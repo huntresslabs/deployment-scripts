@@ -1,5 +1,3 @@
-#Requires -Version 1.0
-
 $AccountSecretKey = "__KEY__"
 
 # Variables used throughout the Huntress Deployment Script for Continuum RMM.
