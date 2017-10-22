@@ -62,7 +62,7 @@ function Get-Installer {
 }
 
 
-function Get-SiteName {
+function Get-SiteId {
     # Ensure we resolve the correct Continuum registry key regardless of operating system or process architecture.
     $WindowsArchitecture = Get-WindowsArchitecture
     If ($WindowsArchitecture -eq $X86) {
@@ -77,7 +77,7 @@ function Get-SiteName {
         throw $ArchitectureError
     }
     
-    $ContinuumValueName = "SITENAME"
+    $ContinuumValueName = "SITEID"
 
     # Ensure the Continuum registry key is present.
     If ( ! (Test-Path $ContinuumKeyPath)) {
@@ -109,9 +109,9 @@ function Get-SiteName {
         throw $ContinuumRegistryError
     }
 
-    $SiteName = $ContinuumKeyObject.$ContinuumValueName
+    $SiteId = $ContinuumKeyObject.$ContinuumValueName
 
-    return $SiteName
+    return $SiteId
 }
 
 
@@ -232,8 +232,8 @@ function Test-Installation {
 function main {
     # TODO - Log debug information (OS, Arch, Language, etc)
     Get-Installer
-    $SiteName = Get-SiteName
-    Install-Huntress $SiteName
+    $SiteId = Get-SiteId
+    Install-Huntress $SiteId
     Test-Installation
 }
 
