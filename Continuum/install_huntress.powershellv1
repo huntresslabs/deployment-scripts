@@ -36,7 +36,7 @@ $X86 = 32
 $InstallerName = "HuntressAgent.exe"
 $InstallerPath = Join-Path $Env:TMP $InstallerName
 $DebugLog = Join-Path $Env:TMP HuntressDebug.log
-$DownloadURL = "https://huntress.io/organization/download/" + $AccountSecretKey + "/" + $InstallerName
+$DownloadURL = "https://huntress.io/download/" + $AccountSecretKey + "/" + $InstallerName
 
 function Get-TimeStamp {
     return "[{0:MM/dd/yy} {0:HH:mm:ss}]" -f (Get-Date)   
