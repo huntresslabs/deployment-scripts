@@ -23,10 +23,17 @@
 # NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
 # EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-# This Huntress deployment script uses Continuum RMM's SITEID for the tag.
-# While it is possible to use SITENAME, there is a race condition where the
-# SITENAME registry value is not populated for 15-20 minutes after the 
-# Continuum agent is installed.
+# The Huntress installer needs an Organization Key (user specified name or description) which is used to affiliate an
+# Agent with a specific Organization within the Huntress Partner's Account. The Continuum SITENAME value from the
+# registry is the ideal data to use for the Huntress Organization Key. Unfortunatly, the Continuum RMM does not create 
+# the SITENAME value until ~30 minutes after installation which means we can't depend on it being present. As a result, 
+# our initial Continuum Deployment script only used the Continuum SITEID value for the Organization Key which is unique
+# and always present, but only consists of digits (not very descriptive). After discussing this with our partners, we
+# developed an alternative solution that always attempts to include the Continuum SITEID and SITENAME in the Huntress
+# Organization Key (looks like SITEID-SITENAME or 12345-WibbleBank). However, when the SITENAME value is not present,
+# this new approach will only use the SITEID for the Organization Key. As byproduct of this compromise, now it is
+# possible for a single Continuum Site to have two Huntress Organization Keys (12345 and 12345-WibbleBank). Users of
+# this deployment script will have to manually consolidate these Organizations from within the Huntress Web Interface.
 
 $AccountSecretKey = "__KEY__"
 
@@ -36,7 +43,7 @@ $X86 = 32
 $InstallerName = "HuntressAgent.exe"
 $InstallerPath = Join-Path $Env:TMP $InstallerName
 $DebugLog = Join-Path $Env:TMP HuntressDebug.log
-$DownloadURL = "https://huntress.io/organization/download/" + $AccountSecretKey + "/" + $InstallerName
+$DownloadURL = "https://huntress.io/download/" + $AccountSecretKey + "/" + $InstallerName
 
 function Get-TimeStamp {
     return "[{0:MM/dd/yy} {0:HH:mm:ss}]" -f (Get-Date)   
@@ -54,22 +61,10 @@ function Get-WindowsArchitecture {
 }
 
 
-function Get-Installer {
-    $WebClient = New-Object System.Net.WebClient
-    $WebClient.DownloadFile($DownloadURL, $InstallerPath)
-    If ( ! (Test-Path $InstallerPath)) {
-        $DownloadError = "Failed to download the Huntress Installer from $DownloadURL"
-        Add-Content $DebugLog "$(Get-TimeStamp) $DownloadError"
-        Add-Content $DebugLog ("$(Get-TimeStamp) Verify you correctly added your secret key to the first line of the " +
-                               "Huntress Deployment Script for Continuum RMM.")
-        throw $DownloadError
-    }
-}
-
-
-function Get-SiteId {
+function Get-ContinuumKeyPath {
     # Ensure we resolve the correct Continuum registry key regardless of operating system or process architecture.
     $WindowsArchitecture = Get-WindowsArchitecture
+
     If ($WindowsArchitecture -eq $X86) {
         $ContinuumKeyPath = "HKLM:\SOFTWARE\SAAZOD"
     } ElseIf ($WindowsArchitecture -eq $X64) {
@@ -81,8 +76,13 @@ function Get-SiteId {
                                "support@huntresslabs.com")
         throw $ArchitectureError
     }
-    
-    $ContinuumValueName = "SITEID"
+
+    return $ContinuumKeyPath
+}
+
+
+function Get-ContinuumKeyObject {
+    $ContinuumKeyPath = Get-ContinuumKeyPath
 
     # Ensure the Continuum registry key is present.
     If ( ! (Test-Path $ContinuumKeyPath)) {
@@ -104,10 +104,19 @@ function Get-SiteId {
         throw $ContinuumRegistryError
     }
 
-    # Ensure the SITENAME value is present within the Continuum registry key.
+    return $ContinuumKeyObject
+}
+
+
+function Get-SiteId {
+    $ContinuumValueName = "SITEID"
+    $ContinuumKeyObject = Get-ContinuumKeyObject
+
+    # Ensure the SITEID value is present within the Continuum registry key.
     If ( ! (Get-Member -inputobject $ContinuumKeyObject -name $ContinuumValueName -Membertype Properties)) {
+        $ContinuumKeyPath = Get-ContinuumKeyPath
         $ContinuumRegistryError = ("The expected Continuum registry value $ContinuumValueName did not exist within " +
-                                  "$ContinuumKeyPath")
+                                   "$ContinuumKeyPath")
         Add-Content $DebugLog "$(Get-TimeStamp) $ContinuumRegistryError"
         Add-Content $DebugLog ("$(Get-TimeStamp) Please send this log to the Huntress Team for help via " +
                                "support@huntresslabs.com")
@@ -120,7 +129,67 @@ function Get-SiteId {
 }
 
 
-function Install-Huntress ($OrganizationName) {
+function Get-SiteName {
+    $ContinuumValueName = "SITENAME"
+    $ContinuumKeyObject = Get-ContinuumKeyObject
+
+    # Get the data from the SITENAME value within the Continuum registry key if it is present.
+    If ( ! (Get-Member -inputobject $ContinuumKeyObject -name $ContinuumValueName -Membertype Properties)) {
+        $SiteName = $null
+    } Else {
+        $SiteName = $ContinuumKeyObject.$ContinuumValueName
+    }
+
+    return $SiteName
+}
+
+
+function Get-Installer {
+    $WebClient = New-Object System.Net.WebClient
+    $WebClient.DownloadFile($DownloadURL, $InstallerPath)
+    If ( ! (Test-Path $InstallerPath)) {
+        $DownloadError = "Failed to download the Huntress Installer from $DownloadURL"
+        Add-Content $DebugLog "$(Get-TimeStamp) $DownloadError"
+        Add-Content $DebugLog ("$(Get-TimeStamp) Verify you correctly added your secret key to the first line of the " +
+                               "Huntress Deployment Script for Continuum RMM.")
+        throw $DownloadError
+    }
+}
+
+
+function Get-OrganizationKey {
+    <#
+    .SYNOPSIS
+    Create a Huntress Organization Key using the Continuum SITEID and SITENAME values.
+    
+    .DESCRIPTION
+    The Huntress installer needs an Organization Key (user specified name or description) which is used to affiliate an
+    Agent with a specific Organization within the Huntress Partner's Account. The Continuum SITENAME value from the
+    registry is the ideal data to use for the Huntress Organization Key. Unfortunatly, the Continuum RMM does not create 
+    the SITENAME value until ~30 minutes after installation which means we can't depend on it being present. As a
+    result, our initial Continuum Deployment script only used the Continuum SITEID value for the Organization Key which
+    is unique and always present, but only consists of digits (not very descriptive). After discussing this with our
+    partners, we developed an alternative solution that always attempts to include the Continuum SITEID and SITENAME in
+    the Huntress Organization Key (looks like SITEID-SITENAME or 12345-WibbleBank). However, when the SITENAME value is
+    not present, this new approach will only use the SITEID for the Organization Key. As byproduct of this compromise,
+    now it is possible for a single Continuum Site to have two Huntress Organization Keys (12345 and 12345-WibbleBank).
+    Users of this deployment script will have to manually consolidate these Organizations from within the Huntress Web
+    Interface.
+    #>
+    $SiteId = Get-SiteId
+    $SiteName = Get-SiteName
+
+    If ($SiteName -eq $null) {
+        $OrganizationKey = $SiteId
+    } Else {
+        $OrganizationKey = $SiteId + "-" + $SiteName
+    }
+
+    return $OrganizationKey
+}
+
+
+function Install-Huntress ($OrganizationKey) {
     If ( ! (Test-Path $InstallerPath)) {
         $InstallerError = "The installer was unexpectedly removed from $InstallerPath"
         Add-Content $DebugLog "$(Get-TimeStamp) $InstallerError"
@@ -130,7 +199,7 @@ function Install-Huntress ($OrganizationName) {
         throw $InstallerError
     }
     
-    Start-Process $InstallerPath "/ORG_KEY=$AccountSecretKey /TAGS=`"$OrganizationName`" /S" -Wait
+    Start-Process $InstallerPath "/ACCT_KEY=`"$AccountSecretKey`" /ORG_KEY=`"$OrganizationKey`" /S" -Wait
 }
 
 
@@ -153,6 +222,7 @@ function Test-Installation {
     $HuntressUpdaterPath = Join-Path $HuntressDirPath "HuntressUpdater.exe"
     $WyUpdaterPath = Join-Path $HuntressDirPath "wyUpdate.exe"
     $HuntressKeyPath = "HKLM:\SOFTWARE\Huntress Labs\Huntress"
+    $AccountKeyValueName = "AccountKey"
     $OrganizationKeyValueName = "OrganizationKey"
     $TagsValueName = "Tags"
 
@@ -212,6 +282,16 @@ function Test-Installation {
         throw $HuntressRegistryError
     }
 
+    # Ensure the AccountKey value is present within the Huntress registry key.
+    If ( ! (Get-Member -inputobject $HuntressKeyObject -name $AccountKeyValueName -Membertype Properties)) {
+        $HuntressRegistryError = ("The expected Huntress registry value $AccountKeyValueName did not exist " +
+                                  "within $HuntressKeyPath")
+        Add-Content $DebugLog "$(Get-TimeStamp) $HuntressRegistryError"
+        Add-Content $DebugLog ("$(Get-TimeStamp) Please send this log to the Huntress Team for help via " +
+                               "support@huntresslabs.com")
+        throw $HuntressRegistryError
+    }
+
     # Ensure the OrganizationKey value is present within the Huntress registry key.
     If ( ! (Get-Member -inputobject $HuntressKeyObject -name $OrganizationKeyValueName -Membertype Properties)) {
         $HuntressRegistryError = ("The expected Huntress registry value $OrganizationKeyValueName did not exist " +
@@ -237,8 +317,8 @@ function Test-Installation {
 function main {
     # TODO - Log debug information (OS, Arch, Language, etc)
     Get-Installer
-    $SiteId = Get-SiteId
-    Install-Huntress $SiteId
+    $OrganizationKey = Get-OrganizationKey
+    Install-Huntress $OrganizationKey
     Test-Installation
 }
 
