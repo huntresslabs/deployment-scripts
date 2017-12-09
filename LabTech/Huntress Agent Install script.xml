@@ -5,16 +5,16 @@
 	<PackedScript>
 		<NewDataSet>
 			<Table>
-				<ScriptId>5963</ScriptId>
+				<ScriptId>5966</ScriptId>
 				<FolderId>190</FolderId>
 				<ScriptName>Huntress Agent Install</ScriptName>
-				<ScriptNotes>Installs Huntress Agent silently. Sets Org Key to company name (clientname) for easy grouping of clients.
+				<ScriptNotes>Installs the Huntress Agent silently. Sets Org Key to company name (ClientName) for easy grouping of clients and uses the LocationName as a tag.
 
 Requirements:
 - Set your ACCT_KEY on Globals and Parameters tab
 - Installer file needs to be saved in the root of the transfer (LabTech/Transfer) folder as huntressinstaller.exe.
 
-Updated: 4 December 2017</ScriptNotes>
+Updated: 9 December 2017</ScriptNotes>
 				<Permission>0,</Permission>
 				<EditPermission>0,</EditPermission>
 				<ComputerScript>1</ComputerScript>
@@ -22,7 +22,7 @@ Updated: 4 December 2017</ScriptNotes>
 				<MaintenanceScript>0</MaintenanceScript>
 				<FunctionScript>0</FunctionScript>
 				<LicenseData>H4sIAAAAAAAEAFWPwQqDMBBE74X+gx9gSFYbLbIESi29tJdWeo9xhRwaJRqof98qLdjDMOwMb2HwYg25gUo9aoXV1JMC5IvjLbhjF9xIXgnkqwtPr976mSFVBRoaPcVRSYaeNfkoEfFHkEUgCkiKVESHK/IVgnfjbT8+yA+2c/Pv/+Dbn4NtFNV7LbWpmcnSlgFQxvawk0wkudGS8raV8OMXAPl60XbzBmk+TInhAAAA</LicenseData>
-				<ScriptData>H4sIAAAAAAAEAN2Z7W+aQBjAvy/Z/3BpYvbJIiDaGkts7MvMtrSZ25IlS8wJj3Lp9TDcsbX//eh5KBi52BTm4JM8z73A/XhecTj1IrISV1hg9/07hIZrmUshEa+fRIRfRm8IUJ8jIx24xxF+BAFRRndLwzmm3MWeJ2YP8HwxDjBbwhcYGumQmrm+y49kNQmZaw6NvCI36zYmvgvzM+xgb972evaibZrQa5+ZXafdsfoedqC/WDibXeQCeRgjexq13VTAavMcl55QD6CulP4mZlKe+G7PGhoZMXt80/0YMxEB5+hyCUwMDaXOTrLcjtJbOb29w7K7IztbeRpG4mUX+at045AJwmJ40W+u1dgd/0weiVySXqqRCfOT58TyqMloVswC2zLSQLM00KzzQ6BhGgH2nxFhXGBKwd8PcAdMs8GZTjG5nYO+FYz5v4GxNWBMW2dS4wC8ByQCLFAafNBShhz0G0cEzymgAHM0B2CIQ4GnNs3QdDz7HQ3OlGFBQLP2BzR3G+6VIkfPHXxf+VjAbJ0L1KRuc0zU6uiYplFvooJddApPUAC4JeBx5ZOo9Uu36m35xKoTWtPsatBucQUKFzkAsllgxYOr8A+jIfZnN5hsk5L9Krp2nehatibpbLz9lUaKjMvx+Nvs0/XPi1EaT0bIuPt6K3UnLY+S5DgsqSJbJ8iYHmbUm7e2EzdcHgBNygke0zS4O7kX0q3VC9HlulHmqKNKEpnTGFayLiBsifKFelpxVkKvVyd6+rJqIPnNJhXS6teJlqPJQiUX52dlczGrtCLrkMpH2yQPprHnJZMWMd2xt7eVOed14nhY25wLYWghi5RTdE8Bc0Ce7IRouOSVuKtZepNTKc9/2U2X3qtU6rH6uL+vUyvZkGrVf2gdcwqarw4hQyIAxOVtP3CkPoQizHyU+YYq8FyqIohiVg3w0luSxnhu6b3BET13f/Nasik1p0FIcW3S6Lji/Fl6d9AYLyy9EziiFxYWsyVbU+ldwtEcsaC65WuQ1dA7Rm+Qyuof17+BVf+WgB0AAA==</ScriptData>
+				<ScriptData>H4sIAAAAAAAEAN2Z7W+aQBjAvy/Z/3BpYvbJIiDaGks0dnVmW9qMbsmSJeaERyG9HoY7tva/Hz0PBSMXm8IcfJLnuePl+fG84tBxo2DNrzHH9vt3CA03MhNCIn584hF+Wb0JgHgMaenCHY7wI3CIMropCReYMBu7Lp8/wPPVxMd0BV9hqKVLcufmLj+Ss4OQ2vpQyytyu6Zx4NmwuMAWdhdtt2cu27oOvfaF3rXaHaPvYgv6y6W1vYo4QRijZa2Rl3M4rLfPMXa5fAB5JPU3MRXyzLN7xlDLiFnzdftTTHkEjKHxCigfalKd3WTYHak3cnpzj2V3T7Z2shNG/OUq4lfqJiHlAY3hRb89lmu37EvwGIhT0kO5MqNe8pxYmJqsZsUssB0jBTRDAc24PAYaJhFg7xkFlHFMCHiHAe6BaTY43Somt2foW8Ho/xsYUwFGN1UuNfHBfUDcxxylyQetRMpBv3EU4AUB5GOGFgAUMSiI1KY5mopnv6PAmTIsSGjG4YRm79K9VOTo2YPvaw9zmG9qgdzUbY6LGh0V0zTrzWSyi87hCQoAtzg8rr0gav1SnfW2emLUCa2udxVod7h8iSs4ArJe4MWD6/APJSH25jc42BUl81V0zTrRNUxF0dlG+yudFGnjyeR+/vnjz6tRmk9GSLv9NhW6s5ZLgsQcmnSRrTOk3Y+nTqIkoSsMTNXOcb6+fZl76cRmPpCky2AxSXO+lXtP3Vq9J1UJHGVMHVVS36zGsBLtQkBXKN+/p41oJfR6daKn7rYGgt98ViGtfp1oWYriVHLPflE2F71KLzKOaYiUs/PAiV032bSMyZ6/va37uawTx+Om6VwKQ0vRu5yjOwKYAXLFgETCFaskXPXSZ59Kef7LIbv0EabSiFXn/UMDXMmOVKuxRBmYDig+RoQUcR8QE7f9wJD8Poow9VDm0yrHC6GKIIppNcBLn1QaE7mlzwYnjNzDM23JrtScASHFtS2jk4rrZ+nTQWOisPRJ4IRRWNjMluxNpU8JJwvEgu6WbUBWQ+8Us0Eqyz9i/wLgGHwqlx0AAA==</ScriptData>
 				<ScriptVersion>1</ScriptVersion>
 				<ScriptGuid>eb8a5acb-c63f-11e6-8145-027ca5e7ff51</ScriptGuid>
 				<ScriptFlags>0</ScriptFlags>
