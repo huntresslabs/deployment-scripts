@@ -2,9 +2,17 @@
 <ScriptExport xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="http://www.kaseya.com/vsa/2008/12/Scripting">
   <Procedure name="Huntress Agent Deployment">
     <Body description="">
-      <If description="Huntress Agent Deployment Procedure&#xD;&#xA;v1.0   16 February 2018&#xD;&#xA;by John Ferrell, Huntress Labs&#xD;&#xA;Before running this procedure create a HUNTRESS_ACCT_KEY managed variable&#xD;&#xA;set the HUNTRESS_ACCT_KEY variable to your Huntress account key&#xD;&#xA;Your Huntress account key can be found in Huntress console&#xD;&#xA;The procedure will use the Kaseya GroupName as the Huntress organization key (used to group agents)">
+      <Statement description="Huntress Agent Deployment Procedure&#xD;&#xA;18 February 2018 (v1.1)&#xD;&#xA;by John Ferrell, Huntress Labs&#xD;&#xA;When run, you will be prompted for the following:&#xD;&#xA;ACCT_KEY - your Huntress account key (Found in Huntress console)&#xD;&#xA;The procedure will use the Kaseya GroupName as the Huntress organization key (used to group agents)" name="GetVariable" continueOnFail="false">
+        <Parameter xsi:type="EnumParameter" name="VariableType" value="Prompt" />
+        <Parameter xsi:type="StringParameter" name="SourceContent" value="Huntress Account Key" />
+        <Parameter xsi:type="StringParameter" name="VariableName" value="ACCT_KEY" />
+      </Statement>
+      <Statement name="WriteScriptLogEntry" continueOnFail="false">
+        <Parameter xsi:type="StringParameter" name="Comment" value="Got script variables" />
+      </Statement>
+      <If description="">
         <Condition name="CheckVariable">
-          <Parameter xsi:type="StringParameter" name="VariableName" value="&lt;HUNTRESS_ACCT_KEY&gt;" />
+          <Parameter xsi:type="StringParameter" name="VariableName" value="#ACCT_KEY#" />
           <Parameter xsi:type="EnumParameter" name="Condition" value="NotEquals" />
           <Parameter xsi:type="StringParameter" name="Value" value="" />
         </Condition>
@@ -19,7 +27,7 @@
                 <Parameter xsi:type="StringParameter" name="Comment" value="HuntressAgent service not found, installing..." />
               </Statement>
               <Statement name="GetURL" continueOnFail="false" osType="Windows">
-                <Parameter xsi:type="StringParameter" name="URL" value="https://huntress.io/download/&lt;HUNTRESS_ACCT_KEY&gt;/HuntressInstaller.exe&quot;" />
+                <Parameter xsi:type="StringParameter" name="URL" value="https://huntress.io/download/#ACCT_KEY#/HuntressInstaller.exe&quot;" />
                 <Parameter xsi:type="StringParameter" name="ResponseFileName" value="#vagentconfiguration.agenttempdir#\HuntressInstaller.exe" />
                 <Parameter xsi:type="BooleanParameter" name="WaitComplete" value="True" />
               </Statement>
@@ -45,7 +53,7 @@
                     <Then>
                       <Statement name="ExecuteFile" continueOnFail="false">
                         <Parameter xsi:type="StringParameter" name="Path" value="#vagentconfiguration.agenttempdir#\HuntressInstaller.exe" />
-                        <Parameter xsi:type="StringParameter" name="Arguments" value="/ACCT_KEY=&lt;HUNTRESS_ACCT_KEY&gt; /ORG_KEY=&quot;#vAgentConfiguration.groupName#&quot; /S" />
+                        <Parameter xsi:type="StringParameter" name="Arguments" value="/ACCT_KEY=#ACCT_KEY# /ORG_KEY=&quot;#vAgentConfiguration.groupName#&quot; /S" />
                         <Parameter xsi:type="EnumParameter" name="ExecuteAccount" value="System" />
                         <Parameter xsi:type="BooleanParameter" name="WaitComplete" value="True" />
                       </Statement>
