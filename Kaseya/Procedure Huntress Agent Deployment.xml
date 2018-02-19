@@ -2,7 +2,7 @@
 <ScriptExport xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="http://www.kaseya.com/vsa/2008/12/Scripting">
   <Procedure name="Huntress Agent Deployment">
     <Body description="">
-      <If description="Huntress Agent Deployment Procedure&#xD;&#xA;v1.0   16 February 2018&#xD;&#xA;by John Ferrell, Huntress Labs&#xD;&#xA;Before running this procedure create a HUNTRESS_ACCT_KEY managed variable&#xD;&#xA;set the HUNTRESS_ACCT_KEY variable to your Huntress account key&#xD;&#xA;Your Huntress account key can be found in Huntress console&#xD;&#xA;The procedure will use the Kaseya GroupName as the Huntress organization key (used to group agents)">
+      <If description="Huntress Agent Deployment Procedure&#xD;&#xA;18 February 2018 (v1.1)&#xD;&#xA;by John Ferrell, Huntress Labs&#xD;&#xA;Before running this procedure define a HUNTRESS_ACCT_KEY variable&#xD;&#xA;set the HUNTRESS_ACCT_KEY variable to your Huntress account key&#xD;&#xA;Your Huntress account key can be found in Huntress console&#xD;&#xA;The procedure will use the Kaseya GroupName as the Huntress organization key (used to group agents)">
         <Condition name="CheckVariable">
           <Parameter xsi:type="StringParameter" name="VariableName" value="&lt;HUNTRESS_ACCT_KEY&gt;" />
           <Parameter xsi:type="EnumParameter" name="Condition" value="NotEquals" />
