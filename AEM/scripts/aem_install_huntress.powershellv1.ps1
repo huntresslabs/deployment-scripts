@@ -196,12 +196,12 @@ function Test-Installation {
 
 function main {
     # TODO - Log debug information (OS, Arch, Language, etc)
-    if ($AccountSecretKey == "__KEY__")
+    if ($AccountSecretKey -eq "__KEY__")
     {
         Write-Warning "AccountSecretKey not set, exiting script!"
         exit 1
     }
-    if ($OrganizationKey == "ChangeMe")
+    if ($OrganizationKey -eq "ChangeMe")
     {
         Write-Warning "ORG_KEY not specified, exiting script!"
         exit 1
