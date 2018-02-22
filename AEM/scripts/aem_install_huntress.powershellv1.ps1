@@ -28,6 +28,8 @@
 # Organization within the Huntress Partner's Account. The Organization Key is
 # passed in when the script is scheduled to run.
 
+# Replace __KEY__ with your account key
+# See https://support.huntress.io/article/7-using-account-and-organization-keys
 $AccountSecretKey = "__KEY__"
 
 # OrganizationKey is passed in when script is scheduled
@@ -38,7 +40,6 @@ $X64 = 64
 $X86 = 32
 $InstallerName = "HuntressAgent.exe"
 $InstallerPath = Join-Path $Env:TMP $InstallerName
-$DebugLog = Join-Path $Env:TMP HuntressDebug.log
 $DownloadURL = "https://huntress.io/download/" + $AccountSecretKey + "/" + $InstallerName
 
 function Get-TimeStamp {
@@ -61,8 +62,8 @@ function Get-Installer {
     $WebClient.DownloadFile($DownloadURL, $InstallerPath)
     If ( ! (Test-Path $InstallerPath)) {
         $DownloadError = "Failed to download the Huntress Installer from $DownloadURL"
-        Add-Content $DebugLog "$(Get-TimeStamp) $DownloadError"
-        Add-Content $DebugLog ("$(Get-TimeStamp) Verify you correctly added your secret key to the first line of the " +
+        Write-Host "$(Get-TimeStamp) $DownloadError"
+        Write-Host ("$(Get-TimeStamp) Verify you correctly added your secret key to the first line of the " +
                                "Huntress Deployment Script.")
         throw $DownloadError
     }
@@ -71,8 +72,8 @@ function Get-Installer {
 function Install-Huntress ($OrganizationKey) {
     If ( ! (Test-Path $InstallerPath)) {
         $InstallerError = "The installer was unexpectedly removed from $InstallerPath"
-        Add-Content $DebugLog "$(Get-TimeStamp) $InstallerError"
-        Add-Content $DebugLog ("$(Get-TimeStamp) A security product may have quarantined the installer. Please check " +
+        Write-Host "$(Get-TimeStamp) $InstallerError"
+        Write-Host ("$(Get-TimeStamp) A security product may have quarantined the installer. Please check " +
                                "your logs. If the issue continues to occur, please send this log to the Huntress " +
                                "Team for help via support@huntresslabs.com")
         throw $InstallerError
@@ -91,8 +92,8 @@ function Test-Installation {
         $HuntressDirPath = Join-Path $Env:ProgramW6432 "Huntress"
     } Else {
         $ArchitectureError = "Failed to determine the Windows Architecture. Received $WindowsArchitecure."
-        Add-Content $DebugLog "$(Get-TimeStamp) $ArchitectureError"
-        Add-Content $DebugLog ("$(Get-TimeStamp) Please send this log to the Huntress Team for help via " +
+        Write-Host "$(Get-TimeStamp) $ArchitectureError"
+        Write-Host ("$(Get-TimeStamp) Please send this log to the Huntress Team for help via " +
                                "support@huntresslabs.com")
         throw $ArchitectureError
     }
@@ -108,46 +109,46 @@ function Test-Installation {
     # Ensure the Huntress installation directory was created.
     If ( ! (Test-Path $HuntressDirPath)) {
         $HuntressInstallationError = "The expected Huntress directory $HuntressDirPath did not exist."
-        Add-Content $DebugLog "$(Get-TimeStamp) $HuntressInstallationError"
-        Add-Content $DebugLog ("$(Get-TimeStamp) Please send this log to the Huntress Team for help via " +
+        Write-Host "$(Get-TimeStamp) $HuntressInstallationError"
+        Write-Host ("$(Get-TimeStamp) Please send this log to the Huntress Team for help via " +
                                "support@huntresslabs.com")
-        throw $HuntressInstallationError
+        exit 1
     }
 
     # Ensure the Huntress agent was created.
     If ( ! (Test-Path $HuntressAgentPath)) {
         $HuntressInstallationError = "The expected Huntress agent $HuntressAgentPath did not exist."
-        Add-Content $DebugLog "$(Get-TimeStamp) $HuntressInstallationError"
-        Add-Content $DebugLog ("$(Get-TimeStamp) Please send this log to the Huntress Team for help via " +
+        Write-Host "$(Get-TimeStamp) $HuntressInstallationError"
+        Write-Host ("$(Get-TimeStamp) Please send this log to the Huntress Team for help via " +
                                "support@huntresslabs.com")
-        throw $HuntressInstallationError
+        exit 1
     }
 
     # Ensure the Huntress updater was created.
     If ( ! (Test-Path $HuntressUpdaterPath)) {
         $HuntressInstallationError = "The expected Huntress updater $HuntressUpdaterPath did not exist."
-        Add-Content $DebugLog "$(Get-TimeStamp) $HuntressInstallationError"
-        Add-Content $DebugLog ("$(Get-TimeStamp) Please send this log to the Huntress Team for help via " +
+        Write-Host "$(Get-TimeStamp) $HuntressInstallationError"
+        Write-Host ("$(Get-TimeStamp) Please send this log to the Huntress Team for help via " +
                                "support@huntresslabs.com")
-        throw $HuntressInstallationError
+        exit 1
     }
 
     # Ensure our wyUpdate dependency was created.
     If ( ! (Test-Path $WyUpdaterPath)) {
         $HuntressInstallationError = "The expected wyUpdate dependency $WyUpdaterPath did not exist."
-        Add-Content $DebugLog "$(Get-TimeStamp) $HuntressInstallationError"
-        Add-Content $DebugLog ("$(Get-TimeStamp) Please send this log to the Huntress Team for help via " +
+        Write-Host "$(Get-TimeStamp) $HuntressInstallationError"
+        Write-Host ("$(Get-TimeStamp) Please send this log to the Huntress Team for help via " +
                                "support@huntresslabs.com")
-        throw $HuntressInstallationError
+        exit 1
     }
 
     # Ensure the Huntress registry key is present.
      If ( ! (Test-Path $HuntressKeyPath)) {
         $HuntressRegistryError = "The expected Huntress registry key $HuntressKeyPath did not exist."
-        Add-Content $DebugLog "$(Get-TimeStamp) $HuntressRegistryError"
-        Add-Content $DebugLog ("$(Get-TimeStamp) Please send this log to the Huntress Team for help via " +
+        Write-Host "$(Get-TimeStamp) $HuntressRegistryError"
+        Write-Host ("$(Get-TimeStamp) Please send this log to the Huntress Team for help via " +
                                "support@huntresslabs.com")
-        throw $HuntressRegistryError
+        exit 1
     }
 
     $HuntressKeyObject = Get-ItemProperty $HuntressKeyPath
@@ -155,40 +156,40 @@ function Test-Installation {
     # Ensure the Huntress registry key is not empty.
     If ( ! ($HuntressKeyObject)) {
         $HuntressRegistryError = "The Huntress registry key was empty."
-        Add-Content $DebugLog "$(Get-TimeStamp) $HuntressRegistryError"
-        Add-Content $DebugLog ("$(Get-TimeStamp) Please send this log to the Huntress Team for help via " +
+        Write-Host "$(Get-TimeStamp) $HuntressRegistryError"
+        Write-Host ("$(Get-TimeStamp) Please send this log to the Huntress Team for help via " +
                                "support@huntresslabs.com")
-        throw $HuntressRegistryError
+        exit 1
     }
 
     # Ensure the AccountKey value is present within the Huntress registry key.
     If ( ! (Get-Member -inputobject $HuntressKeyObject -name $AccountKeyValueName -Membertype Properties)) {
         $HuntressRegistryError = ("The expected Huntress registry value $AccountKeyValueName did not exist " +
                                   "within $HuntressKeyPath")
-        Add-Content $DebugLog "$(Get-TimeStamp) $HuntressRegistryError"
-        Add-Content $DebugLog ("$(Get-TimeStamp) Please send this log to the Huntress Team for help via " +
+        Write-Host "$(Get-TimeStamp) $HuntressRegistryError"
+        Write-Host ("$(Get-TimeStamp) Please send this log to the Huntress Team for help via " +
                                "support@huntresslabs.com")
-        throw $HuntressRegistryError
+        exit 1
     }
 
     # Ensure the OrganizationKey value is present within the Huntress registry key.
     If ( ! (Get-Member -inputobject $HuntressKeyObject -name $OrganizationKeyValueName -Membertype Properties)) {
         $HuntressRegistryError = ("The expected Huntress registry value $OrganizationKeyValueName did not exist " +
                                   "within $HuntressKeyPath")
-        Add-Content $DebugLog "$(Get-TimeStamp) $HuntressRegistryError"
-        Add-Content $DebugLog ("$(Get-TimeStamp) Please send this log to the Huntress Team for help via " +
+        Write-Host "$(Get-TimeStamp) $HuntressRegistryError"
+        Write-Host ("$(Get-TimeStamp) Please send this log to the Huntress Team for help via " +
                                "support@huntresslabs.com")
-        throw $HuntressRegistryError
+        exit 1
     }
 
     # Ensure the Tags value is present within the Huntress registry key.
     If ( ! (Get-Member -inputobject $HuntressKeyObject -name $TagsValueName -Membertype Properties)) {
         $HuntressRegistryError = ("The expected Huntress registry value $TagsKeyValueName did not exist within " +
                                   "$HuntressKeyPath")
-        Add-Content $DebugLog "$(Get-TimeStamp) $HuntressRegistryError"
-        Add-Content $DebugLog ("$(Get-TimeStamp) Please send this log to the Huntress Team for help via " +
+        Write-Host "$(Get-TimeStamp) $HuntressRegistryError"
+        Write-Host ("$(Get-TimeStamp) Please send this log to the Huntress Team for help via " +
                                "support@huntresslabs.com")
-        throw $HuntressRegistryError
+        exit 1
     }
 }
 
@@ -200,9 +201,9 @@ function main {
         Write-Warning "AccountSecretKey not set, exiting script!"
         exit 1
     }
-    if (!$OrganizationKey)
+    if ($OrganizationKey == "ChangeMe")
     {
-        Write-Warning "ORG_KEY blank, exiting script!"
+        Write-Warning "ORG_KEY not specified, exiting script!"
         exit 1
     }
     Write-Host "ORG_KEY Specified: " $OrganizationKey
