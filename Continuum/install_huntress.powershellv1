@@ -146,7 +146,11 @@ function Get-SiteName {
 
 function Get-Installer {
     $WebClient = New-Object System.Net.WebClient
-    $WebClient.DownloadFile($DownloadURL, $InstallerPath)
+    try {
+        $WebClient.DownloadFile($DownloadURL, $InstallerPath)
+    } catch {
+        Add-Content $DebugLog "$(Get-TimeStamp) $_.Exception.Message"
+    }
     If ( ! (Test-Path $InstallerPath)) {
         $DownloadError = "Failed to download the Huntress Installer from $DownloadURL"
         Add-Content $DebugLog "$(Get-TimeStamp) $DownloadError"
