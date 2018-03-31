@@ -1,0 +1,195 @@
+<?xml version="1.0" encoding="UTF-8"?><Policy Description="VGhpcyBwb2xpY3kgd2lsbCBpbnN0YWxsIHRoZSBIdW50cmVzcyBBZ2VudC4KQ3JlYXRlZCB3aXRoIEF1dG9tYXRpb24gTWFuYWdlciB2Mi4yLjAuMTE2" ExecutionType="Local" ID="2b3e964c-aece-45d8-aec3-2821011ae45d" Name="Huntress Agent Deployment" PS3ObjectCount="0" RemoteCategory="0" Version="2.2.0.116">
+  <Object Data="&lt;xml&gt;&lt;Parameters&gt;&lt;Parameter ParameterName=&quot;AccountKey&quot; Label=&quot;Account Key&quot; ParameterType=&quot;string&quot; Value=&quot;ChangeMe&quot; /&gt;&lt;Parameter ParameterName=&quot;OrganizationKey&quot; Label=&quot;Organization Key&quot; ParameterType=&quot;string&quot; Value=&quot;&quot; /&gt;&lt;/Parameters&gt;&lt;/xml&gt;" ID="{d0e637a6-fbd2-4ac0-8e3d-a73123a29292}" Type="{B6FA6D8B-EEAA-47A6-8463-7F9A4F5BBB6E}"/>
+  <LinkManager xmlns="http://schemas.datacontract.org/2004/07/PolicyExecutor" xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+    <hashset xmlns:d2p1="http://schemas.datacontract.org/2004/07/System"/>
+  </LinkManager>
+  <Activity xmlns="http://schemas.microsoft.com/netfx/2009/xaml/activities" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:mva="clr-namespace:Microsoft.VisualBasic.Activities;assembly=System.Activities" xmlns:p="clr-namespace:PolicyExecutor;assembly=PolicyExecutionEngine" xmlns:sads="http://schemas.microsoft.com/netfx/2010/xaml/activities/debugger" xmlns:sap="http://schemas.microsoft.com/netfx/2009/xaml/activities/presentation" xmlns:scg="clr-namespace:System.Collections.Generic;assembly=mscorlib" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" mc:Ignorable="sads sap" x:Class="Policy Builder">
+    <x:Members>
+      <x:Property Name="PolicyGUID" Type="InArgument(x:String)"/>
+    </x:Members>
+    <sap:VirtualizedContainerService.HintSize>2518,3831</sap:VirtualizedContainerService.HintSize>
+    <mva:VisualBasic.Settings>Assembly references and imported namespaces serialized as XML namespaces</mva:VisualBasic.Settings>
+    <p:PolicySequence DisplayName="Policy Builder" mva:VisualBasic.Settings="Assembly references and imported namespaces serialized as XML namespaces" sap:VirtualizedContainerService.HintSize="2518,3831">
+      <p:PolicySequence.Activities>
+        <p:IfObject AssemblyName="PolicyExecutionEngine, Version=2.2.0.116, Culture=neutral, PublicKeyToken=null" Condition="equals" Condition_DisplayArg="equals" Condition_Item="{x:Null}" Condition_ItemProp="{x:Null}" DisplayName="If" Moniker="2d8187e7-e877-4900-a651-78b15cf9856b" Result="[IfObject_Result]" ResultString="[IfObject_ResultString]" RunAsCurrentLoggedOnUser="False" ScriptExecutionMethod="None" TypeName="IfObject" Value_DisplayArg="ChangeMe" Value_Item="{x:Null}" Value_ItemProp="{x:Null}" Value_Type="x:String" Variable="[AccountKey]" Variable_DisplayArg="Input Parameters.Account Key" Variable_Item="{x:Null}" Variable_ItemProp="{x:Null}" Variable_Type="x:String" m_bTextLinkChange="False" sap:VirtualizedContainerService.HintSize="2482,560">
+          <p:IfObject.IfOption>
+            <p:SequenceActivity DisplayName="Then" Name="SequenceActivity" sap:VirtualizedContainerService.HintSize="533,359">
+              <p:SequenceActivity.Activities>
+                <p:Log AssemblyName="PolicyExecutionEngine, Version=2.2.0.116, Culture=neutral, PublicKeyToken=null" DisplayName="Log" LogMessage="[Log_LogMessage_2]" Message="Please re-run the policy specifying your Huntress Account Key." Message_DisplayArg="Please re-run the policy specifying your Huntress Account Key." Message_Item="{x:Null}" Message_ItemProp="{x:Null}" Moniker="fd9a5b3d-8a9b-4733-8f7b-7648c7582a9a" Result="[Log_Result_2]" ResultString="[Log_ResultString_2]" RunAsCurrentLoggedOnUser="False" ScriptExecutionMethod="ExecuteDebug" TypeName="Log" m_bTextLinkChange="False" sap:VirtualizedContainerService.HintSize="495,88"/>
+                <p:FailPolicy AssemblyName="PolicyExecutionEngine, Version=2.2.0.116, Culture=neutral, PublicKeyToken=null" DisplayName="Fail Policy" Moniker="425d8ae2-df53-41e6-8451-57ec82d50c47" Result="[FailPolicy_Result_2]" ResultString="[FailPolicy_ResultString_2]" RunAsCurrentLoggedOnUser="False" ScriptExecutionMethod="None" TypeName="FailPolicy" m_bTextLinkChange="False" sap:VirtualizedContainerService.HintSize="495,81"/>
+              </p:SequenceActivity.Activities>
+              <p:SequenceActivity.Variables>
+                <Variable Name="Log_LogMessage_2" x:TypeArguments="x:String"/>
+                <Variable Name="Log_Result_2" x:TypeArguments="x:Double"/>
+                <Variable Name="Log_ResultString_2" x:TypeArguments="x:String"/>
+                <Variable Name="FailPolicy_Result_2" x:TypeArguments="x:Double"/>
+                <Variable Name="FailPolicy_ResultString_2" x:TypeArguments="x:String"/>
+              </p:SequenceActivity.Variables>
+            </p:SequenceActivity>
+          </p:IfObject.IfOption>
+          <p:IfObject.Value>
+            <InArgument x:TypeArguments="x:Object">
+              <p:ObjectLiteral Value="ChangeMe"/>
+            </InArgument>
+          </p:IfObject.Value>
+        </p:IfObject>
+        <p:IsServiceRunning AssemblyName="PolicyExecutionEngine, Version=2.2.0.116, Culture=neutral, PublicKeyToken=null" Conditional="[IsServiceRunning_Conditional]" DisplayName="Is Service Running" Moniker="7373d829-c219-4699-87b0-9875668c937a" Result="[IsServiceRunning_Result]" ResultString="[IsServiceRunning_ResultString]" RunAsCurrentLoggedOnUser="False" ScriptExecutionMethod="ExecuteDebug" Service="HuntressAgent" Service_DisplayArg="HuntressAgent" Service_Item="{x:Null}" Service_ItemProp="{x:Null}" TypeName="IsServiceRunning" m_bTextLinkChange="False" sap:VirtualizedContainerService.HintSize="2482,88"/>
+        <p:IfElse AssemblyName="PolicyExecutionEngine, Version=2.2.0.116, Culture=neutral, PublicKeyToken=null" Condition="equals" Condition_DisplayArg="equals" Condition_Item="{x:Null}" Condition_ItemProp="{x:Null}" DisplayName="If/Else" Moniker="d05f00c1-d56c-4cec-98ec-7c0ff949f2b4" Result="[IfElse_Result_3]" ResultString="[IfElse_ResultString_3]" RunAsCurrentLoggedOnUser="False" ScriptExecutionMethod="None" TypeName="IfElse" Value_DisplayArg="True" Value_Item="{x:Null}" Value_ItemProp="{x:Null}" Value_Type="x:String" Variable="[IsServiceRunning_Conditional]" Variable_DisplayArg="Is Service Running.Conditional" Variable_Item="{x:Null}" Variable_ItemProp="{x:Null}" Variable_Type="x:String" m_bTextLinkChange="False" sap:VirtualizedContainerService.HintSize="2482,2878">
+          <p:IfElse.ElseOption>
+            <p:SequenceActivity DisplayName="Else" Name="SequenceActivity" sap:VirtualizedContainerService.HintSize="2030,2677">
+              <p:SequenceActivity.Activities>
+                <p:FormatString AssemblyName="PolicyExecutionEngine, Version=2.2.0.116, Culture=neutral, PublicKeyToken=null" DisplayName="Download URL" FormattedString="[FormatString_FormattedString]" Input0="https://huntress.io/download" Input0_DisplayArg="https://huntress.io/download" Input0_Item="{x:Null}" Input0_ItemProp="{x:Null}" Input1="[AccountKey]" Input1_DisplayArg="Input Parameters.Account Key" Input1_Item="{x:Null}" Input1_ItemProp="{x:Null}" Moniker="64184dfb-8de2-40a8-a915-534b0412185e" Result="[FormatString_Result]" ResultString="[FormatString_ResultString]" RunAsCurrentLoggedOnUser="False" ScriptExecutionMethod="ExecuteDebug" Text="{}{0}/{1}" Text_DisplayArg="{}{0}/{1}" Text_Item="{x:Null}" Text_ItemProp="{x:Null}" TypeName="FormatString" m_bTextLinkChange="False" sap:VirtualizedContainerService.HintSize="1992,160"/>
+                <p:GetEnvironmentVariable AssemblyName="PolicyExecutionEngine, Version=2.2.0.116, Culture=neutral, PublicKeyToken=null" DisplayName="Get TEMP dir" Moniker="9fcb4e1c-f8af-45cf-8df7-8e2a94197523" Result="[GetEnvironmentVariable_Result]" ResultString="[GetEnvironmentVariable_ResultString]" RunAsCurrentLoggedOnUser="False" ScriptExecutionMethod="ExecuteDebug" Type="Machine" TypeName="GetEnvironmentVariable" Type_DisplayArg="Machine" Type_Item="{x:Null}" Type_ItemProp="{x:Null}" Value="[GetEnvironmentVariable_Value]" Variable="TEMP" Variable_DisplayArg="TEMP" Variable_Item="{x:Null}" Variable_ItemProp="{x:Null}" m_bTextLinkChange="False" sap:VirtualizedContainerService.HintSize="1992,124"/>
+                <p:FormatString AssemblyName="PolicyExecutionEngine, Version=2.2.0.116, Culture=neutral, PublicKeyToken=null" DisplayName="InstallerPath" FormattedString="[FormatString_FormattedString_1]" Input0="[GetEnvironmentVariable_Value]" Input0_DisplayArg="Get TEMP dir.Value" Input0_Item="{x:Null}" Input0_ItemProp="{x:Null}" Input1="HuntressInstaller.exe" Input1_DisplayArg="HuntressInstaller.exe" Input1_Item="{x:Null}" Input1_ItemProp="{x:Null}" Moniker="9b9a4862-8ad3-4cdc-a9b0-f0e5da8ca7e2" Result="[FormatString_Result_1]" ResultString="[FormatString_ResultString_1]" RunAsCurrentLoggedOnUser="False" ScriptExecutionMethod="ExecuteDebug" Text="{}{0}\{1}" Text_DisplayArg="{}{0}\{1}" Text_Item="{x:Null}" Text_ItemProp="{x:Null}" TypeName="FormatString" m_bTextLinkChange="False" sap:VirtualizedContainerService.HintSize="1992,160"/>
+                <p:DownloadFileFromURL AssemblyName="PolicyExecutionEngine, Version=2.2.0.116, Culture=neutral, PublicKeyToken=null" DisplayName="Download File From URL" Moniker="6c48f8b0-2f3a-49de-877d-ec4224cf5d96" OverwriteExistingFile="True" OverwriteExistingFile_DisplayArg="true" OverwriteExistingFile_Item="{x:Null}" OverwriteExistingFile_ItemProp="{x:Null}" RemoteFileURL="[FormatString_FormattedString]" RemoteFileURL_DisplayArg="Download URL.FormattedString" RemoteFileURL_Item="{x:Null}" RemoteFileURL_ItemProp="{x:Null}" Result="[DownloadFileFromURL_Result]" ResultString="[DownloadFileFromURL_ResultString]" RunAsCurrentLoggedOnUser="False" SaveAsFileName="[FormatString_FormattedString_1]" SaveAsFileName_DisplayArg="InstallerPath.FormattedString" SaveAsFileName_Item="{x:Null}" SaveAsFileName_ItemProp="{x:Null}" ScriptExecutionMethod="ExecuteDebug" TypeName="DownloadFileFromURL" m_bTextLinkChange="False" sap:VirtualizedContainerService.HintSize="1992,160"/>
+                <p:FileExists AssemblyName="PolicyExecutionEngine, Version=2.2.0.116, Culture=neutral, PublicKeyToken=null" Conditional="[FileExists_Conditional]" DisplayName="File Exists" File="[FormatString_FormattedString_1]" File_DisplayArg="InstallerPath.FormattedString" File_Item="{x:Null}" File_ItemProp="{x:Null}" Moniker="e7241fa5-1d23-428e-826c-23ad54e939c6" Result="[FileExists_Result]" ResultString="[FileExists_ResultString]" RunAsCurrentLoggedOnUser="False" ScriptExecutionMethod="ExecuteDebug" TypeName="FileExists" m_bTextLinkChange="False" sap:VirtualizedContainerService.HintSize="1992,88"/>
+                <p:IfElse AssemblyName="PolicyExecutionEngine, Version=2.2.0.116, Culture=neutral, PublicKeyToken=null" Condition="equals" Condition_DisplayArg="equals" Condition_Item="{x:Null}" Condition_ItemProp="{x:Null}" DisplayName="If/Else" Moniker="22c915ee-af3f-410c-8bb2-d741a931229b" Result="[IfElse_Result_2]" ResultString="[IfElse_ResultString_2]" RunAsCurrentLoggedOnUser="False" ScriptExecutionMethod="None" TypeName="IfElse" Value_DisplayArg="True" Value_Item="{x:Null}" Value_ItemProp="{x:Null}" Value_Type="x:String" Variable="[FileExists_Conditional]" Variable_DisplayArg="File Exists.Conditional" Variable_Item="{x:Null}" Variable_ItemProp="{x:Null}" Variable_Type="x:String" m_bTextLinkChange="False" sap:VirtualizedContainerService.HintSize="1992,1635">
+                  <p:IfElse.ElseOption>
+                    <p:SequenceActivity DisplayName="Else" Name="SequenceActivity" sap:VirtualizedContainerService.HintSize="760,359">
+                      <p:SequenceActivity.Activities>
+                        <p:Log AssemblyName="PolicyExecutionEngine, Version=2.2.0.116, Culture=neutral, PublicKeyToken=null" DisplayName="Log" LogMessage="[Log_LogMessage_4]" Message="Failed to download the Huntress Agent installer. Please check your Huntress Account Key and try again." Message_DisplayArg="Failed to download the Huntress Agent installer. Please check your Huntress Account Key and try again." Message_Item="{x:Null}" Message_ItemProp="{x:Null}" Moniker="f5da16d0-0f82-4a5a-870f-106d97830645" Result="[Log_Result_4]" ResultString="[Log_ResultString_4]" RunAsCurrentLoggedOnUser="False" ScriptExecutionMethod="ExecuteDebug" TypeName="Log" m_bTextLinkChange="False" sap:VirtualizedContainerService.HintSize="722,88"/>
+                        <p:FailPolicy AssemblyName="PolicyExecutionEngine, Version=2.2.0.116, Culture=neutral, PublicKeyToken=null" DisplayName="Fail Policy" Moniker="8409309b-277c-4de1-bc62-fd6cc9847756" Result="[FailPolicy_Result_3]" ResultString="[FailPolicy_ResultString_3]" RunAsCurrentLoggedOnUser="False" ScriptExecutionMethod="None" TypeName="FailPolicy" m_bTextLinkChange="False" sap:VirtualizedContainerService.HintSize="722,81"/>
+                      </p:SequenceActivity.Activities>
+                      <p:SequenceActivity.Variables>
+                        <Variable Name="Log_LogMessage_4" x:TypeArguments="x:String"/>
+                        <Variable Name="Log_Result_4" x:TypeArguments="x:Double"/>
+                        <Variable Name="Log_ResultString_4" x:TypeArguments="x:String"/>
+                        <Variable Name="FailPolicy_Result_3" x:TypeArguments="x:Double"/>
+                        <Variable Name="FailPolicy_ResultString_3" x:TypeArguments="x:String"/>
+                      </p:SequenceActivity.Variables>
+                    </p:SequenceActivity>
+                  </p:IfElse.ElseOption>
+                  <p:IfElse.IfOption>
+                    <p:SequenceActivity DisplayName="Then" Name="SequenceActivity" sap:VirtualizedContainerService.HintSize="1188,1434">
+                      <p:SequenceActivity.Activities>
+                        <p:RunPowerShellScript AssemblyName="PolicyExecutionEngine, Version=2.2.0.116, Culture=neutral, PublicKeyToken=null" DisplayName="Run PowerShell Script" Moniker="20e8b369-c003-4b5e-9382-63935de98d9a" OutPut_64="[RunPowerShellScript_OutPut_64]" Result="[RunPowerShellScript_Result]" ResultString="[RunPowerShellScript_ResultString]" Results_x64="[RunPowerShellScript_Results_x64]" RunAsCurrentLoggedOnUser="False" ScriptExecutionMethod="ExecuteDebug" TypeName="RunPowerShellScript" genArgEvent="c088e2ab-e96c-467d-bda0-c4214d2b7207" m_bTextLinkChange="False" sap:VirtualizedContainerService.HintSize="1150,520" script="UwB0AGEAcgB0AC0AUAByAG8AYwBlAHMAcwAgACQAaQBuAHMAdABhAGwAbABlAHIAIAAiAC8AQQBDAEMAVABfAEsARQBZAD0AYAAiACQAYQBjAGMAdABrAGUAeQBgACIAIAAvAE8AUgBHAF8ASwBFAFkAPQBgACIAJABvAHIAZwBrAGUAeQBgACIAIAAvAFMAIgAgAC0AVwBhAGkAdAA=">
+                          <p:RunPowerShellScript.InArgs>
+                            <p:InArg ArgType="string" DisplayArg="Input Parameters.Account Key" DisplayName="acctkey" Item="{x:Null}" ItemProp="{x:Null}" Name="acctkey" isRequired="False" x:Key="acctkey">
+                              <p:InArg.Arg>
+                                <InArgument x:TypeArguments="x:String">[AccountKey]</InArgument>
+                              </p:InArg.Arg>
+                            </p:InArg>
+                            <p:InArg ArgType="string" DisplayArg="Input Parameters.Organization Key" DisplayName="orgkey" Item="{x:Null}" ItemProp="{x:Null}" Name="orgkey" isRequired="False" x:Key="orgkey">
+                              <p:InArg.Arg>
+                                <InArgument x:TypeArguments="x:String">[OrganizationKey]</InArgument>
+                              </p:InArg.Arg>
+                            </p:InArg>
+                            <p:InArg ArgType="string" DisplayArg="InstallerPath.FormattedString" DisplayName="installer" Item="{x:Null}" ItemProp="{x:Null}" Name="installer" isRequired="False" x:Key="installer">
+                              <p:InArg.Arg>
+                                <InArgument x:TypeArguments="x:String">[FormatString_FormattedString_1]</InArgument>
+                              </p:InArg.Arg>
+                            </p:InArg>
+                          </p:RunPowerShellScript.InArgs>
+                          <p:RunPowerShellScript.OutArgs>
+                            <scg:Dictionary x:TypeArguments="x:String, p:OutArg"/>
+                          </p:RunPowerShellScript.OutArgs>
+                        </p:RunPowerShellScript>
+                        <p:RegistryKeyExists AssemblyName="PolicyExecutionEngine, Version=2.2.0.116, Culture=neutral, PublicKeyToken=null" BaseKey="HKLM" BaseKey_DisplayArg="HKLM" BaseKey_Item="{x:Null}" BaseKey_ItemProp="{x:Null}" Conditional="[RegistryKeyExists_Conditional]" DisplayName="Registry Key Exists" Key="Software\Huntress Labs\Huntress" Key_DisplayArg="Software\Huntress Labs\Huntress" Key_Item="{x:Null}" Key_ItemProp="{x:Null}" Moniker="7b461c48-ab34-44c4-ba81-a42f576243df" Result="[RegistryKeyExists_Result]" ResultString="[RegistryKeyExists_ResultString]" RunAsCurrentLoggedOnUser="False" ScriptExecutionMethod="ExecuteDebug" TypeName="RegistryKeyExists" m_bTextLinkChange="False" sap:VirtualizedContainerService.HintSize="1150,124"/>
+                        <p:IfElse AssemblyName="PolicyExecutionEngine, Version=2.2.0.116, Culture=neutral, PublicKeyToken=null" Condition="equals" Condition_DisplayArg="equals" Condition_Item="{x:Null}" Condition_ItemProp="{x:Null}" DisplayName="If/Else" Moniker="b6ca5442-49a8-4ef9-86fa-3863f655f159" Result="[IfElse_Result]" ResultString="[IfElse_ResultString]" RunAsCurrentLoggedOnUser="False" ScriptExecutionMethod="None" TypeName="IfElse" Value_DisplayArg="True" Value_Item="{x:Null}" Value_ItemProp="{x:Null}" Value_Type="x:String" Variable="[RegistryKeyExists_Conditional]" Variable_DisplayArg="Registry Key Exists.Conditional" Variable_Item="{x:Null}" Variable_ItemProp="{x:Null}" Variable_Type="x:String" m_bTextLinkChange="False" sap:VirtualizedContainerService.HintSize="1150,560">
+                          <p:IfElse.ElseOption>
+                            <p:SequenceActivity DisplayName="Else" Name="SequenceActivity" sap:VirtualizedContainerService.HintSize="685,359">
+                              <p:SequenceActivity.Activities>
+                                <p:Log AssemblyName="PolicyExecutionEngine, Version=2.2.0.116, Culture=neutral, PublicKeyToken=null" DisplayName="Log" LogMessage="[Log_LogMessage_1]" Message="The Huntress Agent failed to install! Please send a copy of the log to support@huntress.io." Message_DisplayArg="The Huntress Agent failed to install! Please send a copy of the log to support@huntress.io." Message_Item="{x:Null}" Message_ItemProp="{x:Null}" Moniker="db075e23-33ee-4c9d-9271-dbeb6688c25e" Result="[Log_Result_1]" ResultString="[Log_ResultString_1]" RunAsCurrentLoggedOnUser="False" ScriptExecutionMethod="ExecuteDebug" TypeName="Log" m_bTextLinkChange="False" sap:VirtualizedContainerService.HintSize="647,88"/>
+                                <p:FailPolicy AssemblyName="PolicyExecutionEngine, Version=2.2.0.116, Culture=neutral, PublicKeyToken=null" DisplayName="Fail Policy" Moniker="cb062a2e-4c1d-47b5-bc0f-5e0b9a6b233c" Result="[FailPolicy_Result]" ResultString="[FailPolicy_ResultString]" RunAsCurrentLoggedOnUser="False" ScriptExecutionMethod="None" TypeName="FailPolicy" m_bTextLinkChange="False" sap:VirtualizedContainerService.HintSize="647,81"/>
+                              </p:SequenceActivity.Activities>
+                              <p:SequenceActivity.Variables>
+                                <Variable Name="Log_LogMessage_1" x:TypeArguments="x:String"/>
+                                <Variable Name="Log_Result_1" x:TypeArguments="x:Double"/>
+                                <Variable Name="Log_ResultString_1" x:TypeArguments="x:String"/>
+                                <Variable Name="FailPolicy_Result" x:TypeArguments="x:Double"/>
+                                <Variable Name="FailPolicy_ResultString" x:TypeArguments="x:String"/>
+                              </p:SequenceActivity.Variables>
+                            </p:SequenceActivity>
+                          </p:IfElse.ElseOption>
+                          <p:IfElse.IfOption>
+                            <p:SequenceActivity DisplayName="Then" Name="SequenceActivity" sap:VirtualizedContainerService.HintSize="421,238">
+                              <p:SequenceActivity.Activities>
+                                <p:Log AssemblyName="PolicyExecutionEngine, Version=2.2.0.116, Culture=neutral, PublicKeyToken=null" DisplayName="Log" LogMessage="[Log_LogMessage]" Message="The Huntress Agent installed successfully!" Message_DisplayArg="The Huntress Agent installed successfully!" Message_Item="{x:Null}" Message_ItemProp="{x:Null}" Moniker="62cd23ea-ca41-4590-aab2-e280dbc2aab9" Result="[Log_Result]" ResultString="[Log_ResultString]" RunAsCurrentLoggedOnUser="False" ScriptExecutionMethod="ExecuteDebug" TypeName="Log" m_bTextLinkChange="False" sap:VirtualizedContainerService.HintSize="383,88"/>
+                              </p:SequenceActivity.Activities>
+                              <p:SequenceActivity.Variables>
+                                <Variable Name="Log_LogMessage" x:TypeArguments="x:String"/>
+                                <Variable Name="Log_Result" x:TypeArguments="x:Double"/>
+                                <Variable Name="Log_ResultString" x:TypeArguments="x:String"/>
+                              </p:SequenceActivity.Variables>
+                            </p:SequenceActivity>
+                          </p:IfElse.IfOption>
+                          <p:IfElse.Value>
+                            <InArgument x:TypeArguments="x:Object">
+                              <p:ObjectLiteral Value="True"/>
+                            </InArgument>
+                          </p:IfElse.Value>
+                        </p:IfElse>
+                      </p:SequenceActivity.Activities>
+                      <p:SequenceActivity.Variables>
+                        <Variable Name="RunPowerShellScript_OutPut_64" x:TypeArguments="x:String"/>
+                        <Variable Name="RunPowerShellScript_Result" x:TypeArguments="x:Double"/>
+                        <Variable Name="RunPowerShellScript_ResultString" x:TypeArguments="x:String"/>
+                        <Variable Name="RunPowerShellScript_Results_x64" x:TypeArguments="scg:IEnumerable(x:Object)"/>
+                        <Variable Name="RegistryKeyExists_Conditional" x:TypeArguments="x:String"/>
+                        <Variable Name="RegistryKeyExists_Result" x:TypeArguments="x:Double"/>
+                        <Variable Name="RegistryKeyExists_ResultString" x:TypeArguments="x:String"/>
+                        <Variable Name="IfElse_Result" x:TypeArguments="x:Double"/>
+                        <Variable Name="IfElse_ResultString" x:TypeArguments="x:String"/>
+                      </p:SequenceActivity.Variables>
+                    </p:SequenceActivity>
+                  </p:IfElse.IfOption>
+                  <p:IfElse.Value>
+                    <InArgument x:TypeArguments="x:Object">
+                      <p:ObjectLiteral Value="True"/>
+                    </InArgument>
+                  </p:IfElse.Value>
+                </p:IfElse>
+              </p:SequenceActivity.Activities>
+              <p:SequenceActivity.Variables>
+                <Variable Name="FormatString_FormattedString" x:TypeArguments="x:String"/>
+                <Variable Name="FormatString_Result" x:TypeArguments="x:Double"/>
+                <Variable Name="FormatString_ResultString" x:TypeArguments="x:String"/>
+                <Variable Name="GetEnvironmentVariable_Result" x:TypeArguments="x:Double"/>
+                <Variable Name="GetEnvironmentVariable_ResultString" x:TypeArguments="x:String"/>
+                <Variable Name="GetEnvironmentVariable_Value" x:TypeArguments="x:String"/>
+                <Variable Name="FormatString_FormattedString_1" x:TypeArguments="x:String"/>
+                <Variable Name="FormatString_Result_1" x:TypeArguments="x:Double"/>
+                <Variable Name="FormatString_ResultString_1" x:TypeArguments="x:String"/>
+                <Variable Name="DownloadFileFromURL_Result" x:TypeArguments="x:Double"/>
+                <Variable Name="DownloadFileFromURL_ResultString" x:TypeArguments="x:String"/>
+                <Variable Name="FileExists_Conditional" x:TypeArguments="x:String"/>
+                <Variable Name="FileExists_Result" x:TypeArguments="x:Double"/>
+                <Variable Name="FileExists_ResultString" x:TypeArguments="x:String"/>
+                <Variable Name="IfElse_Result_2" x:TypeArguments="x:Double"/>
+                <Variable Name="IfElse_ResultString_2" x:TypeArguments="x:String"/>
+              </p:SequenceActivity.Variables>
+            </p:SequenceActivity>
+          </p:IfElse.ElseOption>
+          <p:IfElse.IfOption>
+            <p:SequenceActivity DisplayName="Then" Name="SequenceActivity" sap:VirtualizedContainerService.HintSize="408,238">
+              <p:SequenceActivity.Activities>
+                <p:Log AssemblyName="PolicyExecutionEngine, Version=2.2.0.116, Culture=neutral, PublicKeyToken=null" DisplayName="Log" LogMessage="[Log_LogMessage_3]" Message="The Huntress Agent is already installed." Message_DisplayArg="The Huntress Agent is already installed." Message_Item="{x:Null}" Message_ItemProp="{x:Null}" Moniker="35782d6c-f5ce-4fb8-a090-e85dbc30d74f" Result="[Log_Result_3]" ResultString="[Log_ResultString_3]" RunAsCurrentLoggedOnUser="False" ScriptExecutionMethod="ExecuteDebug" TypeName="Log" m_bTextLinkChange="False" sap:VirtualizedContainerService.HintSize="370,88"/>
+              </p:SequenceActivity.Activities>
+              <p:SequenceActivity.Variables>
+                <Variable Name="Log_LogMessage_3" x:TypeArguments="x:String"/>
+                <Variable Name="Log_Result_3" x:TypeArguments="x:Double"/>
+                <Variable Name="Log_ResultString_3" x:TypeArguments="x:String"/>
+              </p:SequenceActivity.Variables>
+            </p:SequenceActivity>
+          </p:IfElse.IfOption>
+          <p:IfElse.Value>
+            <InArgument x:TypeArguments="x:Object">
+              <p:ObjectLiteral Value="True"/>
+            </InArgument>
+          </p:IfElse.Value>
+        </p:IfElse>
+      </p:PolicySequence.Activities>
+      <p:PolicySequence.Variables>
+        <Variable Name="IfObject_Result" x:TypeArguments="x:Double"/>
+        <Variable Name="IfObject_ResultString" x:TypeArguments="x:String"/>
+        <Variable Name="IsServiceRunning_Conditional" x:TypeArguments="x:String"/>
+        <Variable Name="IsServiceRunning_Result" x:TypeArguments="x:Double"/>
+        <Variable Name="IsServiceRunning_ResultString" x:TypeArguments="x:String"/>
+        <Variable Name="IfElse_Result_3" x:TypeArguments="x:Double"/>
+        <Variable Name="IfElse_ResultString_3" x:TypeArguments="x:String"/>
+        <Variable Name="AccountKey" x:TypeArguments="x:String"/>
+        <Variable Name="OrganizationKey" x:TypeArguments="x:String"/>
+      </p:PolicySequence.Variables>
+    </p:PolicySequence>
+  </Activity>
+</Policy>
