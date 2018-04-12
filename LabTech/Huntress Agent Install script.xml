@@ -5,8 +5,8 @@
 	<PackedScript>
 		<NewDataSet>
 			<Table>
-				<ScriptId>5966</ScriptId>
-				<FolderId>190</FolderId>
+				<ScriptId>5972</ScriptId>
+				<FolderId>191</FolderId>
 				<ScriptName>Huntress Agent Install</ScriptName>
 				<ScriptNotes>Installs the Huntress Agent silently. Sets Org Key to company name (ClientName) for easy grouping of clients and uses the LocationName as a tag.
 
@@ -22,7 +22,7 @@ Updated: 9 December 2017</ScriptNotes>
 				<MaintenanceScript>0</MaintenanceScript>
 				<FunctionScript>0</FunctionScript>
 				<LicenseData>H4sIAAAAAAAEAFWPwQqDMBBE74X+gx9gSFYbLbIESi29tJdWeo9xhRwaJRqof98qLdjDMOwMb2HwYg25gUo9aoXV1JMC5IvjLbhjF9xIXgnkqwtPr976mSFVBRoaPcVRSYaeNfkoEfFHkEUgCkiKVESHK/IVgnfjbT8+yA+2c/Pv/+Dbn4NtFNV7LbWpmcnSlgFQxvawk0wkudGS8raV8OMXAPl60XbzBmk+TInhAAAA</LicenseData>
-				<ScriptData>H4sIAAAAAAAEAN2Z7W+aQBjAvy/Z/3BpYvbJIiDaGks0dnVmW9qMbsmSJeaERyG9HoY7tva/Hz0PBSMXm8IcfJLnuePl+fG84tBxo2DNrzHH9vt3CA03MhNCIn584hF+Wb0JgHgMaenCHY7wI3CIMropCReYMBu7Lp8/wPPVxMd0BV9hqKVLcufmLj+Ss4OQ2vpQyytyu6Zx4NmwuMAWdhdtt2cu27oOvfaF3rXaHaPvYgv6y6W1vYo4QRijZa2Rl3M4rLfPMXa5fAB5JPU3MRXyzLN7xlDLiFnzdftTTHkEjKHxCigfalKd3WTYHak3cnpzj2V3T7Z2shNG/OUq4lfqJiHlAY3hRb89lmu37EvwGIhT0kO5MqNe8pxYmJqsZsUssB0jBTRDAc24PAYaJhFg7xkFlHFMCHiHAe6BaTY43Somt2foW8Ho/xsYUwFGN1UuNfHBfUDcxxylyQetRMpBv3EU4AUB5GOGFgAUMSiI1KY5mopnv6PAmTIsSGjG4YRm79K9VOTo2YPvaw9zmG9qgdzUbY6LGh0V0zTrzWSyi87hCQoAtzg8rr0gav1SnfW2emLUCa2udxVod7h8iSs4ArJe4MWD6/APJSH25jc42BUl81V0zTrRNUxF0dlG+yudFGnjyeR+/vnjz6tRmk9GSLv9NhW6s5ZLgsQcmnSRrTOk3Y+nTqIkoSsMTNXOcb6+fZl76cRmPpCky2AxSXO+lXtP3Vq9J1UJHGVMHVVS36zGsBLtQkBXKN+/p41oJfR6daKn7rYGgt98ViGtfp1oWYriVHLPflE2F71KLzKOaYiUs/PAiV032bSMyZ6/va37uawTx+Om6VwKQ0vRu5yjOwKYAXLFgETCFaskXPXSZ59Kef7LIbv0EabSiFXn/UMDXMmOVKuxRBmYDig+RoQUcR8QE7f9wJD8Poow9VDm0yrHC6GKIIppNcBLn1QaE7mlzwYnjNzDM23JrtScASHFtS2jk4rrZ+nTQWOisPRJ4IRRWNjMluxNpU8JJwvEgu6WbUBWQ+8Us0Eqyz9i/wLgGHwqlx0AAA==</ScriptData>
+				<ScriptData>H4sIAAAAAAAEAN2Z7W+aQBjAvy/Z/3BpYvbJIiDaGks0dnVmW9qMbsmSJeaERyG9HoY7tva/Hz0PBSMXm8IcfJLnuePl+fG84tBxo2DNrzHH9vt3CA03MhNCIn584hF+Wb0JgHgMaenCHY7wI3CIMropCReYMBu7Lp8/wPPVxMd0BV9hqKVLcufmLj+Ss4OQ2vpQyytyu6Zx4NmwuMAWdhdtt2cu27oOvfaF3rXaHaPvYgv6y6W1vYo4QRijZa2Rl3M4rLfPMXa5fAB5JPU3MRXyzLN7xlDLiFnzdftTTHkEjKHxCigfalKd3WTYHak3cnpzj2V3T7Z2shNG/OUq4lfqJiHlAY3hRb89lmu37EvwGIhT0kO5MqNe8pxYmJqsZsUssB0jBTRDAc24PAYaJhFg7xkFlHFMCHiHAe6BaTY43Somt2foW8Ho/xsYUwFGN1UuNfHBfUDcxxylyQetRMpBv3EU4AUB5GOGFgAUMSiI1KY5mopnv6PAmTIsSGjG4YRm79K9VOTo2YPvaw9zmG9qgdzUbY6LGh0V0zTrzWSyi87hCQoAtzg8rr0gav1SnfW2emLUCa2udxVod7h8iSs4ArJe4MWD6/APJSH25jc42BUl81V0zTrRNUxF0dlG+yudFGnjyeR+/vnjz6tRmk9GSLv9NhW6s5ZLgsQcmnSRrTOk3Y+nTqIkoSsMTNXOcb6+7bH20onNfCBJl8FikuZ8K/eeurV6T6oSOMqYOqqkvlmNYSXahYCuUL5/TxvRSuj16kRP3W0NBL/5rEJa/TrRshTFqeSe/aJsLnqVXmQc0xApZ+eBE7tusmkZkz1/e1v3c1knjsdN07kUhpaidzlHdwQwA+SKAYmEK1ZJuOqlzz6V8vyXQ3bpI0ylEavO+4cGuJIdqVZjiTIwHVB8jAgp4j4gJm77gSH5fRRh6qHMp1WOF0IVQRTTaoCXPqk0JnJLnw1OGLmHZ9qSXak5A0KKa1tGJxXXz9Kng8ZEYemTwAmjsLCZLdmbSp8SThaIBd0t24Csht4pZoNUln/E/gU8bPcclx0AAA==</ScriptData>
 				<ScriptVersion>1</ScriptVersion>
 				<ScriptGuid>eb8a5acb-c63f-11e6-8145-027ca5e7ff51</ScriptGuid>
 				<ScriptFlags>0</ScriptFlags>
@@ -32,10 +32,10 @@ Updated: 9 December 2017</ScriptNotes>
 		<ScriptFolder>
 			<NewDataSet>
 				<Table>
-					<FolderID>190</FolderID>
+					<FolderID>191</FolderID>
 					<ParentID>0</ParentID>
 					<Name>Custom Scripts</Name>
-					<GUID>af641fc8-27a3-4966-a34e-665c67672a9e</GUID>
+					<GUID>2913a92b-4d16-4166-969d-ae4a804426b3</GUID>
 				</Table>
 			</NewDataSet>
 		</ScriptFolder>
