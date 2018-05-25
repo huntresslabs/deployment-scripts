@@ -252,6 +252,7 @@ function main ($orgKeyArg) {
         $OrganizationKey = $orgKeyArg
     }
     
+    # make sure we have an org key (either hard coded or from the command line args)
     if ($OrganizationKey -eq "__ORGANIZATION_KEY__")
     {
         Write-Warning "$(Get-TimeStamp) OrganizationKey not specified, exiting script!"
