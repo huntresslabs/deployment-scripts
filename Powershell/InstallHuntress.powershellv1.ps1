@@ -35,11 +35,22 @@
 # Usage:
 # powershell -executionpolicy bypass -f ./InstallHuntress.powershellv1.ps1 [organization_key]
 
+Param(
+  [string]$acctkey,
+  [string]$orgkey 
+)
+
 # Replace __ACCOUNT_KEY__ with your account secret key
-$AccountKey = "__ACCOUNT_KEY__"
+$AccountKey = "***REMOVED***"
+If (![string]::IsNullOrEmpty($acctkey)) {
+    $AccountKey = $acctkey
+}
 
 # Replace __ORGANIZATION_KEY__ with a unique identifier for the organization/client
-$OrganizationKey = "__ORGANIZATION_KEY__"
+$OrganizationKey = "HuntressTraining"
+If (![string]::IsNullOrEmpty($acctkey)) {
+    $OrganizationKey = $orgkey
+}
 
 # set to 1 to enable verbose logging
 $DebugPrintEnabled = 0
