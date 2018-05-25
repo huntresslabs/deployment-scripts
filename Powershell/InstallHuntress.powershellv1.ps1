@@ -33,8 +33,11 @@
 # for more details.
 
 # Usage:
-# powershell -executionpolicy bypass -f ./InstallHuntress.powershellv1.ps1 [organization_key]
+# powershell -executionpolicy bypass -f ./InstallHuntress.powershellv1.ps1 [-acctkey <account_key>] [-orgkey <organization_key>]
 
+# !!! You can hard code your account and organization keys below or specifiy them on the command line
+
+# optional command line params, this has to be the first line in the script
 Param(
   [string]$acctkey,
   [string]$orgkey 
@@ -42,21 +45,25 @@ Param(
 
 # Replace __ACCOUNT_KEY__ with your account secret key
 $AccountKey = "__ACCOUNT_KEY__"
-If (![string]::IsNullOrEmpty($acctkey)) {
-    $AccountKey = $acctkey
-}
 
 # Replace __ORGANIZATION_KEY__ with a unique identifier for the organization/client
 $OrganizationKey = "__ORGANIZATION_KEY__"
-If (![string]::IsNullOrEmpty($acctkey)) {
-    $OrganizationKey = $orgkey
-}
 
 # set to 1 to enable verbose logging
 $DebugPrintEnabled = 0
 
 ##############################################################################
 ## The following should not need to be adjusted
+
+# check for an account key specified on the command line
+If (![string]::IsNullOrEmpty($acctkey)) {
+    $AccountKey = $acctkey
+}
+
+# check for an organization key specified on the command line
+If (![string]::IsNullOrEmpty($orgkey)) {
+    $OrganizationKey = $orgkey
+}
 
 # Variables used throughout the Huntress Deployment Script
 $X64 = 64
@@ -248,7 +255,8 @@ function Test-Installation {
     Debug-Print("Installation verified...")
 }
 
-function main ($orgKeyArg) {
+function main () {
+    # make sure we have an accountr key (either hard coded or from the command line params)
     Debug-Print("Checking for AccountKey...")
     if ($AccountKey -eq "__ACCOUNT_KEY__")
     {
@@ -256,14 +264,7 @@ function main ($orgKeyArg) {
         exit 1
     }
 
-    Debug-Print("Checking for OrganizationKey...$($orgKeyArg)")
-    if ($orgKeyArg.length -gt 0)
-    {
-        Debug-Print("OrganizationKey specified on the command line...")
-        $OrganizationKey = $orgKeyArg
-    }
-    
-    # make sure we have an org key (either hard coded or from the command line args)
+    # make sure we have an org key (either hard coded or from the command line params)
     if ($OrganizationKey -eq "__ORGANIZATION_KEY__")
     {
         Write-Warning "$(Get-TimeStamp) OrganizationKey not specified, exiting script!"
@@ -279,8 +280,7 @@ function main ($orgKeyArg) {
 
 try
 {
-    # arg[0] is the OrganizationKey (if specified on the command line)
-    main $args[0]
+    main
 }
 catch
 {

@@ -6,5 +6,5 @@ Your Huntress acccount key will need to be hard coded inside the script. You hav
 
 Usage:
 ```
-powershell -executionpolicy bypass -f ./InstallHuntress.powershellv1.ps1 [organization_key]
+powershell -executionpolicy bypass -f ./InstallHuntress.powershellv1.ps1 [-acctkey <account_key>] [-orgkey <organization_key>]
 ```
