@@ -41,13 +41,13 @@ Param(
 )
 
 # Replace __ACCOUNT_KEY__ with your account secret key
-$AccountKey = "***REMOVED***"
+$AccountKey = "__ACCOUNT_KEY__"
 If (![string]::IsNullOrEmpty($acctkey)) {
     $AccountKey = $acctkey
 }
 
 # Replace __ORGANIZATION_KEY__ with a unique identifier for the organization/client
-$OrganizationKey = "HuntressTraining"
+$OrganizationKey = "__ORGANIZATION_KEY__"
 If (![string]::IsNullOrEmpty($acctkey)) {
     $OrganizationKey = $orgkey
 }
