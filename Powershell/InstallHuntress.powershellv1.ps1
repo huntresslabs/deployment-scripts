@@ -25,8 +25,8 @@
 
 
 # The Huntress installer needs an Account Key and an Organization Key (a user
-# specified name or description) which is used to affiliate an Agent with a 
-# specific Organization within the Huntress Partner's Account. The Organization 
+# specified name or description) which is used to affiliate an Agent with a
+# specific Organization within the Huntress Partner's Account. The Organization
 # Key can hard coded below or passed in when the script is run.
 
 # See https://support.huntress.io/article/7-using-account-and-organization-keys
@@ -40,7 +40,7 @@
 # optional command line params, this has to be the first line in the script
 Param(
   [string]$acctkey,
-  [string]$orgkey 
+  [string]$orgkey
 )
 
 # Replace __ACCOUNT_KEY__ with your account secret key
@@ -209,8 +209,8 @@ function Test-Installation {
     }
 
     # Ensure the Huntress registry key is present.
-     If ( ! (Test-Path $HuntressKeyPath)) {
-        $HuntressRegistryError = "The expected Huntress registry key $HuntressKeyPath did not exist."
+    If ( ! (Test-Path $HuntressKeyPath)) {
+        $HuntressRegistryError = "The expected Huntress registry key '$HuntressKeyPath' did not exist."
         Write-Host "$(Get-TimeStamp) $HuntressRegistryError"
         Write-Host "$(Get-TimeStamp) $SupportMessage"
         throw $ScriptFailed
@@ -252,6 +252,7 @@ function Test-Installation {
         Write-Host "$(Get-TimeStamp) $SupportMessage"
         throw $ScriptFailed
     }
+
     Debug-Print("Installation verified...")
 }
 
