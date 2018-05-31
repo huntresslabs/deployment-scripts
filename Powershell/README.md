@@ -2,9 +2,11 @@
 
 This Powershell script will install the Huntress Agent. The script will automatically download the installer from the Huntress servers and run it. The script does basic error checking and logging as well. (It will check to see if the agent is already installed and also verfiy the installation completed.)
 
-Your Huntress acccount key will need to be hard coded inside the script. You have the option to hard code the organization key or pass it as an argument to the script. [Click here for more details regarding the Account Key and Organization Key.](https://support.huntress.io/article/7-using-account-and-organization-keys)
+You have the option to hard code your Huntress account key and the organization key in the script or pass either as an argument to the script. [Click here for more details regarding the Account Key and Organization Key.](https://support.huntress.io/article/7-using-account-and-organization-keys)
 
 Usage:
 ```
 powershell -executionpolicy bypass -f ./InstallHuntress.powershellv1.ps1 [-acctkey <account_key>] [-orgkey <organization_key>]
 ```
+
+We have also included a batch file, `InstallHuntress.bat`, to be used as a wrapper. This is useful if your RMM/SCCM application does not manage the Powershell [`executionpolicy`.](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.security/set-executionpolicy?view=powershell-3.0)
