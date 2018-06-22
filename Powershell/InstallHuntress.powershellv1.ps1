@@ -256,6 +256,9 @@ function main () {
     if ($AccountKey -eq "__ACCOUNT_KEY__") {
         Write-Warning "$(Get-TimeStamp) AccountKey not set, exiting script!"
         exit 1
+    } elseif ($AccountKey.length -ne 32) {
+        Write-Warning "(Get-TimeStamp) Invalid AccountKey specified, exiting script!"
+        exit 1
     }
 
     # make sure we have an org key (either hard coded or from the command line params)
