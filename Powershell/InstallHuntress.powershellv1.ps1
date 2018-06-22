@@ -257,7 +257,7 @@ function main () {
         Write-Warning "$(Get-TimeStamp) AccountKey not set, exiting script!"
         exit 1
     } elseif ($AccountKey.length -ne 32) {
-        Write-Warning "(Get-TimeStamp) Invalid AccountKey specified, exiting script!"
+        Write-Warning "$(Get-TimeStamp) Invalid AccountKey specified, exiting script!"
         exit 1
     }
 
