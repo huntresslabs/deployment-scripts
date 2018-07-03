@@ -11,7 +11,7 @@ powershell -executionpolicy bypass -f ./InstallHuntress.powershellv1.ps1 [-acctk
 
 We have also included a batch file, `InstallHuntress.bat`, to be used as a wrapper. This is useful if your RMM/SCCM application does not manage the Powershell [`executionpolicy`.](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.security/set-executionpolicy?view=powershell-3.0)
 
-#### Using with script via a GPO
+#### Using the script via a GPO
 
 We've had several of our partners use this Powershell script with a GPO. The "startup script" is the best option because it will install with SYSTEM (local administrator) privileges before any user logs in.
 
