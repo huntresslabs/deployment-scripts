@@ -8,8 +8,15 @@ Usage:
 ```
 powershell -executionpolicy bypass -f ./InstallHuntress.powershellv1.ps1 [-acctkey <account_key>] [-orgkey <organization_key>]
 ```
+#### Batch File Wrapper
 
 We have also included a batch file, `InstallHuntress.bat`, to be used as a wrapper. This is useful if your RMM/SCCM application does not manage the Powershell [`executionpolicy`.](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.security/set-executionpolicy?view=powershell-3.0)
+
+You'll need to edit the batch file, adding your Huntress account key. Then you can run the batch file as follows:
+
+```
+InstallHuntress.bat <organization_key>
+```
 
 #### Using the script via a GPO
 
