@@ -8,7 +8,7 @@
 				<ScriptId>5972</ScriptId>
 				<FolderId>191</FolderId>
 				<ScriptName>Huntress Agent Install - Download</ScriptName>
-				<ScriptNotes>Dowloads and installs the Huntress Agent silently. Sets Org Key to company name (ClientName) for easy grouping of clients and uses the LocationName as a tag.
+				<ScriptNotes>Downloads and installs the Huntress Agent silently. Sets Org Key to company name (ClientName) for easy grouping of clients and uses the LocationName as a tag.
 
 Requirements:
 - Set your ACCT_KEY on Globals and Parameters tab
