@@ -7,7 +7,11 @@ https://github.com/huntresslabs/deployment-scripts/tree/master/LabTech
 
 ## Overview
 
-This script will download the most recent Huntress Agent installer from the Huntress servers and run the installer.  
+This script will download the most recent Huntress Agent installer from the Huntress servers and run the installer. The installer will overwrite any previously installed version of the Huntress Agent. It will not change any existing agent's configuration.
+
+- [Update Huntress Agent - Download.xml](https://raw.githubusercontent.com/huntresslabs/deployment-scripts/master/LabTech/Reinstall/Update%20Huntress%20Agent%20-%20Download.xml)
+
+https://raw.githubusercontent.com/huntresslabs/deployment-scripts/master/LabTech/Huntress%20Agent%20Install%20script.xml
 
 The setup is the same as the normal deployment script. You will need to update the script with your Huntress account key. When scheduled, it should only be run once.
 
