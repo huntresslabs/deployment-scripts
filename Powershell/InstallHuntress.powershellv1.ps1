@@ -35,7 +35,7 @@
 # Usage:
 # powershell -executionpolicy bypass -f ./InstallHuntress.powershellv1.ps1 [-acctkey <account_key>] [-orgkey <organization_key>]
 
-# !!! You can hard code your account and organization keys below or specifiy them on the command line
+# !!! You can hard code your account and organization keys below or specify them on the command line
 
 # optional command line params, this has to be the first line in the script
 param (
