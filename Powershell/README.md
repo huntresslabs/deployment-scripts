@@ -20,7 +20,7 @@ InstallHuntress.bat <organization_key>
 
 #### Using the script via a GPO
 
-We've had several of our partners use this Powershell script with a GPO. The "startup script" is the best option because it will install with SYSTEM (local administrator) privileges before any user logs in.
+We've had several of our partners use this Powershell script with a GPO. The "startup script" is the best option because it will install with SYSTEM (local administrator) privileges before any user logs in. The caveat is the system will need to be rebooted before the install will occur.
 
 The startup script is located in Computer Configuration | Policies | Windows Settings | Scripts | Startup
 
