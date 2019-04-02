@@ -1,0 +1,44 @@
+﻿<LabTech_Expansion
+	Version="110.286"
+	Name="LabTech Script Expansion"
+	Type="PackedScript">
+	<PackedScript>
+		<NewDataSet>
+			<Table>
+				<ScriptId>5976</ScriptId>
+				<FolderId>191</FolderId>
+				<ScriptName>Update Huntress Agent - Download</ScriptName>
+				<ScriptNotes>NOTE: This script does not check if the Huntress Agent was already installed.
+
+Dowloads and installs/updates the Huntress Agent silently. Sets Org Key to company name (ClientName) for easy grouping of clients and uses the LocationName as a tag.
+
+Requirements:
+- Set your ACCT_KEY on Globals and Parameters tab
+
+Updated: 5 October 2018</ScriptNotes>
+				<Permission>0,</Permission>
+				<EditPermission>0,</EditPermission>
+				<ComputerScript>1</ComputerScript>
+				<LocationScript>0</LocationScript>
+				<MaintenanceScript>0</MaintenanceScript>
+				<FunctionScript>0</FunctionScript>
+				<LicenseData>H4sIAAAAAAAEAFWPwQqDMBBE74X+gx9gSFYbLbIESi29tJdWeo9xhRwaJRqof98qLdjDMOwMb2HwYg25gUo9aoXV1JMC5IvjLbhjF9xIXgnkqwtPr976mSFVBRoaPcVRSYaeNfkoEfFHkEUgCkiKVESHK/IVgnfjbT8+yA+2c/Pv/+Dbn4NtFNV7LbWpmcnSlgFQxvawk0wkudGS8raV8OMXAPl60XbzBmk+TInhAAAA</LicenseData>
+				<ScriptData>H4sIAAAAAAAEAOWZUW/aMBCA3yftP1iV0J5oSCDQIhoV0ZahbWq1dJMmTUImOYhV10Gxs3X/fsE4EKLElbpEKOwJ39lO7M93vrswcr2IrMUNFth5/w6h0VbmUkjE2xcR4U3vHQHqc2SkHQ84ws8gIMropjRcYMod7Hli/gR/riYBZiv4AiMj7VIjt2/5nswmIXPMkXGoOBg1jYnvwOIC29hbtL1+d9k2Tei3L8ye3e5YAw/bMFgu7d1T5AS5GSO7G/U4V8B6t46xJ9QCVEvp72Im5Zm/6ctI2d2bORpWTu7m5F5OtveyG0bC6STr3fwq3SRkgrAYNvpdW/Xd88/kmcgpaVP1zJgPTGC5maQ3K2aR7ClosFg6LN3LcjDOJADvCYkAC5QaA1pJE0C/cETwggIKMEcLAIY4iJGhJv63PAcdDc6UYTGmzXNV6wCXs3c/pTig5wy/rX0sYL71TTWop0VqNgmp1dH4rhMIseZDwwhiJiLg/JyEhh/+ZjTEvnGdEr8uQd4S8Lz2SdT6+VHNnzEuMKUQncMLlBxIp/gkXrFjq0nQTbOngb7HlmInBdjysM0SnMMbdV7zO0wo+G+i220SXatra+habzNWZIwnk8f5p9sfV3u7R8b916nUnbU8SpLtsCTet86Q8TieuomShp7cYKp2iw8pf2fvfCB30Tg8AEqTtcU0jQb2wTn1GnVOuuB4ndlqyf3yj5HPPhlWMpEgbIVSy0XjVbIMpK6NWuj1m0RPn4cNJb/5rEZagybRsjXBqeJs/qJqLmadVmTp0s9D3ysJMkM39rxk0DKmOXt7JSK8wvGySRy1d1nxFYaWMnc5Rw8UMAfkydKJhitei7ualVdFtfI0NflOxQ5rVl7c1Oqx+nu/qLSr2JAaVZZoHdMFzWeKkCERAOLytR84Ul+yEGY+ynwEE3ghVRFEMasHeOWVysl4buW1wRE9t7imrdiUTqdASHHtwuik5vhZeXVwMl5YeSVwRC8sTWYrtqbKq4SjOWJJdsu3IOuhd4zaIJXVX2Z/AbB5MSpBGwAA</ScriptData>
+				<ScriptVersion>1</ScriptVersion>
+				<ScriptGuid>eb8a5acb-c63f-11e6-8145-027ca5e7ff51</ScriptGuid>
+				<ScriptFlags>0</ScriptFlags>
+				<Parameters></Parameters>
+			</Table>
+		</NewDataSet>
+		<ScriptFolder>
+			<NewDataSet>
+				<Table>
+					<FolderID>191</FolderID>
+					<ParentID>0</ParentID>
+					<Name>Custom Scripts</Name>
+					<GUID>2913a92b-4d16-4166-969d-ae4a804426b3</GUID>
+				</Table>
+			</NewDataSet>
+		</ScriptFolder>
+	</PackedScript>
+</LabTech_Expansion>
