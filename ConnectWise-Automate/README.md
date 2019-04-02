@@ -1,4 +1,4 @@
-Automate (LabTech) script for installing the Huntress Agent.
+ConnectWise Automate (formerly LabTech) script for installing the Huntress Agent.
 
 Each client will download the most recent installer directly from the Huntress server and execute it.
 
