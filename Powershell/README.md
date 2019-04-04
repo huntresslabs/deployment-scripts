@@ -25,3 +25,5 @@ We've had several of our partners use this Powershell script with a GPO. The "st
 The startup script is located in Computer Configuration | Policies | Windows Settings | Scripts | Startup
 
 <img src="gpo_startup.png" border="0" alt="GPO">
+
+<img src="gpo_startup_script.png" border="0" alt="GPO-script">
