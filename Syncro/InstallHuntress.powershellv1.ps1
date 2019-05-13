@@ -237,6 +237,7 @@ function Test-Installation {
 }
 
 function main () {
+    Write-Host "$(Get-TimeStamp) Huntress deployment script (updated 13 May 2019)"
     # make sure we have an account key (either hard coded or from the command line params)
     Debug-Print("Checking for AccountKey...")
     if ($AccountKey -eq "__ACCOUNT_KEY__") {
