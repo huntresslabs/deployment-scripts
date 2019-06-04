@@ -156,7 +156,7 @@ function Test-Installation {
     } elseif ($WindowsArchitecture -eq $X64) {
         $HuntressDirPath = Join-Path $Env:ProgramW6432 "Huntress"
     } else {
-        $ArchitectureError = "Failed to determine the Windows Architecture. Received $WindowsArchitecure."
+        $ArchitectureError = "Failed to determine the Windows Architecture. Received $WindowsArchitecture."
         Write-Host "$(Get-TimeStamp) $ArchitectureError"
         Write-Host "$(Get-TimeStamp) $SupportMessage"
         throw $ScriptFailed
@@ -240,7 +240,7 @@ function Test-Installation {
 
     # Ensure the Tags value is present within the Huntress registry key.
     if ( ! (Get-Member -inputobject $HuntressKeyObject -name $TagsValueName -Membertype Properties)) {
-        $HuntressRegistryError = ("The expected Huntress registry value $TagsKeyValueName did not exist within " +
+        $HuntressRegistryError = ("The expected Huntress registry value $TagsValueName did not exist within " +
                                   "$HuntressKeyPath")
         Write-Host "$(Get-TimeStamp) $HuntressRegistryError"
         Write-Host "$(Get-TimeStamp) $SupportMessage"
