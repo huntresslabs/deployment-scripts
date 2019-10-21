@@ -1,4 +1,4 @@
-# Copyright (c) 2018 Huntress Labs, Inc.
+# Copyright (c) 2019 Huntress Labs, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -33,7 +33,7 @@
 $AccountSecretKey = "__KEY__"
 
 # OrganizationKey is passed in when script is scheduled
-$OrganizationKey = $env:ORG_KEY
+$OrganizationKey = $env:CS_PROFILE_NAME
 
 # Variables used throughout the Huntress Deployment Script
 $X64 = 64
