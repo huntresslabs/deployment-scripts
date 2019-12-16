@@ -42,7 +42,7 @@ if (-not (Test-Path variable:global:$OrganizationKey)) { $OrganizationKey = 'MIS
 # Variables used throughout the Huntress Deployment Script
 $X64 = 64
 $X86 = 32
-$InstallerName = "HuntressAgent.exe"
+$InstallerName = "HuntressInstaller.exe"
 $InstallerPath = Join-Path $Env:TMP $InstallerName
 $DownloadURL = "https://huntress.io/download/" + $AccountSecretKey + "/" + $InstallerName
 $HuntressServiceName = "HuntressAgent"
