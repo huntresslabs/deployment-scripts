@@ -28,12 +28,16 @@
 # Organization within the Huntress Partner's Account. The Organization Key is
 # passed in when the script is scheduled to run.
 
+# Set strict mode, hopefuly we'll catch any errors early
+Set-StrictMode -Version 2.0
+
 # Replace __KEY__ with your account key
 # See https://support.huntress.io/article/7-using-account-and-organization-keys
 $AccountSecretKey = "__KEY__"
 
 # OrganizationKey is passed in when script is scheduled
 $OrganizationKey = $env:CS_PROFILE_NAME
+if (-not (Test-Path variable:global:$OrganizationKey)) { $OrganizationKey = 'MISSING_CS_PROFILE_NAME' }
 
 # Variables used throughout the Huntress Deployment Script
 $X64 = 64
