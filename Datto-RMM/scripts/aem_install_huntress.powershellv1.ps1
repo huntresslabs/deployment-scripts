@@ -38,6 +38,7 @@ $AccountSecretKey = "__KEY__"
 # OrganizationKey is passed in when script is scheduled
 $OrganizationKey = $env:CS_PROFILE_NAME
 if (-not (Test-Path variable:global:$OrganizationKey)) { $OrganizationKey = 'MISSING_CS_PROFILE_NAME' }
+$OrganizationKey = $OrganizationKey.Trim()
 
 # Variables used throughout the Huntress Deployment Script
 $X64 = 64
@@ -87,6 +88,7 @@ function Get-WindowsArchitecture {
 
 function Get-Installer {
     Debug-Print("downloading installer...")
+    [Net.ServicePointManager]::SecurityProtocol =  [Enum]::ToObject([Net.SecurityProtocolType], 3072) # For TLS 1.2
     $WebClient = New-Object System.Net.WebClient
     try
     {
@@ -126,7 +128,17 @@ function Install-Huntress ($OrganizationKey) {
     }
 
     Debug-Print("Executing installer...")
-    Start-Process $InstallerPath "/ACCT_KEY=`"$AccountSecretKey`" /ORG_KEY=`"$OrganizationKey`" /S" -Wait
+    $timeout = 30 # seconds
+    $process = Start-Process $InstallerPath "/ACCT_KEY=`"$AccountSecretKey`" /ORG_KEY=`"$OrganizationKey`" /S" -PassThru
+    try {
+        $process | Wait-Process -Timeout $timeout -ErrorAction Stop
+    } catch {
+        $process | Stop-Process -Force
+        $TimeoutError = "Installer failed to complete in $timeout seconds."
+        Write-Host "$(Get-TimeStamp) $TimeoutError"
+        Write-Host "$(Get-TimeStamp) $SupportMessage"
+        throw $ScriptFailed + " " + $TimeoutError + " " + $SupportMessage
+    }
 }
 
 
@@ -205,13 +217,13 @@ function Test-Installation {
     }
 
     # Ensure the AccountKey value is present within the Huntress registry key.
-    If ( ! (Get-Member -inputobject $HuntressKeyObject -name $AccountKeyValueName -Membertype Properties)) {
-        $HuntressRegistryError = ("The expected Huntress registry value $AccountKeyValueName did not exist " +
-                                  "within $HuntressKeyPath")
-        Write-Host "$(Get-TimeStamp) $HuntressRegistryError"
-        Write-Host "$(Get-TimeStamp) $SupportMessage"
-        throw $ScriptFailed
-    }
+    # If ( ! (Get-Member -inputobject $HuntressKeyObject -name $AccountKeyValueName -Membertype Properties)) {
+    #     $HuntressRegistryError = ("The expected Huntress registry value $AccountKeyValueName did not exist " +
+    #                               "within $HuntressKeyPath")
+    #     Write-Host "$(Get-TimeStamp) $HuntressRegistryError"
+    #     Write-Host "$(Get-TimeStamp) $SupportMessage"
+    #     throw $ScriptFailed
+    # }
 
     # Ensure the OrganizationKey value is present within the Huntress registry key.
     If ( ! (Get-Member -inputobject $HuntressKeyObject -name $OrganizationKeyValueName -Membertype Properties)) {
