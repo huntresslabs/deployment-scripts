@@ -163,6 +163,7 @@ function Test-Installation {
     $WyUpdaterPath = Join-Path $HuntressDirPath "wyUpdate.exe"
     $HuntressKeyPath = "HKLM:\SOFTWARE\Huntress Labs\Huntress"
     $AccountKeyValueName = "AccountKey"
+    $AgentIdKeyValueName = "AgentId"
     $OrganizationKeyValueName = "OrganizationKey"
     $TagsValueName = "Tags"
 
@@ -224,6 +225,15 @@ function Test-Installation {
     #     Write-Host "$(Get-TimeStamp) $SupportMessage"
     #     throw $ScriptFailed
     # }
+
+    # Ensure the AgentId value is present within the Huntress registry key.
+    If ( ! (Get-Member -inputobject $HuntressKeyObject -name $AgentIdKeyValueName -Membertype Properties)) {
+        $HuntressRegistryError = ("The expected Huntress registry value $AgentIdKeyValueName did not exist " +
+                                  "within $HuntressKeyPath.")
+        Write-Host "$(Get-TimeStamp) $HuntressRegistryError"
+        Write-Host "$(Get-TimeStamp) $SupportMessage"
+        throw $ScriptFailed + " " + $HuntressRegistryError + " " + $SupportMessage
+    }
 
     # Ensure the OrganizationKey value is present within the Huntress registry key.
     If ( ! (Get-Member -inputobject $HuntressKeyObject -name $OrganizationKeyValueName -Membertype Properties)) {
