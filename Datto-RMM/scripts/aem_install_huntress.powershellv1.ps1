@@ -252,6 +252,23 @@ function Test-Installation {
         Write-Host "$(Get-TimeStamp) $SupportMessage"
         throw $ScriptFailed + " " + $HuntressRegistryError + " " + $SupportMessage
     }
+
+    # Ensure the service was started
+    if ( ! (Confirm-ServiceExists($HuntressServiceName) )) {
+        $InstallerError = "The Huntress Agent service did not install."
+        Write-Host "$(Get-TimeStamp) $InstallerError"
+        Write-Host "$(Get-TimeStamp) $SupportMessage"
+        throw $ScriptFailed + " " + $HuntressRegistryError + " " + $SupportMessage
+    }
+
+    # Ensure the AgentId value is set within the Huntress registry key.
+    If ($HuntressKeyObject.$AgentIdKeyValueName -eq 0) {
+        $HuntressRegistryError = ("The Huntress Agent did not register. Check the Huntress Agent log (%programfiles%\Huntress\HuntressAgent.log) for any errors.")
+        Write-Host "$(Get-TimeStamp) $HuntressRegistryError"
+        Write-Host "$(Get-TimeStamp) $SupportMessage"
+        throw $ScriptFailed + " " + $HuntressRegistryError + " " + $SupportMessage
+    }
+
     Debug-Print("Installation verified...")
 }
 
