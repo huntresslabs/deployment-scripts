@@ -37,7 +37,7 @@ $AccountSecretKey = "__KEY__"
 
 # OrganizationKey is passed in when script is scheduled
 $OrganizationKey = $env:CS_PROFILE_NAME
-if (-not (Test-Path variable:global:$OrganizationKey)) { $OrganizationKey = 'MISSING_CS_PROFILE_NAME' }
+if (!$env:CS_PROFILE_NAME) { $OrganizationKey = 'MISSING_CS_PROFILE_NAME' }
 $OrganizationKey = $OrganizationKey.Trim()
 
 # Variables used throughout the Huntress Deployment Script
@@ -88,7 +88,8 @@ function Get-WindowsArchitecture {
 
 function Get-Installer {
     Debug-Print("downloading installer...")
-    [Net.ServicePointManager]::SecurityProtocol =  [Enum]::ToObject([Net.SecurityProtocolType], 3072) # For TLS 1.2
+    # For TLS 1.2 support
+    [Net.ServicePointManager]::SecurityProtocol =  [Enum]::ToObject([Net.SecurityProtocolType], 3072)
     $WebClient = New-Object System.Net.WebClient
     try
     {
