@@ -1,4 +1,4 @@
-# Copyright (c) 2019 Huntress Labs, Inc.
+# Copyright (c) 2020 Huntress Labs, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -145,7 +145,7 @@ function Install-Huntress ($OrganizationKey) {
 
 function Test-Installation {
     Debug-Print("Verifying installation...")
-    
+
     # Give the agent a few seconds to start and register
     Start-Sleep -Seconds 8
 
@@ -286,12 +286,12 @@ function main {
     }
 
     Debug-Print("Checking for ORG_KEY...")
-    if ($OrganizationKey -eq "__ChangeMe__")
+    if (!$OrganizationKey)
     {
         Write-Warning "$(Get-TimeStamp) ORG_KEY not specified, exiting script!"
         exit 1
     }
-    Write-Host "$(Get-TimeStamp) ORG_KEY Specified: " $OrganizationKey
+    Write-Host "ORG_KEY Specified: `"$OrganizationKey`""
     Get-Installer
     Install-Huntress $OrganizationKey
     Test-Installation
