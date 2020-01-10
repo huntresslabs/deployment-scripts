@@ -263,6 +263,8 @@ function Test-Installation {
     }
 
     # Ensure the AgentId value is set within the Huntress registry key.
+    # Give the agent a few seconds to register
+    Start-Sleep -Seconds 8
     If ($HuntressKeyObject.$AgentIdKeyValueName -eq 0) {
         $HuntressRegistryError = ("The Huntress Agent did not register. Check the Huntress Agent log (%programfiles%\Huntress\HuntressAgent.log) for any errors.")
         Write-Host "$(Get-TimeStamp) $HuntressRegistryError"
