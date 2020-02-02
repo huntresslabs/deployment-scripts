@@ -126,19 +126,47 @@ function Get-Installer {
     Debug-Print("downloading installer...")
 
     # Ensure a secure TLS version is used
-    $ProtocolsSupported = [enum]::GetValues('Net.SecurityProtocolType')
-    if ($ProtocolsSupported -contains 'Tls13') {
-        [Net.ServicePointManager]::SecurityProtocol = [Enum]::ToObject([Net.SecurityProtocolType], 12288)
-    } elseif ($ProtocolsSupported -contains 'Tls12') {
-        [Net.ServicePointManager]::SecurityProtocol = [Enum]::ToObject([Net.SecurityProtocolType], 3072)    
-    } else {
-        $err = "ERROR: This host does not support a secure version of TLS. Please patch the OS and try again."
+    # $ProtocolsSupported = [enum]::GetValues('Net.SecurityProtocolType')
+    # if ($ProtocolsSupported -contains 'Tls13') {
+    #     [Net.ServicePointManager]::SecurityProtocol = [Enum]::ToObject([Net.SecurityProtocolType], 12288)
+    # } elseif ($ProtocolsSupported -contains 'Tls12') {
+    #     [Net.ServicePointManager]::SecurityProtocol = [Enum]::ToObject([Net.SecurityProtocolType], 3072)
+    # } else {
+    #     $err = "ERROR: This host does not support a secure version of TLS. Please patch the OS and try again."
+    #     Write-Host "$(Get-TimeStamp) $err"
+    #     throw $ScriptFailed + " " + $err
+    # }
+
+    # The above does not work on Windows 7 SP1 with PS 2.0 which supports TLS12, but TLS12 not listed
+    # in the protocol types
+    #
+    # PS C:\Users\admin> $PSVersionTable.PSVersion.ToString()
+    # 2.0
+    # PS C:\Users\admin> [enum]::GetValues('Net.SecurityProtocolType')
+    # Ssl3
+    # Tls
+    # PS C:\Users\admin>  [Net.ServicePointManager]::SecurityProtocol = [Enum]::ToObject([Net.SecurityProtocolType], 3072)
+    # PS C:\Users\admin>  [Net.ServicePointManager]::SecurityProtocol = [Enum]::ToObject([Net.SecurityProtocolType], 12288)
+    # Exception setting "SecurityProtocol": "The requested security protocol is not supported."
+    # At line:1 char:29
+    # +  [Net.ServicePointManager]:: <<<< SecurityProtocol = [Enum]::ToObject([Net.SecurityProtocolType], 12288)
+    #     + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    #     + FullyQualifiedErrorId : PropertyAssignmentException
+
+    # For TLS 1.2 support
+    try {
+        [Net.ServicePointManager]::SecurityProtocol = [Enum]::ToObject([Net.SecurityProtocolType], 3072)
+    } catch {
+        $msg = $_.Exception.Message
+        $err = "ERROR: Unable to enable TLS 1.2."
         Write-Host "$(Get-TimeStamp) $err"
-        throw $ScriptFailed + " " + $err
+        Write-Host "$(Get-TimeStamp) $msg"
+        Write-Host "$(Get-TimeStamp) $SupportMessage"
+        throw $ScriptFailed + " " + $err + " " + $msg + " " + $SupportMessage
     }
-    
+
     $WebClient = New-Object System.Net.WebClient
-    
+
     try {
         $WebClient.DownloadFile($DownloadURL, $InstallerPath)
     } catch {
