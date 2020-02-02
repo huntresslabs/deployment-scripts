@@ -55,8 +55,8 @@ $DebugPrintEnabled = 0
 ##############################################################################
 ## The following should not need to be adjusted
 
-# Set strict mode, hopefully we'll catch any errors early
-Set-StrictMode -Version 2.0
+# Find poorly written code faster with the most stringent setting
+Set-StrictMode -Version Latest
 
 # do not modify the following variables
 # these are used by the Huntress support team when troubleshooting
