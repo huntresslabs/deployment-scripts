@@ -372,7 +372,7 @@ function main () {
     Write-Host "$(Get-TimeStamp) Script version: $ScriptVersion"
     Write-Host "$(Get-TimeStamp) Host name: $env:computerName"
     Write-Host "$(Get-TimeStamp) Host OS: " (get-WMiObject -computername $env:computername -Class win32_operatingSystem).caption
-    Write-Host "$(Get-TimeStamp) Host Architecture: " Get-WindowsArchitecture
+    Write-Host "$(Get-TimeStamp) Host Architecture: " (Get-WindowsArchitecture)
     $masked = $AccountKey.Substring(0,8) + "XXXXXXXXXXXXXXXXXXXXXXX"
     Write-Host "$(Get-TimeStamp) AccountKey: $masked"
     Write-Host "$(Get-TimeStamp) OrganizationKey: " $OrganizationKey
