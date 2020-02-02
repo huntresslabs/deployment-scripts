@@ -152,27 +152,40 @@ function Get-Installer {
 function Install-Huntress ($OrganizationKey) {
     Debug-Print("Checking for HuntressAgent service...")
     if ( Confirm-ServiceExists($HuntressServiceName)) {
-        $InstallerError = "The Huntress Agent is already installed. Exiting."
-        Write-Host "$(Get-TimeStamp) $InstallerError"
+        $err = "The Huntress Agent is already installed. Exiting."
+        Write-Host "$(Get-TimeStamp) $err"
         exit 0
     }
 
-    Debug-Print("Checking for installer file...")
+    Debug-Print("Checking for installer file...$InstallerPath")
     if ( ! (Test-Path $InstallerPath)) {
-        $InstallerError = "The installer was unexpectedly removed from $InstallerPath"
-        Write-Host "$(Get-TimeStamp) $InstallerError"
+        $err = "ERROR: The installer was unexpectedly removed from $InstallerPath"
+        Write-Host "$(Get-TimeStamp) $err"
         Write-Host ("$(Get-TimeStamp) A security product may have quarantined the installer. Please check " +
                                "your logs. If the issue continues to occur, please send the log to the Huntress " +
                                "Team for help at support@huntresslabs.com")
-        throw $ScriptFailed
+        throw $ScriptFailed + " " + $err + " " + $SupportMessage
     }
 
     Debug-Print("Executing installer...")
-    Start-Process $InstallerPath "/ACCT_KEY=`"$AccountKey`" /ORG_KEY=`"$OrganizationKey`" /S" -Wait
+    $timeout = 30 # seconds
+    $process = Start-Process $InstallerPath "/ACCT_KEY=`"$AccountKey`" /ORG_KEY=`"$OrganizationKey`" /S" -PassThru
+    try {
+        $process | Wait-Process -Timeout $timeout -ErrorAction Stop
+    } catch {
+        $process | Stop-Process -Force
+        $err = "ERROR: Installer failed to complete in $timeout seconds."
+        Write-Host "$(Get-TimeStamp) $err"
+        Write-Host "$(Get-TimeStamp) $SupportMessage"
+        throw $ScriptFailed + " " + $err + " " + $SupportMessage
+    }
 }
 
 function Test-Installation {
     Debug-Print("Verifying installation...")
+
+    # Give the agent a few seconds to start and register
+    Start-Sleep -Seconds 8
 
     # Ensure we resolve the correct Huntress directory regardless of operating system or process architecture.
     $WindowsArchitecture = Get-WindowsArchitecture
