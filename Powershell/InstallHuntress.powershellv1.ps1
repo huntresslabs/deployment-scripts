@@ -161,7 +161,7 @@ function Get-Installer {
         [Net.ServicePointManager]::SecurityProtocol = [Enum]::ToObject([Net.SecurityProtocolType], 3072)
     } catch {
         $msg = $_.Exception.Message
-        $err = "ERROR: Unable to enable TLS 1.2."
+        $err = "ERROR: Unable to enable TLS 1.2. Please verify Hotfix KB3140245 is installed."
         Write-Host "$(Get-TimeStamp) $err"
         Write-Host "$(Get-TimeStamp) $msg"
         Write-Host "$(Get-TimeStamp) $SupportMessage"
