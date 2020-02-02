@@ -124,11 +124,12 @@ function Get-WindowsArchitecture {
 
 function Get-Installer {
     Debug-Print("downloading installer...")
-    
+
     # Ensure a secure TLS version is used
-    if ([Net.ServicePointManager]::SecurityProtocol.ToString().Split(',') -contains 'Tls13') {
+    $ProtocolsSupported = [enum]::GetValues('Net.SecurityProtocolType')
+    if ($ProtocolsSupported -contains 'Tls13') {
         [Net.ServicePointManager]::SecurityProtocol = [Enum]::ToObject([Net.SecurityProtocolType], 12288)
-    } elseif ([Net.ServicePointManager]::SecurityProtocol.ToString().Split(',') -contains 'Tls12') {
+    } elseif ($ProtocolsSupported -contains 'Tls12') {
         [Net.ServicePointManager]::SecurityProtocol = [Enum]::ToObject([Net.SecurityProtocolType], 3072)    
     } else {
         $err = "ERROR: This host does not support a secure version of TLS. Please patch the OS and try again."
