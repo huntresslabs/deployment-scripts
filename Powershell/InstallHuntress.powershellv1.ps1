@@ -41,7 +41,8 @@
 param (
   [string]$acctkey,
   [string]$orgkey,
-  [switch]$reregister
+  [switch]$reregister,
+  [switch]$reinstall
 )
 
 # Replace __ACCOUNT_KEY__ with your account secret key
@@ -342,16 +343,25 @@ function Test-Installation {
     Debug-Print("Installation verified...")
 }
 
-function PrepReregister {
-    Write-Host "$(Get-TimeStamp) prepping to reregister agent"
+function StopHuntressServices {
+    Write-Host "$(Get-TimeStamp) Stopping Huntress services"
     Stop-Service -Name "$HuntressAgentServiceName"
     Stop-Service -Name "$HuntressUpdaterServiceName"
+}
+
+function PrepReregister {
+    Write-Host "$(Get-TimeStamp) prepping to reregister agent"
+    StopHuntressServices
 
     $HuntressKeyPath = "HKLM:\SOFTWARE\Huntress Labs\Huntress"
     Remove-Item -Path "$HuntressKeyPath" -Recurse -ErrorAction SilentlyContinue
 }
 
 function main () {
+    if ($reregister -And $reinstall) {
+        Write-Warning "$(Get-TimeStamp) Cannot specify `-reregister` and `-reinstall` flags"
+        exit 1
+    }
     # make sure we have an account key (either hard coded or from the command line params)
     Debug-Print("Checking for AccountKey...")
     if ($AccountKey -eq "__ACCOUNT_KEY__") {
@@ -365,6 +375,9 @@ function main () {
     # make sure we have an org key (either hard coded or from the command line params)
     if ($OrganizationKey -eq "__ORGANIZATION_KEY__") {
         Write-Warning "$(Get-TimeStamp) OrganizationKey not specified, exiting script!"
+        exit 1
+    } elseif ($OrganizationKey.length -lt 1) {
+        Write-Warning "$(Get-TimeStamp) Invalid OrganizationKey specified (length is 0), exiting script!"
         exit 1
     }
 
@@ -380,6 +393,9 @@ function main () {
 
     if ($reregister) {
         PrepReregister
+    } elseif ($reinstall) {
+        Write-Host "$(Get-TimeStamp) Re-installing agent"
+        StopHuntressServices
     } else {
         Debug-Print("Checking for HuntressAgent service...")
         if ( Confirm-ServiceExists($HuntressAgentServiceName)) {
