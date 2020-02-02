@@ -26,8 +26,8 @@
 
 # The Huntress installer needs an Account Key and an Organization Key (a user
 # specified name or description) which is used to affiliate an Agent with a
-# specific Organization within the Huntress Partner's Account. The Organization
-# Key can hard coded below or passed in when the script is run.
+# specific Organization within the Huntress Partner's Account. These keys can be
+# hard coded below or passed in when the script is run.
 
 # See https://support.huntress.io/article/7-using-account-and-organization-keys
 # for more details.
@@ -35,9 +35,7 @@
 # Usage:
 # powershell -executionpolicy bypass -f ./InstallHuntress.powershellv1.ps1 [-acctkey <account_key>] [-orgkey <organization_key>]
 
-# !!! You can hard code your account and organization keys below or specify them on the command line
-
-# optional command line params, this has to be the first line in the script
+# Optional command line params, this has to be the first line in the script.
 param (
   [string]$acctkey,
   [string]$orgkey,
@@ -45,38 +43,38 @@ param (
   [switch]$reinstall
 )
 
-# Replace __ACCOUNT_KEY__ with your account secret key
+# Replace __ACCOUNT_KEY__ with your account secret key.
 $AccountKey = "__ACCOUNT_KEY__"
 
-# Replace __ORGANIZATION_KEY__ with a unique identifier for the organization/client
+# Replace __ORGANIZATION_KEY__ with a unique identifier for the organization/client.
 $OrganizationKey = "__ORGANIZATION_KEY__"
 
-# set to 1 to enable verbose logging
+# Set to 1 to enable verbose logging
 $DebugPrintEnabled = 0
 
 ##############################################################################
-## The following should not need to be adjusted
+## The following should not need to be adjusted.
 
-# Find poorly written code faster with the most stringent setting
+# Find poorly written code faster with the most stringent setting.
 Set-StrictMode -Version Latest
 
-# do not modify the following variables
-# these are used by the Huntress support team when troubleshooting
+# Do not modify the following variables.
+# These are used by the Huntress support team when troubleshooting.
 $ScriptVersion = "2020 February 1; revision 1"
 $ScriptType = "PowerShell"
 
-# check for an account key specified on the command line
+# Check for an account key specified on the command line.
 if ( ! [string]::IsNullOrEmpty($acctkey)) {
     $AccountKey = $acctkey
 }
 
-# check for an organization key specified on the command line
+# Check for an organization key specified on the command line.
 if ( ! [string]::IsNullOrEmpty($orgkey)) {
     $OrganizationKey = $orgkey
 }
 $OrganizationKey = $OrganizationKey.Trim()
 
-# Variables used throughout the Huntress Deployment Script
+# Variables used throughout the Huntress Deployment Script.
 $X64 = 64
 $X86 = 32
 $InstallerName = "HuntressInstaller.exe"
@@ -126,7 +124,7 @@ function Get-WindowsArchitecture {
 }
 
 function verifyInstaller ($file) {
-    # sometimes the installer is corrupted during download, check the file signature
+    # Ensure the installer was not modified during download by validating the file signature.
     $varChain = New-Object -TypeName System.Security.Cryptography.X509Certificates.X509Chain
     try {
         $varChain.Build((Get-AuthenticodeSignature -FilePath "$file").SignerCertificate) | out-null
@@ -144,7 +142,7 @@ function verifyInstaller ($file) {
 function Get-Installer {
     Debug-Print("downloading installer...")
 
-    # Ensure a secure TLS version is used
+    # Ensure a secure TLS version is used.
     $ProtocolsSupported = [enum]::GetValues('Net.SecurityProtocolType')
     if ($ProtocolsSupported -contains 'Tls13') {
         [Net.ServicePointManager]::SecurityProtocol = [Enum]::ToObject([Net.SecurityProtocolType], 12288)   
@@ -199,7 +197,7 @@ function Install-Huntress ($OrganizationKey) {
     verifyInstaller($InstallerPath)
 
     Debug-Print("Executing installer...")
-    $timeout = 30 # seconds
+    $timeout = 30 # Seconds
     $process = Start-Process $InstallerPath "/ACCT_KEY=`"$AccountKey`" /ORG_KEY=`"$OrganizationKey`" /S" -PassThru
     try {
         $process | Wait-Process -Timeout $timeout -ErrorAction Stop
@@ -215,7 +213,7 @@ function Install-Huntress ($OrganizationKey) {
 function Test-Installation {
     Debug-Print("Verifying installation...")
 
-    # Give the agent a few seconds to start and register
+    # Give the agent a few seconds to start and register.
     Start-Sleep -Seconds 8
 
     # Ensure we resolve the correct Huntress directory regardless of operating system or process architecture.
@@ -259,7 +257,7 @@ function Test-Installation {
 
     $HuntressKeyObject = Get-ItemProperty $HuntressKeyPath
 
-    # Verify key values are present
+    # Ensure the Huntress registry values are present.
     foreach ( $value in ($AgentIdKeyValueName, $OrganizationKeyValueName, $TagsValueName) ) {
         If ( ! (Get-Member -inputobject $HuntressKeyObject -name $value -Membertype Properties) ) {
             $err = "ERROR: The registry value $value did not exist within $HuntressKeyPath."
@@ -269,7 +267,7 @@ function Test-Installation {
         }
     }
 
-    # Ensure the service was installed
+    # Ensure the service was installed.
     if ( ! (Confirm-ServiceExists($HuntressAgentServiceName)) ) {
         $err = "ERROR: The Huntress Agent service did not install."
         Write-Host "$(Get-TimeStamp) $err"
@@ -277,7 +275,7 @@ function Test-Installation {
         throw $ScriptFailed + " " + $err + " " + $SupportMessage
     }
 
-    # Verify service was started
+    # Verify the service was started.
     if ( ! (Confirm-ServiceRunning($HuntressAgentServiceName)) ) {
         $err = "ERROR: The Huntress Agent service is not running."
         Write-Host "$(Get-TimeStamp) $err"
@@ -285,7 +283,7 @@ function Test-Installation {
         throw $ScriptFailed + " " + $err + " " + $SupportMessage
     }
 
-    # Verify the agent registered
+    # Verify the agent registered.
     If ($HuntressKeyObject.$AgentIdKeyValueName -eq 0) {
         $err = ("ERROR: The agent did not register. Check the log (%ProgramFiles%\Huntress\HuntressAgent.log) for errors.")
         Write-Host "$(Get-TimeStamp) $err"
@@ -315,7 +313,7 @@ function main () {
         Write-Warning "$(Get-TimeStamp) Cannot specify `-reregister` and `-reinstall` flags"
         exit 1
     }
-    # make sure we have an account key (either hard coded or from the command line params)
+    # Ensure we have an account key (either hard coded or from the command line params).
     Debug-Print("Checking for AccountKey...")
     if ($AccountKey -eq "__ACCOUNT_KEY__") {
         Write-Warning "$(Get-TimeStamp) AccountKey not set, exiting script!"
@@ -325,7 +323,7 @@ function main () {
         exit 1
     }
 
-    # make sure we have an org key (either hard coded or from the command line params)
+    # Ensure we have an org key (either hard coded or from the command line params).
     if ($OrganizationKey -eq "__ORGANIZATION_KEY__") {
         Write-Warning "$(Get-TimeStamp) OrganizationKey not specified, exiting script!"
         exit 1
