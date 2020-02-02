@@ -97,6 +97,15 @@ function Confirm-ServiceExists ($service) {
     return $false
 }
 
+function Confirm-ServiceRunning ($service) {
+    $arrService = Get-Service $service
+    $status = $arrService.Status.ToString()
+    if ($status.ToLower() -eq 'running') {
+        return $true
+    }
+    return $false
+}
+
 function Debug-Print ($msg) {
     if ($DebugPrintEnabled -eq 1) {
         Write-Host "$(Get-TimeStamp) [DEBUG] $msg"
@@ -172,95 +181,116 @@ function Test-Installation {
     } elseif ($WindowsArchitecture -eq $X64) {
         $HuntressDirPath = Join-Path $Env:ProgramW6432 "Huntress"
     } else {
-        $ArchitectureError = "Failed to determine the Windows Architecture. Received $WindowsArchitecture."
-        Write-Host "$(Get-TimeStamp) $ArchitectureError"
+        $err = "ERROR: Failed to determine the Windows Architecture. Received $WindowsArchitecture."
+        Write-Host "$(Get-TimeStamp) $err"
         Write-Host "$(Get-TimeStamp) $SupportMessage"
-        throw $ScriptFailed
+        throw $ScriptFailed + " " + $err + " " + $SupportMessage
     }
 
     $HuntressAgentPath = Join-Path $HuntressDirPath "HuntressAgent.exe"
     $HuntressUpdaterPath = Join-Path $HuntressDirPath "HuntressUpdater.exe"
     $WyUpdaterPath = Join-Path $HuntressDirPath "wyUpdate.exe"
     $HuntressKeyPath = "HKLM:\SOFTWARE\Huntress Labs\Huntress"
-    $AccountKeyValueName = "AccountKey"
+    $AgentIdKeyValueName = "AgentId"
     $OrganizationKeyValueName = "OrganizationKey"
     $TagsValueName = "Tags"
 
     # Ensure the Huntress installation directory was created.
     if ( ! (Test-Path $HuntressDirPath)) {
-        $HuntressInstallationError = "The expected Huntress directory $HuntressDirPath did not exist."
-        Write-Host "$(Get-TimeStamp) $HuntressInstallationError"
+        $err = "ERROR: The expected Huntress directory $HuntressDirPath did not exist."
+        Write-Host "$(Get-TimeStamp) $err"
         Write-Host "$(Get-TimeStamp) $SupportMessage"
-        throw $ScriptFailed
+        throw $ScriptFailed + " " + $err + " " + $SupportMessage
     }
 
     # Ensure the Huntress agent was created.
     if ( ! (Test-Path $HuntressAgentPath)) {
-        $HuntressInstallationError = "The expected Huntress agent $HuntressAgentPath did not exist."
-        Write-Host "$(Get-TimeStamp) $HuntressInstallationError"
+        $err = "ERROR: The expected Huntress agent $HuntressAgentPath did not exist."
+        Write-Host "$(Get-TimeStamp) $err"
         Write-Host "$(Get-TimeStamp) $SupportMessage"
-        throw $ScriptFailed
+        throw $ScriptFailed + " " + $err + " " + $SupportMessage
     }
 
     # Ensure the Huntress updater was created.
     if ( ! (Test-Path $HuntressUpdaterPath)) {
-        $HuntressInstallationError = "The expected Huntress updater $HuntressUpdaterPath did not exist."
-        Write-Host "$(Get-TimeStamp) $HuntressInstallationError"
+        $err = "ERROR: The Huntress updater ($HuntressUpdaterPath) did not exist."
+        Write-Host "$(Get-TimeStamp) $err"
         Write-Host "$(Get-TimeStamp) $SupportMessage"
-        throw $ScriptFailed
+        throw $ScriptFailed + " " + $err + " " + $SupportMessage
     }
 
     # Ensure our wyUpdate dependency was created.
     if ( ! (Test-Path $WyUpdaterPath)) {
-        $HuntressInstallationError = "The expected wyUpdate dependency $WyUpdaterPath did not exist."
-        Write-Host "$(Get-TimeStamp) $HuntressInstallationError"
+        $err = "ERROR: The wyUpdate executable ($WyUpdaterPath) did not exist."
+        Write-Host "$(Get-TimeStamp) $err"
         Write-Host "$(Get-TimeStamp) $SupportMessage"
-        throw $ScriptFailed
+        throw $ScriptFailed + " " + $err + " " + $SupportMessage
     }
 
     # Ensure the Huntress registry key is present.
     if ( ! (Test-Path $HuntressKeyPath)) {
-        $HuntressRegistryError = "The expected Huntress registry key '$HuntressKeyPath' did not exist."
-        Write-Host "$(Get-TimeStamp) $HuntressRegistryError"
+        $err = "ERROR: The Huntress registry key '$HuntressKeyPath' did not exist."
+        Write-Host "$(Get-TimeStamp) $err"
         Write-Host "$(Get-TimeStamp) $SupportMessage"
-        throw $ScriptFailed
+        throw $ScriptFailed + " " + $err + " " + $SupportMessage
     }
 
     $HuntressKeyObject = Get-ItemProperty $HuntressKeyPath
 
     # Ensure the Huntress registry key is not empty.
     if ( ! ($HuntressKeyObject)) {
-        $HuntressRegistryError = "The Huntress registry key was empty."
-        Write-Host "$(Get-TimeStamp) $HuntressRegistryError"
+        $err = "ERROR: The Huntress registry key was empty."
+        Write-Host "$(Get-TimeStamp) $err"
         Write-Host "$(Get-TimeStamp) $SupportMessage"
-        throw $ScriptFailed
+        throw $ScriptFailed + " " + $err + " " + $SupportMessage
     }
 
-    # Ensure the AccountKey value is present within the Huntress registry key.
-    if ( ! (Get-Member -inputobject $HuntressKeyObject -name $AccountKeyValueName -Membertype Properties)) {
-        $HuntressRegistryError = ("The expected Huntress registry value $AccountKeyValueName did not exist " +
-                                  "within $HuntressKeyPath")
-        Write-Host "$(Get-TimeStamp) $HuntressRegistryError"
+    # Ensure the AgentId value is present within the Huntress registry key.
+    If ( ! (Get-Member -inputobject $HuntressKeyObject -name $AgentIdKeyValueName -Membertype Properties)) {
+        $err = "ERROR: The registry value $AgentIdKeyValueName did not exist within $HuntressKeyPath."
+        Write-Host "$(Get-TimeStamp) $err"
         Write-Host "$(Get-TimeStamp) $SupportMessage"
-        throw $ScriptFailed
+        throw $ScriptFailed + " " + $err + " " + $SupportMessage
     }
 
     # Ensure the OrganizationKey value is present within the Huntress registry key.
     if ( ! (Get-Member -inputobject $HuntressKeyObject -name $OrganizationKeyValueName -Membertype Properties)) {
-        $HuntressRegistryError = ("The expected Huntress registry value $OrganizationKeyValueName did not exist " +
-                                  "within $HuntressKeyPath")
-        Write-Host "$(Get-TimeStamp) $HuntressRegistryError"
+        $err = "ERROR: The registry value $OrganizationKeyValueName did not exist within $HuntressKeyPath"
+        Write-Host "$(Get-TimeStamp) $err"
         Write-Host "$(Get-TimeStamp) $SupportMessage"
-        throw $ScriptFailed
+        throw $ScriptFailed + " " + $err + " " + $SupportMessage
     }
 
     # Ensure the Tags value is present within the Huntress registry key.
     if ( ! (Get-Member -inputobject $HuntressKeyObject -name $TagsValueName -Membertype Properties)) {
-        $HuntressRegistryError = ("The expected Huntress registry value $TagsValueName did not exist within " +
-                                  "$HuntressKeyPath")
-        Write-Host "$(Get-TimeStamp) $HuntressRegistryError"
+        $err = "ERROR: The registry value $TagsValueName did not exist within $HuntressKeyPath"
+        Write-Host "$(Get-TimeStamp) $err"
         Write-Host "$(Get-TimeStamp) $SupportMessage"
-        throw $ScriptFailed
+        throw $ScriptFailed + " " + $err + " " + $SupportMessage
+    }
+
+    # Ensure the service was installed
+    if ( ! (Confirm-ServiceExists($HuntressServiceName) )) {
+        $err = "ERROR: The Huntress Agent service did not install."
+        Write-Host "$(Get-TimeStamp) $err"
+        Write-Host "$(Get-TimeStamp) $SupportMessage"
+        throw $ScriptFailed + " " + $err + " " + $SupportMessage
+    }
+
+    # Verify service was started
+    if ( ! (Confirm-ServiceRunning($HuntressServiceName) )) {
+        $err = "ERROR: The Huntress Agent service is not running."
+        Write-Host "$(Get-TimeStamp) $err"
+        Write-Host "$(Get-TimeStamp) $SupportMessage"
+        throw $ScriptFailed + " " + $err + " " + $SupportMessage
+    }
+
+    # Ensure the AgentId value is set within the Huntress registry key.
+    If ($HuntressKeyObject.$AgentIdKeyValueName -eq 0) {
+        $err = ("ERROR: The agent did not register. Check the log (%ProgramFiles%\Huntress\HuntressAgent.log) for errors.")
+        Write-Host "$(Get-TimeStamp) $err"
+        Write-Host "$(Get-TimeStamp) $SupportMessage"
+        throw $ScriptFailed + " " + $err + " " + $SupportMessage
     }
 
     Debug-Print("Installation verified...")
