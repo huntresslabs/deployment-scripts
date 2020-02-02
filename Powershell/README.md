@@ -4,9 +4,13 @@ This PowerShell script will install the Huntress Agent. The script will automati
 
 You have the option to hard code your Huntress account key and the organization key in the script or pass either as an argument to the script. [Click here for more details regarding the Account Key and Organization Key.](https://support.huntress.io/article/7-using-account-and-organization-keys)
 
+The script supports the following mutually exclusive command-line switches:
+* `-reregister` - Force the agent to re-register (useful if previously deployed with the incorrect account key)
+* `-reinstall` - Re-install the agent (useful for upgrading an agent)
+
 Usage:
 ```
-powershell -executionpolicy bypass -f ./InstallHuntress.powershellv1.ps1 [-acctkey <account_key>] [-orgkey <organization_key>]
+powershell -executionpolicy bypass -f ./InstallHuntress.powershellv1.ps1 [-acctkey <account_key>] [-orgkey <organization_key>] [-reregister] [-reinstall]
 ```
 ### Batch File Wrapper
 
