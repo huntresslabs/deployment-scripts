@@ -67,6 +67,7 @@ $ScriptType = "PowerShell"
 if ( ! [string]::IsNullOrEmpty($acctkey)) {
     $AccountKey = $acctkey
 }
+$AccountKey = $AccountKey.Trim()
 
 # Check for an organization key specified on the command line.
 if ( ! [string]::IsNullOrEmpty($orgkey)) {
