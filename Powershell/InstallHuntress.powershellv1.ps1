@@ -72,22 +72,23 @@ if ( ! [string]::IsNullOrEmpty($acctkey)) {
 if ( ! [string]::IsNullOrEmpty($orgkey)) {
     $OrganizationKey = $orgkey
 }
+$OrganizationKey = $OrganizationKey.Trim()
 
 # Variables used throughout the Huntress Deployment Script
 $X64 = 64
 $X86 = 32
-$InstallerName = "HuntressAgent.exe"
+$InstallerName = "HuntressInstaller.exe"
 $InstallerPath = Join-Path $Env:TMP $InstallerName
-$DownloadURL = "https://huntress.io/download/" + $AccountKey + "/" + $InstallerName
+$DownloadURL = "https://update.huntress.io/download/" + $AccountKey + "/" + $InstallerName
 $HuntressServiceName = "HuntressAgent"
 
 $ScriptFailed = "Script Failed!"
 
+$SupportMessage = "Please send the error message to the Huntress Team for help at support@huntresslabs.com"
+
 function Get-TimeStamp {
     return "[{0:MM/dd/yy} {0:HH:mm:ss}]" -f (Get-Date)
 }
-
-$SupportMessage = "Please send the error message to the Huntress Team for help at support@huntresslabs.com"
 
 function Confirm-ServiceExists ($service) {
     if (Get-Service $service -ErrorAction SilentlyContinue) {
@@ -114,20 +115,27 @@ function Get-WindowsArchitecture {
 
 function Get-Installer {
     Debug-Print("downloading installer...")
+    
+    # For TLS 1.2 support
+    [Net.ServicePointManager]::SecurityProtocol =  [Enum]::ToObject([Net.SecurityProtocolType], 3072)
     $WebClient = New-Object System.Net.WebClient
     
     try {
         $WebClient.DownloadFile($DownloadURL, $InstallerPath)
     } catch {
-        $ErrorMessage = $_.Exception.Message
-        Write-Host "$(Get-TimeStamp) $ErrorMessage"
+        $msg = $_.Exception.Message
+        $err = "ERROR: Download from $DownloadURL failed."
+        Write-Host "$(Get-TimeStamp) $err"
+        Write-Host "$(Get-TimeStamp) $msg"
+        Write-Host "$(Get-TimeStamp) $SupportMessage"
+        throw $ScriptFailed + " " + $err + " " + $msg + " " + $SupportMessage
     }
     
     if ( ! (Test-Path $InstallerPath)) {
-        $DownloadError = "Failed to download the Huntress Installer from $DownloadURL"
-        Write-Host "$(Get-TimeStamp) $DownloadError"
-        Write-Host "$(Get-TimeStamp) Verify you set the AccountKey variable to your account secret key."
-        throw $ScriptFailed
+        $err = "ERROR: Failed to download the Huntress Installer from $DownloadURL."
+        Write-Host "$(Get-TimeStamp) $err"
+        Write-Host "$(Get-TimeStamp) $SupportMessage"
+        throw $ScriptFailed + " " + $err + " " + $SupportMessage
     }
     Debug-Print("installer downloaded to $InstallerPath...")
 }
