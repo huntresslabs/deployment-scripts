@@ -125,6 +125,22 @@ function Get-WindowsArchitecture {
     return $WindowsArchitecture
 }
 
+function verifyInstaller ($file) {
+    # sometimes the installer is corrupted during download, check the file signature
+    $varChain = New-Object -TypeName System.Security.Cryptography.X509Certificates.X509Chain
+    try {
+        $varChain.Build((Get-AuthenticodeSignature -FilePath "$file").SignerCertificate) | out-null
+    } catch [System.Management.Automation.MethodInvocationException] {
+        $err = (
+            "ERROR: $file installer did not contain a valid digital certificate. " +
+            "Something may have corrupted/modified the file during the download process." +
+            "If the problem persists please file a support ticket.")
+        Write-Host "$(Get-TimeStamp) $err"
+        Write-Host "$(Get-TimeStamp) $SupportMessage"
+        throw $ScriptFailed + " " + $err + " " + $SupportMessage
+    }
+}
+
 function Get-Installer {
     Debug-Print("downloading installer...")
 
@@ -195,11 +211,14 @@ function Install-Huntress ($OrganizationKey) {
     if ( ! (Test-Path $InstallerPath) ) {
         $err = "ERROR: The installer was unexpectedly removed from $InstallerPath"
         Write-Host "$(Get-TimeStamp) $err"
-        Write-Host ("$(Get-TimeStamp) A security product may have quarantined the installer. Please check " +
-                               "your logs. If the issue continues to occur, please send the log to the Huntress " +
-                               "Team for help at support@huntresslabs.com")
+        Write-Host (
+            "$(Get-TimeStamp) A security product may have quarantined the installer. Please check " +
+            "your logs. If the issue continues to occur, please send the log to the Huntress " +
+            "Team for help at support@huntresslabs.com")
         throw $ScriptFailed + " " + $err + " " + $SupportMessage
     }
+
+    verifyInstaller($InstallerPath)
 
     Debug-Print("Executing installer...")
     $timeout = 30 # seconds
