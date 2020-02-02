@@ -326,6 +326,12 @@ function main () {
         exit 1
     }
 
+    Write-Host "$(Get-TimeStamp) Script type: $ScriptType"
+    Write-Host "$(Get-TimeStamp) Script version: $ScriptVersion"
+    Write-Host "$(Get-TimeStamp) Device name: $env:computerName"
+    Write-Host "$(Get-TimeStamp) Device OS: " (get-WMiObject -computername $env:computername -Class win32_operatingSystem).caption
+    $masked = $AccountKey.Substring(0,8) + "XXXXXXXXXXXXXXXXXXXXXXX"
+    Write-Host "$(Get-TimeStamp) AccountKey: $masked"
     Write-Host "$(Get-TimeStamp) OrganizationKey: " $OrganizationKey
     Get-Installer
     Install-Huntress $OrganizationKey
