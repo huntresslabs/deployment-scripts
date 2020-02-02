@@ -179,8 +179,8 @@ function Get-Installer {
         Write-Host "$(Get-TimeStamp) $SupportMessage"
         throw $ScriptFailed + " " + $err + " " + $msg + " " + $SupportMessage
     }
-    
-    if ( ! (Test-Path $InstallerPath)) {
+
+    if ( ! (Test-Path $InstallerPath) ) {
         $err = "ERROR: Failed to download the Huntress Installer from $DownloadURL."
         Write-Host "$(Get-TimeStamp) $err"
         Write-Host "$(Get-TimeStamp) $SupportMessage"
@@ -191,7 +191,7 @@ function Get-Installer {
 
 function Install-Huntress ($OrganizationKey) {
     Debug-Print("Checking for installer file...$InstallerPath")
-    if ( ! (Test-Path $InstallerPath)) {
+    if ( ! (Test-Path $InstallerPath) ) {
         $err = "ERROR: The installer was unexpectedly removed from $InstallerPath"
         Write-Host "$(Get-TimeStamp) $err"
         Write-Host ("$(Get-TimeStamp) A security product may have quarantined the installer. Please check " +
@@ -242,7 +242,7 @@ function Test-Installation {
     $TagsValueName = "Tags"
 
     # Ensure the Huntress installation directory was created.
-    if ( ! (Test-Path $HuntressDirPath)) {
+    if ( ! (Test-Path $HuntressDirPath) ) {
         $err = "ERROR: The expected Huntress directory $HuntressDirPath did not exist."
         Write-Host "$(Get-TimeStamp) $err"
         Write-Host "$(Get-TimeStamp) $SupportMessage"
@@ -250,7 +250,7 @@ function Test-Installation {
     }
 
     # Ensure the Huntress agent was created.
-    if ( ! (Test-Path $HuntressAgentPath)) {
+    if ( ! (Test-Path $HuntressAgentPath) ) {
         $err = "ERROR: The expected Huntress agent $HuntressAgentPath did not exist."
         Write-Host "$(Get-TimeStamp) $err"
         Write-Host "$(Get-TimeStamp) $SupportMessage"
@@ -258,7 +258,7 @@ function Test-Installation {
     }
 
     # Ensure the Huntress updater was created.
-    if ( ! (Test-Path $HuntressUpdaterPath)) {
+    if ( ! (Test-Path $HuntressUpdaterPath) ) {
         $err = "ERROR: The Huntress updater ($HuntressUpdaterPath) did not exist."
         Write-Host "$(Get-TimeStamp) $err"
         Write-Host "$(Get-TimeStamp) $SupportMessage"
@@ -266,7 +266,7 @@ function Test-Installation {
     }
 
     # Ensure our wyUpdate dependency was created.
-    if ( ! (Test-Path $WyUpdaterPath)) {
+    if ( ! (Test-Path $WyUpdaterPath) ) {
         $err = "ERROR: The wyUpdate executable ($WyUpdaterPath) did not exist."
         Write-Host "$(Get-TimeStamp) $err"
         Write-Host "$(Get-TimeStamp) $SupportMessage"
@@ -274,7 +274,7 @@ function Test-Installation {
     }
 
     # Ensure the Huntress registry key is present.
-    if ( ! (Test-Path $HuntressKeyPath)) {
+    if ( ! (Test-Path $HuntressKeyPath) ) {
         $err = "ERROR: The Huntress registry key '$HuntressKeyPath' did not exist."
         Write-Host "$(Get-TimeStamp) $err"
         Write-Host "$(Get-TimeStamp) $SupportMessage"
@@ -284,7 +284,7 @@ function Test-Installation {
     $HuntressKeyObject = Get-ItemProperty $HuntressKeyPath
 
     # Ensure the Huntress registry key is not empty.
-    if ( ! ($HuntressKeyObject)) {
+    if ( ! ($HuntressKeyObject) ) {
         $err = "ERROR: The Huntress registry key was empty."
         Write-Host "$(Get-TimeStamp) $err"
         Write-Host "$(Get-TimeStamp) $SupportMessage"
@@ -292,7 +292,7 @@ function Test-Installation {
     }
 
     # Ensure the AgentId value is present within the Huntress registry key.
-    If ( ! (Get-Member -inputobject $HuntressKeyObject -name $AgentIdKeyValueName -Membertype Properties)) {
+    If ( ! (Get-Member -inputobject $HuntressKeyObject -name $AgentIdKeyValueName -Membertype Properties) ) {
         $err = "ERROR: The registry value $AgentIdKeyValueName did not exist within $HuntressKeyPath."
         Write-Host "$(Get-TimeStamp) $err"
         Write-Host "$(Get-TimeStamp) $SupportMessage"
@@ -300,7 +300,7 @@ function Test-Installation {
     }
 
     # Ensure the OrganizationKey value is present within the Huntress registry key.
-    if ( ! (Get-Member -inputobject $HuntressKeyObject -name $OrganizationKeyValueName -Membertype Properties)) {
+    if ( ! (Get-Member -inputobject $HuntressKeyObject -name $OrganizationKeyValueName -Membertype Properties) ) {
         $err = "ERROR: The registry value $OrganizationKeyValueName did not exist within $HuntressKeyPath"
         Write-Host "$(Get-TimeStamp) $err"
         Write-Host "$(Get-TimeStamp) $SupportMessage"
@@ -308,7 +308,7 @@ function Test-Installation {
     }
 
     # Ensure the Tags value is present within the Huntress registry key.
-    if ( ! (Get-Member -inputobject $HuntressKeyObject -name $TagsValueName -Membertype Properties)) {
+    if ( ! (Get-Member -inputobject $HuntressKeyObject -name $TagsValueName -Membertype Properties) ) {
         $err = "ERROR: The registry value $TagsValueName did not exist within $HuntressKeyPath"
         Write-Host "$(Get-TimeStamp) $err"
         Write-Host "$(Get-TimeStamp) $SupportMessage"
@@ -316,7 +316,7 @@ function Test-Installation {
     }
 
     # Ensure the service was installed
-    if ( ! (Confirm-ServiceExists($HuntressAgentServiceName) )) {
+    if ( ! (Confirm-ServiceExists($HuntressAgentServiceName)) ) {
         $err = "ERROR: The Huntress Agent service did not install."
         Write-Host "$(Get-TimeStamp) $err"
         Write-Host "$(Get-TimeStamp) $SupportMessage"
@@ -324,7 +324,7 @@ function Test-Installation {
     }
 
     # Verify service was started
-    if ( ! (Confirm-ServiceRunning($HuntressAgentServiceName) )) {
+    if ( ! (Confirm-ServiceRunning($HuntressAgentServiceName)) ) {
         $err = "ERROR: The Huntress Agent service is not running."
         Write-Host "$(Get-TimeStamp) $err"
         Write-Host "$(Get-TimeStamp) $SupportMessage"
