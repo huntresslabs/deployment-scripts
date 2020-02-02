@@ -49,8 +49,8 @@ $AccountKey = "__ACCOUNT_KEY__"
 # Replace __ORGANIZATION_KEY__ with a unique identifier for the organization/client.
 $OrganizationKey = "__ORGANIZATION_KEY__"
 
-# Set to 1 to enable verbose logging
-$DebugPrintEnabled = 0
+# Set to "Continue" to enable verbose logging.
+$DebugPreference = "SilentlyContinue"
 
 ##############################################################################
 ## The following should not need to be adjusted.
@@ -91,7 +91,7 @@ function Get-TimeStamp {
 }
 
 function Test-Parameters {
-    Debug-Print("Verifying received parameters...")
+    Write-Debug "$(Get-TimeStamp) Verifying received parameters..."
 
     # Ensure mutually exclusive parameters were not both specified.
     if ($reregister -and $reinstall) {
@@ -134,12 +134,6 @@ function Confirm-ServiceRunning ($service) {
     return $false
 }
 
-function Debug-Print ($msg) {
-    if ($DebugPrintEnabled -eq 1) {
-        Write-Host "$(Get-TimeStamp) [DEBUG] $msg"
-    }
-}
-
 function Get-WindowsArchitecture {
     if ($env:ProgramW6432) {
         $WindowsArchitecture = $X64
@@ -167,7 +161,7 @@ function verifyInstaller ($file) {
 }
 
 function Get-Installer {
-    Debug-Print("downloading installer...")
+    Write-Debug "$(Get-TimeStamp) Downloading installer..."
 
     # Ensure a secure TLS version is used.
     $ProtocolsSupported = [enum]::GetValues('Net.SecurityProtocolType')
@@ -206,11 +200,11 @@ function Get-Installer {
         Write-Host "$(Get-TimeStamp) $SupportMessage"
         throw $ScriptFailed + " " + $err + " " + $SupportMessage
     }
-    Debug-Print("installer downloaded to $InstallerPath...")
+    Write-Debug "$(Get-TimeStamp) Installer downloaded to $InstallerPath..."
 }
 
 function Install-Huntress ($OrganizationKey) {
-    Debug-Print("Checking for installer file...$InstallerPath")
+    Write-Debug "$(Get-TimeStamp) Checking for installer file...$InstallerPath"
     if ( ! (Test-Path $InstallerPath) ) {
         $err = "ERROR: The installer was unexpectedly removed from $InstallerPath"
         Write-Host "$(Get-TimeStamp) $err"
@@ -223,7 +217,7 @@ function Install-Huntress ($OrganizationKey) {
 
     verifyInstaller($InstallerPath)
 
-    Debug-Print("Executing installer...")
+    Write-Debug "$(Get-TimeStamp) Executing installer..."
     $timeout = 30 # Seconds
     $process = Start-Process $InstallerPath "/ACCT_KEY=`"$AccountKey`" /ORG_KEY=`"$OrganizationKey`" /S" -PassThru
     try {
@@ -238,7 +232,7 @@ function Install-Huntress ($OrganizationKey) {
 }
 
 function Test-Installation {
-    Debug-Print("Verifying installation...")
+    Write-Debug "$(Get-TimeStamp) Verifying installation..."
 
     # Give the agent a few seconds to start and register.
     Start-Sleep -Seconds 8
@@ -318,7 +312,7 @@ function Test-Installation {
         throw $ScriptFailed + " " + $err + " " + $SupportMessage
     }
 
-    Debug-Print("Installation verified...")
+    Write-Debug "$(Get-TimeStamp) Installation verified..."
 }
 
 function StopHuntressServices {
@@ -354,7 +348,7 @@ function main () {
         Write-Host "$(Get-TimeStamp) Re-installing agent"
         StopHuntressServices
     } else {
-        Debug-Print("Checking for HuntressAgent service...")
+        Write-Debug "$(Get-TimeStamp) Checking for HuntressAgent service..."
         if ( Confirm-ServiceExists($HuntressAgentServiceName)) {
             $err = "The Huntress Agent is already installed. Exiting."
             Write-Host "$(Get-TimeStamp) $err"
