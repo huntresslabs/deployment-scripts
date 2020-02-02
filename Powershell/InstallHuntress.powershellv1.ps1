@@ -132,8 +132,8 @@ function verifyInstaller ($file) {
         $varChain.Build((Get-AuthenticodeSignature -FilePath "$file").SignerCertificate) | out-null
     } catch [System.Management.Automation.MethodInvocationException] {
         $err = (
-            "ERROR: $file installer did not contain a valid digital certificate. " +
-            "Something may have corrupted/modified the file during the download process." +
+            "ERROR: '$file' did not contain a valid digital certificate. " +
+            "Something may have corrupted/modified the file during the download process. " +
             "If the problem persists please file a support ticket.")
         Write-Host "$(Get-TimeStamp) $err"
         Write-Host "$(Get-TimeStamp) $SupportMessage"
@@ -262,7 +262,7 @@ function Test-Installation {
     $TagsValueName = "Tags"
 
     # Ensure the critical files were created.
-    foreach ($file in ($HuntressAgentPath, $HuntressUpdaterPath, $WyUpdaterPath)) {
+    foreach ( $file in ($HuntressAgentPath, $HuntressUpdaterPath, $WyUpdaterPath) ) {
         if ( ! (Test-Path $file) ) {
             $err = "ERROR: $file did not exist."
             Write-Host "$(Get-TimeStamp) $err"
@@ -282,7 +282,7 @@ function Test-Installation {
     $HuntressKeyObject = Get-ItemProperty $HuntressKeyPath
 
     # Verify key values are present
-    foreach ($value in ($AgentIdKeyValueName, $OrganizationKeyValueName, $TagsValueName)) {
+    foreach ( $value in ($AgentIdKeyValueName, $OrganizationKeyValueName, $TagsValueName) ) {
         If ( ! (Get-Member -inputobject $HuntressKeyObject -name $value -Membertype Properties) ) {
             $err = "ERROR: The registry value $value did not exist within $HuntressKeyPath."
             Write-Host "$(Get-TimeStamp) $err"
