@@ -40,7 +40,8 @@
 # optional command line params, this has to be the first line in the script
 param (
   [string]$acctkey,
-  [string]$orgkey
+  [string]$orgkey,
+  [switch]$reregister
 )
 
 # Replace __ACCOUNT_KEY__ with your account secret key
@@ -80,7 +81,8 @@ $X86 = 32
 $InstallerName = "HuntressInstaller.exe"
 $InstallerPath = Join-Path $Env:TMP $InstallerName
 $DownloadURL = "https://update.huntress.io/download/" + $AccountKey + "/" + $InstallerName
-$HuntressServiceName = "HuntressAgent"
+$HuntressAgentServiceName = "HuntressAgent"
+$HuntressUpdaterServiceName = "HuntressUpdater"
 
 $ScriptFailed = "Script Failed!"
 
@@ -188,13 +190,6 @@ function Get-Installer {
 }
 
 function Install-Huntress ($OrganizationKey) {
-    Debug-Print("Checking for HuntressAgent service...")
-    if ( Confirm-ServiceExists($HuntressServiceName)) {
-        $err = "The Huntress Agent is already installed. Exiting."
-        Write-Host "$(Get-TimeStamp) $err"
-        exit 0
-    }
-
     Debug-Print("Checking for installer file...$InstallerPath")
     if ( ! (Test-Path $InstallerPath)) {
         $err = "ERROR: The installer was unexpectedly removed from $InstallerPath"
@@ -321,7 +316,7 @@ function Test-Installation {
     }
 
     # Ensure the service was installed
-    if ( ! (Confirm-ServiceExists($HuntressServiceName) )) {
+    if ( ! (Confirm-ServiceExists($HuntressAgentServiceName) )) {
         $err = "ERROR: The Huntress Agent service did not install."
         Write-Host "$(Get-TimeStamp) $err"
         Write-Host "$(Get-TimeStamp) $SupportMessage"
@@ -329,7 +324,7 @@ function Test-Installation {
     }
 
     # Verify service was started
-    if ( ! (Confirm-ServiceRunning($HuntressServiceName) )) {
+    if ( ! (Confirm-ServiceRunning($HuntressAgentServiceName) )) {
         $err = "ERROR: The Huntress Agent service is not running."
         Write-Host "$(Get-TimeStamp) $err"
         Write-Host "$(Get-TimeStamp) $SupportMessage"
@@ -345,6 +340,15 @@ function Test-Installation {
     }
 
     Debug-Print("Installation verified...")
+}
+
+function PrepReregister {
+    Write-Host "$(Get-TimeStamp) prepping to reregister agent"
+    Stop-Service -Name "$HuntressAgentServiceName"
+    Stop-Service -Name "$HuntressUpdaterServiceName"
+
+    $HuntressKeyPath = "HKLM:\SOFTWARE\Huntress Labs\Huntress"
+    Remove-Item -Path "$HuntressKeyPath" -Recurse -ErrorAction SilentlyContinue
 }
 
 function main () {
@@ -371,6 +375,19 @@ function main () {
     $masked = $AccountKey.Substring(0,8) + "XXXXXXXXXXXXXXXXXXXXXXX"
     Write-Host "$(Get-TimeStamp) AccountKey: $masked"
     Write-Host "$(Get-TimeStamp) OrganizationKey: " $OrganizationKey
+    Write-Host "$(Get-TimeStamp) reregister agent: " $reregister
+
+    if ($reregister) {
+        PrepReregister
+    } else {
+        Debug-Print("Checking for HuntressAgent service...")
+        if ( Confirm-ServiceExists($HuntressAgentServiceName)) {
+            $err = "The Huntress Agent is already installed. Exiting."
+            Write-Host "$(Get-TimeStamp) $err"
+            exit 0
+        }
+    }
+
     Get-Installer
     Install-Huntress $OrganizationKey
     Test-Installation
