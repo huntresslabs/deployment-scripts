@@ -84,11 +84,38 @@ $HuntressAgentServiceName = "HuntressAgent"
 $HuntressUpdaterServiceName = "HuntressUpdater"
 
 $ScriptFailed = "Script Failed!"
-
-$SupportMessage = "Please send the error message to the Huntress Team for help at support@huntresslabs.com"
+$SupportMessage = "Please send the error message to the Huntress Team for help at support@huntress.com"
 
 function Get-TimeStamp {
     return "[{0:MM/dd/yy} {0:HH:mm:ss}]" -f (Get-Date)
+}
+
+function Test-Parameters {
+    Debug-Print("Verifying received parameters...")
+
+    # Ensure mutually exclusive parameters were not both specified.
+    if ($reregister -and $reinstall) {
+        Write-Warning "$(Get-TimeStamp) Cannot specify both `-reregister` and `-reinstall` parameters, exiting script!"
+        exit 1
+    }
+
+    # Ensure we have an account key (either hard coded or from the command line params).
+    if ($AccountKey -eq "__ACCOUNT_KEY__") {
+        Write-Warning "$(Get-TimeStamp) AccountKey not set, exiting script!"
+        exit 1
+    } elseif ($AccountKey.length -ne 32) {
+        Write-Warning "$(Get-TimeStamp) Invalid AccountKey specified (incorrect length), exiting script!"
+        exit 1
+    }
+
+    # Ensure we have an organization key (either hard coded or from the command line params).
+    if ($OrganizationKey -eq "__ORGANIZATION_KEY__") {
+        Write-Warning "$(Get-TimeStamp) OrganizationKey not specified, exiting script!"
+        exit 1
+    } elseif ($OrganizationKey.length -lt 1) {
+        Write-Warning "$(Get-TimeStamp) Invalid OrganizationKey specified (length is 0), exiting script!"
+        exit 1
+    }
 }
 
 function Confirm-ServiceExists ($service) {
@@ -309,28 +336,7 @@ function PrepReregister {
 }
 
 function main () {
-    if ($reregister -And $reinstall) {
-        Write-Warning "$(Get-TimeStamp) Cannot specify `-reregister` and `-reinstall` flags"
-        exit 1
-    }
-    # Ensure we have an account key (either hard coded or from the command line params).
-    Debug-Print("Checking for AccountKey...")
-    if ($AccountKey -eq "__ACCOUNT_KEY__") {
-        Write-Warning "$(Get-TimeStamp) AccountKey not set, exiting script!"
-        exit 1
-    } elseif ($AccountKey.length -ne 32) {
-        Write-Warning "$(Get-TimeStamp) Invalid AccountKey specified, exiting script!"
-        exit 1
-    }
-
-    # Ensure we have an org key (either hard coded or from the command line params).
-    if ($OrganizationKey -eq "__ORGANIZATION_KEY__") {
-        Write-Warning "$(Get-TimeStamp) OrganizationKey not specified, exiting script!"
-        exit 1
-    } elseif ($OrganizationKey.length -lt 1) {
-        Write-Warning "$(Get-TimeStamp) Invalid OrganizationKey specified (length is 0), exiting script!"
-        exit 1
-    }
+    Test-Parameters
 
     Write-Host "$(Get-TimeStamp) Script type: $ScriptType"
     Write-Host "$(Get-TimeStamp) Script version: $ScriptVersion"
