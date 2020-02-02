@@ -55,6 +55,14 @@ $DebugPrintEnabled = 0
 ##############################################################################
 ## The following should not need to be adjusted
 
+# Set strict mode, hopefuly we'll catch any errors early
+Set-StrictMode -Version 2.0
+
+# do not modify the following variables
+# these are used by the Huntress support team when troubleshooting
+$ScriptVersion = "2020 February 1; revision 1"
+$ScriptType = "PowerShell"
+
 # check for an account key specified on the command line
 if ( ! [string]::IsNullOrEmpty($acctkey)) {
     $AccountKey = $acctkey
