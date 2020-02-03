@@ -297,20 +297,23 @@ function Test-Installation {
         }
     }
 
-    # Ensure the service was installed.
-    if ( ! (Confirm-ServiceExists($HuntressAgentServiceName)) ) {
-        $err = "ERROR: The Huntress Agent service did not install."
-        Write-Host "$(Get-TimeStamp) $err"
-        Write-Host "$(Get-TimeStamp) $SupportMessage"
-        throw $ScriptFailed + " " + $err + " " + $SupportMessage
-    }
+    # Ensure the services are installed and running.
+    foreach ( $svc in ($HuntressAgentServiceName, $HuntressUpdaterServiceName) ) {
+        # service installed?
+        if ( ! (Confirm-ServiceExists($svc)) ) {
+            $err = "ERROR: The $svc service is not installed."
+            Write-Host "$(Get-TimeStamp) $err"
+            Write-Host "$(Get-TimeStamp) $SupportMessage"
+            throw $ScriptFailed + " " + $err + " " + $SupportMessage
+        }
 
-    # Verify the service was started.
-    if ( ! (Confirm-ServiceRunning($HuntressAgentServiceName)) ) {
-        $err = "ERROR: The Huntress Agent service is not running."
-        Write-Host "$(Get-TimeStamp) $err"
-        Write-Host "$(Get-TimeStamp) $SupportMessage"
-        throw $ScriptFailed + " " + $err + " " + $SupportMessage
+        # service running?
+        if ( ! (Confirm-ServiceRunning($svc)) ) {
+            $err = "ERROR: The $svc service is not running."
+            Write-Host "$(Get-TimeStamp) $err"
+            Write-Host "$(Get-TimeStamp) $SupportMessage"
+            throw $ScriptFailed + " " + $err + " " + $SupportMessage
+        }
     }
 
     # Verify the agent registered.
