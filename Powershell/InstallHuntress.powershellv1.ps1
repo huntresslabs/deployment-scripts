@@ -102,19 +102,27 @@ function Test-Parameters {
 
     # Ensure we have an account key (either hard coded or from the command line params).
     if ($AccountKey -eq "__ACCOUNT_KEY__") {
-        Write-Warning "$(Get-TimeStamp) AccountKey not set, exiting script!"
+        $err = "AccountKey not set!"
+        Write-Warning "$(Get-TimeStamp) $err"
+        throw $ScriptFailed + " " + $err
         exit 1
     } elseif ($AccountKey.length -ne 32) {
-        Write-Warning "$(Get-TimeStamp) Invalid AccountKey specified (incorrect length), exiting script!"
+        $err = "Invalid AccountKey specified (incorrect length)!"
+        Write-Warning "$(Get-TimeStamp) $err"
+        throw $ScriptFailed + " " + $err
         exit 1
     }
 
     # Ensure we have an organization key (either hard coded or from the command line params).
     if ($OrganizationKey -eq "__ORGANIZATION_KEY__") {
-        Write-Warning "$(Get-TimeStamp) OrganizationKey not specified, exiting script!"
+        $err = "OrganizationKey not specified!"
+        Write-Warning "$(Get-TimeStamp) $err"
+        throw $ScriptFailed + " " + $err
         exit 1
     } elseif ($OrganizationKey.length -lt 1) {
-        Write-Warning "$(Get-TimeStamp) Invalid OrganizationKey specified (length is 0), exiting script!"
+        $err = "Invalid OrganizationKey specified (length is 0)!"
+        Write-Warning "$(Get-TimeStamp) $err"
+        throw $ScriptFailed + " " + $err
         exit 1
     }
 }
