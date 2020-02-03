@@ -6,7 +6,7 @@ You have the option to hard code your Huntress account key and the organization 
 
 The script supports the following mutually exclusive command-line switches:
 * `-reregister` - Force the agent to re-register (useful if previously deployed with the incorrect account key)
-* `-reinstall` - Re-install the agent (useful for upgrading an agent)
+* `-reinstall` - Re-install the agent (useful for "repairing" an agent; this will replace all the files are restart the services)
 
 Usage:
 ```
