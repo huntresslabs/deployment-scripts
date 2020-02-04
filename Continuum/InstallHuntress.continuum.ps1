@@ -101,7 +101,7 @@ function Get-ContinuumKeyPath {
         Add-Content $DebugLog (
             "$(Get-TimeStamp) Please send this log to the Huntress Team for help via " +
             "support@huntresslabs.com")
-        throw $ScriptFailed + " " + $err
+        throw $ScriptFailed + " " + $err + " " + $SupportMessage
     }
 
     return $ContinuumKeyPath
@@ -116,9 +116,8 @@ function Get-ContinuumKeyObject {
         $err = "The expected Continuum registry key $ContinuumKeyPath did not exist."
         Add-Content $DebugLog "$(Get-TimeStamp) $err"
         Add-Content $DebugLog (
-            "$(Get-TimeStamp) If you are using this script with Continuum RMM, please send " +
-            "this log to the Huntress Team for help via support@huntresslabs.com")
-        throw $ScriptFailed + " " + $err
+            "$(Get-TimeStamp) Please send this log to the Huntress Team for help via support@huntress.com")
+        throw $ScriptFailed + " " + $err + " " + $SupportMessage
     }
 
     $ContinuumKeyObject = Get-ItemProperty $ContinuumKeyPath
@@ -128,9 +127,8 @@ function Get-ContinuumKeyObject {
         $err = "The Continuum registry key was empty."
         Add-Content $DebugLog "$(Get-TimeStamp) $err"
         Add-Content $DebugLog (
-            "$(Get-TimeStamp) If you are using this script with Continuum RMM, please send this " +
-            "log to the Huntress Team for help via support@huntresslabs.com")
-        throw $ScriptFailed + " " + $err
+            "$(Get-TimeStamp) Please send this log to the Huntress Team for help via support@huntress.com")
+        throw $ScriptFailed + " " + $err + " " + $SupportMessage
     }
 
     return $ContinuumKeyObject
@@ -149,9 +147,8 @@ function Get-SiteId {
             "$ContinuumKeyPath")
         Add-Content $DebugLog "$(Get-TimeStamp) $err"
         Add-Content $DebugLog (
-            "$(Get-TimeStamp) Please send this log to the Huntress Team for help via " +
-            "support@huntresslabs.com")
-        throw $ScriptFailed + " " + $err
+            "$(Get-TimeStamp) Please send this log to the Huntress Team for help via support@huntress.com")
+        throw $ScriptFailed + " " + $err + " " + $SupportMessage
     }
 
     $SiteId = $ContinuumKeyObject.$ContinuumValueName
