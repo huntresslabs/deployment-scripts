@@ -60,7 +60,7 @@ Set-StrictMode -Version Latest
 
 # Do not modify the following variables.
 # These are used by the Huntress support team when troubleshooting.
-$ScriptVersion = "2020 February 3; revision 1"
+$ScriptVersion = "2020 February 3; revision 2"
 $ScriptType = "PowerShell"
 
 # Check for an account key specified on the command line.
@@ -196,11 +196,13 @@ function Get-Installer {
         $WebClient.DownloadFile($DownloadURL, $InstallerPath)
     } catch {
         $msg = $_.Exception.Message
-        $err = "ERROR: Download from $DownloadURL failed."
+        $err = (
+            "ERROR: Failed to download the Huntress Installer. Please try accessing $DownloadURL " +
+            "from a web browser on the host where the download failed. If the issue persists, please " +
+            "send the error message to the Huntress Team for help at support@huntress.com.")
         Write-Host "$(Get-TimeStamp) $err"
         Write-Host "$(Get-TimeStamp) $msg"
-        Write-Host "$(Get-TimeStamp) $SupportMessage"
-        throw $ScriptFailed + " " + $err + " " + $msg + " " + $SupportMessage
+        throw $ScriptFailed + " " + $err + " " + $msg
     }
 
     if ( ! (Test-Path $InstallerPath) ) {
