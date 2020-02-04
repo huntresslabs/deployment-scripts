@@ -170,7 +170,7 @@ function verifyInstaller ($file) {
 }
 
 function Get-Installer {
-    Write-Debug "$(Get-TimeStamp) Downloading installer..."
+    Write-Host "$(Get-TimeStamp) Downloading installer to '$InstallerPath'"
 
     # Ensure a secure TLS version is used.
     $ProtocolsSupported = [enum]::GetValues('Net.SecurityProtocolType')
