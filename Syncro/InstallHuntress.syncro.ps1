@@ -25,9 +25,10 @@
 
 
 # The Huntress installer needs an Account Key and an Organization Key (a user
-# specified name or description) which is used to affiliate an Agent with a
-# specific Organization within the Huntress Partner's Account. The Organization
-# Key can hard coded below or passed in when the script is run.
+# specified name). The Account Key links the agent to the Huntress account and
+# the Organization Key affiliates the agent to a specific client/company. The
+# Syncro integration will automatically pass the Account Key and Organization
+# Key (the customer Business Name within Syncro).
 
 # See https://support.huntress.io/article/7-using-account-and-organization-keys
 # for more details.
