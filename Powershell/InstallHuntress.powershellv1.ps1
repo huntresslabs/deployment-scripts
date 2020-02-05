@@ -369,7 +369,7 @@ function main () {
     LogMessage "Installer log: '$DebugLog'"
 
     $masked = $AccountKey.Substring(0,10) + "XXXXXXXXXXXXXXXXXXXXXXX"
-    LogMessage "AccountKey: $masked"
+    LogMessage "AccountKey: '$masked'"
     LogMessage "OrganizationKey: '$OrganizationKey'"
 
     Test-Parameters
