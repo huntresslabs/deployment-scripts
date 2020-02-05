@@ -361,14 +361,14 @@ function main () {
     LogMessage "Script type: '$ScriptType'"
     LogMessage "Script version: '$ScriptVersion'"
     LogMessage "Host name: '$env:computerName'"
-	$os = (get-WMiObject -computername $env:computername -Class win32_operatingSystem).caption
+    $os = (get-WMiObject -computername $env:computername -Class win32_operatingSystem).caption
     LogMessage "Host OS: '$os'"
     LogMessage "Host Architecture: '$(Get-WindowsArchitecture)'"
-	LogMessage "Re-register agent: '$reregister'"
-	LogMessage "Installer location: '$InstallerPath'"
-	LogMessage "Installer log: '$DebugLog'"
+    LogMessage "Re-register agent: '$reregister'"
+    LogMessage "Installer location: '$InstallerPath'"
+    LogMessage "Installer log: '$DebugLog'"
 
-	$masked = $AccountKey.Substring(0,10) + "XXXXXXXXXXXXXXXXXXXXXXX"
+    $masked = $AccountKey.Substring(0,10) + "XXXXXXXXXXXXXXXXXXXXXXX"
     LogMessage "AccountKey: $masked"
     LogMessage "OrganizationKey: '$OrganizationKey'"
 
