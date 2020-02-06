@@ -182,9 +182,13 @@ function Get-Installer {
 
     # Ensure a secure TLS version is used.
     $ProtocolsSupported = [enum]::GetValues('Net.SecurityProtocolType')
-    if ($ProtocolsSupported -contains 'Tls13') {
+    if ( ($ProtocolsSupported -contains 'Tls13') -and ($ProtocolsSupported -contains 'Tls12') ){
+        # Use only TLS 1.3 or 1.2
+        LogMessage "Using TLS 1.3 or 1.2..."
         [Net.ServicePointManager]::SecurityProtocol = [Enum]::ToObject([Net.SecurityProtocolType], 12288)
+        [Net.ServicePointManager]::SecurityProtocol += [Enum]::ToObject([Net.SecurityProtocolType], 3072)
     } else {
+        LogMessage "Using TLS 1.2..."
         try {
             # In certain .NET 4.0 patch levels, SecurityProtocolType does not have a TLS 1.2 entry.
             # Rather than check for 'Tls12', we force-set TLS 1.2 and catch the error if it's truly unsupported.
