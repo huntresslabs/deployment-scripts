@@ -381,7 +381,7 @@ function main () {
     if ($reregister) {
         PrepReregister
     } elseif ($reinstall) {
-        LogMessage "Re-installing agent"
+        LogMessage "Re-installing agent..."
         if ( !(Confirm-ServiceExists($HuntressAgentServiceName)) ) {
             $err = "The Huntress Agent is NOT installed; nothing to re-install. Exiting."
             LogMessage "$err"
@@ -400,7 +400,7 @@ function main () {
     Get-Installer
     Install-Huntress $OrganizationKey
     Test-Installation
-    LogMessage "Huntress Agent successfully installed"
+    LogMessage "Huntress Agent successfully installed!"
 }
 
 try
