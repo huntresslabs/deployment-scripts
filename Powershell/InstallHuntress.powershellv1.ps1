@@ -89,7 +89,7 @@ $ScriptFailed = "Script Failed!"
 $SupportMessage = "Please send the error message to the Huntress Team for help at support@huntress.com"
 
 function Get-TimeStamp {
-    return "[{0:MM/dd/yy} {0:HH:mm:ss}]" -f (Get-Date)
+    return "[{0:yyyy/MM/dd} {0:HH:mm:ss}]" -f (Get-Date)
 }
 
 function LogMessage ($msg) {
