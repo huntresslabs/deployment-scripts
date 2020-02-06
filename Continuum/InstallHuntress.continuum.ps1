@@ -57,7 +57,7 @@ Set-StrictMode -Version Latest
 
 # Do not modify the following variables.
 # These are used by the Huntress support team when troubleshooting.
-$ScriptVersion = "2020 February 4; revision 1"
+$ScriptVersion = "2020 February 5; revision 2"
 $ScriptType = "Continuum"
 
 # Check for an account key specified on the command line.
@@ -71,12 +71,12 @@ if ( ! [string]::IsNullOrEmpty($orgkey) ) {
     $OrganizationKey = $orgkey.Trim()
 }
 
-# Variables used throughout the Huntress Deployment Script for Continuum RMM.
+# Variables used throughout the Huntress Deployment Script.
 $X64 = 64
 $X86 = 32
 $InstallerName = "HuntressInstaller.exe"
 $InstallerPath = Join-Path $Env:TMP $InstallerName
-$DebugLog = Join-Path $Env:TMP HuntressDebug.log
+$DebugLog = Join-Path $Env:TMP HuntressInstaller.log
 $DownloadURL = "https://update.huntress.io/download/" + $AccountKey + "/" + $InstallerName
 $HuntressAgentServiceName = "HuntressAgent"
 $HuntressUpdaterServiceName = "HuntressUpdater"
@@ -206,27 +206,33 @@ function Get-OrganizationKey {
 ##############################################################################
 
 function Get-TimeStamp {
-    return "[{0:MM/dd/yy} {0:HH:mm:ss}]" -f (Get-Date)
+    return "[{0:yyyy/MM/dd} {0:HH:mm:ss}]" -f (Get-Date)
+}
+
+function LogMessage ($msg) {
+    Add-Content $DebugLog "$(Get-TimeStamp) $msg"
+    Write-Host "$(Get-TimeStamp) $msg"
 }
 
 function Test-Parameters {
-    Write-Debug "$(Get-TimeStamp) Verifying received parameters..."
+    LogMessage "Verifying received parameters..."
 
     # Ensure mutually exclusive parameters were not both specified.
     if ($reregister -and $reinstall) {
-        Write-Warning "$(Get-TimeStamp) Cannot specify both `-reregister` and `-reinstall` parameters, exiting script!"
+        $err = "Cannot specify both `-reregister` and `-reinstall` parameters, exiting script!"
+        LogMessage $err
         exit 1
     }
 
     # Ensure we have an account key (either hard coded or from the command line params).
     if ($AccountKey -eq "__ACCOUNT_KEY__") {
         $err = "AccountKey not set!"
-        Write-Warning "$(Get-TimeStamp) $err"
+        LogMessage $err
         throw $ScriptFailed + " " + $err
         exit 1
     } elseif ($AccountKey.length -ne 32) {
         $err = "Invalid AccountKey specified (incorrect length)!"
-        Write-Warning "$(Get-TimeStamp) $err"
+        LogMessage $err
         throw $ScriptFailed + " " + $err
         exit 1
     }
@@ -234,12 +240,12 @@ function Test-Parameters {
     # Ensure we have an organization key (either hard coded or from the command line params).
     if ($OrganizationKey -eq "__ORGANIZATION_KEY__") {
         $err = "OrganizationKey not specified!"
-        Write-Warning "$(Get-TimeStamp) $err"
+        LogMessage $err
         throw $ScriptFailed + " " + $err
         exit 1
     } elseif ($OrganizationKey.length -lt 1) {
         $err = "Invalid OrganizationKey specified (length is 0)!"
-        Write-Warning "$(Get-TimeStamp) $err"
+        LogMessage $err
         throw $ScriptFailed + " " + $err
         exit 1
     }
@@ -281,20 +287,25 @@ function verifyInstaller ($file) {
             "ERROR: '$file' did not contain a valid digital certificate. " +
             "Something may have corrupted/modified the file during the download process. " +
             "If the problem persists please file a support ticket.")
-        Write-Host "$(Get-TimeStamp) $err"
-        Write-Host "$(Get-TimeStamp) $SupportMessage"
+        LogMessage $err
+        LogMessage $SupportMessage
         throw $ScriptFailed + " " + $err + " " + $SupportMessage
     }
 }
 
 function Get-Installer {
-    Write-Host "$(Get-TimeStamp) Downloading installer to '$InstallerPath'"
+    $msg = "Downloading installer to '$InstallerPath'..."
+    LogMessage $msg
 
     # Ensure a secure TLS version is used.
     $ProtocolsSupported = [enum]::GetValues('Net.SecurityProtocolType')
-    if ($ProtocolsSupported -contains 'Tls13') {
+    if ( ($ProtocolsSupported -contains 'Tls13') -and ($ProtocolsSupported -contains 'Tls12') ){
+        # Use only TLS 1.3 or 1.2
+        LogMessage "Using TLS 1.3 or 1.2..."
         [Net.ServicePointManager]::SecurityProtocol = [Enum]::ToObject([Net.SecurityProtocolType], 12288)
+        [Net.ServicePointManager]::SecurityProtocol += [Enum]::ToObject([Net.SecurityProtocolType], 3072)
     } else {
+        LogMessage "Using TLS 1.2..."
         try {
             # In certain .NET 4.0 patch levels, SecurityProtocolType does not have a TLS 1.2 entry.
             # Rather than check for 'Tls12', we force-set TLS 1.2 and catch the error if it's truly unsupported.
@@ -302,8 +313,8 @@ function Get-Installer {
         } catch {
             $msg = $_.Exception.Message
             $err = "ERROR: Unable to use a secure version of TLS. Please verify Hotfix KB3140245 is installed."
-            Write-Host "$(Get-TimeStamp) $msg"
-            Write-Host "$(Get-TimeStamp) $err"
+            LogMessage $msg
+            LogMessage $err
             throw $ScriptFailed + " " + $msg + " " + $err
         }
     }
@@ -318,35 +329,40 @@ function Get-Installer {
             "ERROR: Failed to download the Huntress Installer. Please try accessing $DownloadURL " +
             "from a web browser on the host where the download failed. If the issue persists, please " +
             "send the error message to the Huntress Team for help at support@huntress.com.")
-        Write-Host "$(Get-TimeStamp) $err"
-        Write-Host "$(Get-TimeStamp) $msg"
+        LogMessage $msg
+        LogMessage $err
         throw $ScriptFailed + " " + $err + " " + $msg
     }
 
     if ( ! (Test-Path $InstallerPath) ) {
         $err = "ERROR: Failed to download the Huntress Installer from $DownloadURL."
-        Write-Host "$(Get-TimeStamp) $err"
-        Write-Host "$(Get-TimeStamp) $SupportMessage"
+        LogMessage $err
+        LogMessage $SupportMessage
         throw $ScriptFailed + " " + $err + " " + $SupportMessage
     }
-    Write-Debug "$(Get-TimeStamp) Installer downloaded to $InstallerPath..."
+
+    $msg = "Installer downloaded to '$InstallerPath'..."
+    LogMessage $msg
 }
 
 function Install-Huntress ($OrganizationKey) {
-    Write-Debug "$(Get-TimeStamp) Checking for installer file...$InstallerPath"
+    LogMessage "Checking for installer '$InstallerPath'..."
     if ( ! (Test-Path $InstallerPath) ) {
         $err = "ERROR: The installer was unexpectedly removed from $InstallerPath"
-        Write-Host "$(Get-TimeStamp) $err"
-        Write-Host (
-            "$(Get-TimeStamp) A security product may have quarantined the installer. Please check " +
+        $msg = (
+            "A security product may have quarantined the installer. Please check " +
             "your logs. If the issue continues to occur, please send the log to the Huntress " +
             "Team for help at support@huntresslabs.com")
+        LogMessage $err
+        LogMessage $msg
         throw $ScriptFailed + " " + $err + " " + $SupportMessage
     }
 
     verifyInstaller($InstallerPath)
 
-    Write-Debug "$(Get-TimeStamp) Executing installer..."
+    $msg = "Executing installer..."
+    LogMessage $msg
+
     $timeout = 30 # Seconds
     $process = Start-Process $InstallerPath "/ACCT_KEY=`"$AccountKey`" /ORG_KEY=`"$OrganizationKey`" /S" -PassThru
     try {
@@ -354,14 +370,14 @@ function Install-Huntress ($OrganizationKey) {
     } catch {
         $process | Stop-Process -Force
         $err = "ERROR: Installer failed to complete in $timeout seconds."
-        Write-Host "$(Get-TimeStamp) $err"
-        Write-Host "$(Get-TimeStamp) $SupportMessage"
+        LogMessage $err
+        LogMessage $SupportMessage
         throw $ScriptFailed + " " + $err + " " + $SupportMessage
     }
 }
 
 function Test-Installation {
-    Write-Debug "$(Get-TimeStamp) Verifying installation..."
+    LogMessage "Verifying installation..."
 
     # Give the agent a few seconds to start and register.
     Start-Sleep -Seconds 8
@@ -374,8 +390,8 @@ function Test-Installation {
         $HuntressDirPath = Join-Path $Env:ProgramW6432 "Huntress"
     } else {
         $err = "ERROR: Failed to determine the Windows Architecture. Received $WindowsArchitecture."
-        Write-Host "$(Get-TimeStamp) $err"
-        Write-Host "$(Get-TimeStamp) $SupportMessage"
+        LogMessage $err
+        LogMessage $SupportMessage
         throw $ScriptFailed + " " + $err + " " + $SupportMessage
     }
 
@@ -391,8 +407,8 @@ function Test-Installation {
     foreach ( $file in ($HuntressAgentPath, $HuntressUpdaterPath, $WyUpdaterPath) ) {
         if ( ! (Test-Path $file) ) {
             $err = "ERROR: $file did not exist."
-            Write-Host "$(Get-TimeStamp) $err"
-            Write-Host "$(Get-TimeStamp) $SupportMessage"
+            LogMessage $err
+            LogMessage $SupportMessage
             throw $ScriptFailed + " " + $err + " " + $SupportMessage
         }
     }
@@ -400,8 +416,8 @@ function Test-Installation {
     # Ensure the Huntress registry key is present.
     if ( ! (Test-Path $HuntressKeyPath) ) {
         $err = "ERROR: The registry key '$HuntressKeyPath' did not exist."
-        Write-Host "$(Get-TimeStamp) $err"
-        Write-Host "$(Get-TimeStamp) $SupportMessage"
+        LogMessage $err
+        LogMessage $SupportMessage
         throw $ScriptFailed + " " + $err + " " + $SupportMessage
     }
 
@@ -411,8 +427,8 @@ function Test-Installation {
     foreach ( $value in ($AgentIdKeyValueName, $OrganizationKeyValueName, $TagsValueName) ) {
         If ( ! (Get-Member -inputobject $HuntressKeyObject -name $value -Membertype Properties) ) {
             $err = "ERROR: The registry value $value did not exist within $HuntressKeyPath."
-            Write-Host "$(Get-TimeStamp) $err"
-            Write-Host "$(Get-TimeStamp) $SupportMessage"
+            LogMessage $err
+            LogMessage $SupportMessage
             throw $ScriptFailed + " " + $err + " " + $SupportMessage
         }
     }
@@ -422,16 +438,16 @@ function Test-Installation {
         # service installed?
         if ( ! (Confirm-ServiceExists($svc)) ) {
             $err = "ERROR: The $svc service is not installed."
-            Write-Host "$(Get-TimeStamp) $err"
-            Write-Host "$(Get-TimeStamp) $SupportMessage"
+            LogMessage $err
+            LogMessage $SupportMessage
             throw $ScriptFailed + " " + $err + " " + $SupportMessage
         }
 
         # service running?
         if ( ! (Confirm-ServiceRunning($svc)) ) {
             $err = "ERROR: The $svc service is not running."
-            Write-Host "$(Get-TimeStamp) $err"
-            Write-Host "$(Get-TimeStamp) $SupportMessage"
+            LogMessage $err
+            LogMessage $SupportMessage
             throw $ScriptFailed + " " + $err + " " + $SupportMessage
         }
     }
@@ -439,22 +455,23 @@ function Test-Installation {
     # Verify the agent registered.
     If ($HuntressKeyObject.$AgentIdKeyValueName -eq 0) {
         $err = ("ERROR: The agent did not register. Check the log (%ProgramFiles%\Huntress\HuntressAgent.log) for errors.")
-        Write-Host "$(Get-TimeStamp) $err"
-        Write-Host "$(Get-TimeStamp) $SupportMessage"
+        LogMessage $err
+        LogMessage $SupportMessage
         throw $ScriptFailed + " " + $err + " " + $SupportMessage
     }
 
-    Write-Debug "$(Get-TimeStamp) Installation verified..."
+    $msg = "Installation verified!"
+    LogMessage $msg
 }
 
 function StopHuntressServices {
-    Write-Host "$(Get-TimeStamp) Stopping Huntress services"
+    LogMessage "Stopping Huntress services..."
     Stop-Service -Name "$HuntressAgentServiceName"
     Stop-Service -Name "$HuntressUpdaterServiceName"
 }
 
 function PrepReregister {
-    Write-Host "$(Get-TimeStamp) prepping to reregister agent"
+    LogMessage "Preparing to re-register agent..."
     StopHuntressServices
 
     $HuntressKeyPath = "HKLM:\SOFTWARE\Huntress Labs\Huntress"
@@ -462,31 +479,40 @@ function PrepReregister {
 }
 
 function main () {
+    LogMessage "Script type: '$ScriptType'"
+    LogMessage "Script version: '$ScriptVersion'"
+    LogMessage "Host name: '$env:computerName'"
+    $os = (get-WMiObject -computername $env:computername -Class win32_operatingSystem).caption
+    LogMessage "Host OS: '$os'"
+    LogMessage "Host Architecture: '$(Get-WindowsArchitecture)'"
+    LogMessage "Re-register agent: '$reregister'"
+    LogMessage "Installer location: '$InstallerPath'"
+    LogMessage "Installer log: '$DebugLog'"
+
     # Continuum specific
     $OrganizationKey = Get-OrganizationKey
 
-    Test-Parameters
+    $masked = $AccountKey.Substring(0,10) + "XXXXXXXXXXXXXXXXXXXXXXX"
+    LogMessage "AccountKey: '$masked'"
+    LogMessage "OrganizationKey: '$OrganizationKey'"
 
-    Write-Host "$(Get-TimeStamp) Script type: $ScriptType"
-    Write-Host "$(Get-TimeStamp) Script version: $ScriptVersion"
-    Write-Host "$(Get-TimeStamp) Host name: $env:computerName"
-    Write-Host "$(Get-TimeStamp) Host OS: " (get-WMiObject -computername $env:computername -Class win32_operatingSystem).caption
-    Write-Host "$(Get-TimeStamp) Host Architecture: " (Get-WindowsArchitecture)
-    $masked = $AccountKey.Substring(0,8) + "XXXXXXXXXXXXXXXXXXXXXXX"
-    Write-Host "$(Get-TimeStamp) AccountKey: $masked"
-    Write-Host "$(Get-TimeStamp) OrganizationKey: " $OrganizationKey
-    Write-Host "$(Get-TimeStamp) reregister agent: " $reregister
+    Test-Parameters
 
     if ($reregister) {
         PrepReregister
     } elseif ($reinstall) {
-        Write-Host "$(Get-TimeStamp) Re-installing agent"
+        LogMessage "Re-installing agent..."
+        if ( !(Confirm-ServiceExists($HuntressAgentServiceName)) ) {
+            $err = "The Huntress Agent is NOT installed; nothing to re-install. Exiting."
+            LogMessage "$err"
+            exit 1
+        }
         StopHuntressServices
     } else {
-        Write-Debug "$(Get-TimeStamp) Checking for HuntressAgent service..."
-        if ( Confirm-ServiceExists($HuntressAgentServiceName)) {
+        LogMessage "Checking for HuntressAgent service..."
+        if ( Confirm-ServiceExists($HuntressAgentServiceName) ) {
             $err = "The Huntress Agent is already installed. Exiting."
-            Write-Host "$(Get-TimeStamp) $err"
+            LogMessage "$err"
             exit 0
         }
     }
@@ -494,7 +520,7 @@ function main () {
     Get-Installer
     Install-Huntress $OrganizationKey
     Test-Installation
-    Write-Host "$(Get-TimeStamp) Huntress Agent successfully installed"
+    LogMessage "Huntress Agent successfully installed!"
 }
 
 try
@@ -502,6 +528,6 @@ try
     main
 } catch {
     $ErrorMessage = $_.Exception.Message
-    Write-Host "$(Get-TimeStamp) $ErrorMessage"
+    LogMessage $ErrorMessage
     exit 1
 }
