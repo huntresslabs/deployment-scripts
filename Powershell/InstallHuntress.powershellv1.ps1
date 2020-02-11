@@ -60,7 +60,7 @@ Set-StrictMode -Version Latest
 
 # Do not modify the following variables.
 # These are used by the Huntress support team when troubleshooting.
-$ScriptVersion = "2020 February 5; revision 2"
+$ScriptVersion = "2020 February 10; revision 1"
 $ScriptType = "PowerShell"
 
 # Check for an account key specified on the command line.
@@ -87,6 +87,12 @@ $HuntressUpdaterServiceName = "HuntressUpdater"
 
 $ScriptFailed = "Script Failed!"
 $SupportMessage = "Please send the error message to the Huntress Team for help at support@huntress.com"
+
+$PowerShellArch = $X86
+# 8 byte pointer is 64bit
+if ([IntPtr]::size -eq 8) {
+   $PowerShellArch = $X64
+}
 
 function Get-TimeStamp {
     return "[{0:yyyy/MM/dd} {0:HH:mm:ss}]" -f (Get-Date)
@@ -294,26 +300,7 @@ function Test-Installation {
             LogMessage $SupportMessage
             throw $ScriptFailed + " " + $err + " " + $SupportMessage
         }
-    }
-
-    # Ensure the Huntress registry key is present.
-    if ( ! (Test-Path $HuntressKeyPath) ) {
-        $err = "ERROR: The registry key '$HuntressKeyPath' did not exist."
-        LogMessage $err
-        LogMessage $SupportMessage
-        throw $ScriptFailed + " " + $err + " " + $SupportMessage
-    }
-
-    $HuntressKeyObject = Get-ItemProperty $HuntressKeyPath
-
-    # Ensure the Huntress registry values are present.
-    foreach ( $value in ($AgentIdKeyValueName, $OrganizationKeyValueName, $TagsValueName) ) {
-        If ( ! (Get-Member -inputobject $HuntressKeyObject -name $value -Membertype Properties) ) {
-            $err = "ERROR: The registry value $value did not exist within $HuntressKeyPath."
-            LogMessage $err
-            LogMessage $SupportMessage
-            throw $ScriptFailed + " " + $err + " " + $SupportMessage
-        }
+        LogMessage "'$file' is present."
     }
 
     # Ensure the services are installed and running.
@@ -333,14 +320,44 @@ function Test-Installation {
             LogMessage $SupportMessage
             throw $ScriptFailed + " " + $err + " " + $SupportMessage
         }
+        LogMessage "'$svc' is running."
+    }
+
+    if ( ($PowerShellArch -eq $X86) -and ($WindowsArchitecture -eq $X64) ) {
+        LogMessage "WARNING: Can't verify registry settings due to 32bit PowerShell on 64bit host."
+    } else {
+        # Ensure the Huntress registry key is present.
+        if ( ! (Test-Path $HuntressKeyPath) ) {
+            $err = "ERROR: The registry key '$HuntressKeyPath' did not exist."
+            LogMessage $err
+            LogMessage $SupportMessage
+            throw $ScriptFailed + " " + $err + " " + $SupportMessage
+        }
+
+        $HuntressKeyObject = Get-ItemProperty $HuntressKeyPath
+
+        # Ensure the Huntress registry values are present.
+        foreach ( $value in ($AgentIdKeyValueName, $OrganizationKeyValueName, $TagsValueName) ) {
+            If ( ! (Get-Member -inputobject $HuntressKeyObject -name $value -Membertype Properties) ) {
+                $err = "ERROR: The registry value $value did not exist within $HuntressKeyPath."
+                LogMessage $err
+                LogMessage $SupportMessage
+                throw $ScriptFailed + " " + $err + " " + $SupportMessage
+            }
+        }
     }
 
     # Verify the agent registered.
-    If ($HuntressKeyObject.$AgentIdKeyValueName -eq 0) {
-        $err = ("ERROR: The agent did not register. Check the log (%ProgramFiles%\Huntress\HuntressAgent.log) for errors.")
-        LogMessage $err
-        LogMessage $SupportMessage
-        throw $ScriptFailed + " " + $err + " " + $SupportMessage
+    if ( ($PowerShellArch -eq $X86) -and ($WindowsArchitecture -eq $X64) ) {
+        LogMessage "WARNING: Can't verify agent registration due to 32bit PowerShell on 64bit host."
+    } else {
+        If ($HuntressKeyObject.$AgentIdKeyValueName -eq 0) {
+            $err = ("ERROR: The agent did not register. Check the log (%ProgramFiles%\Huntress\HuntressAgent.log) for errors.")
+            LogMessage $err
+            LogMessage $SupportMessage
+            throw $ScriptFailed + " " + $err + " " + $SupportMessage
+        }
+        LogMessage "Agent registered."
     }
 
     $msg = "Installation verified!"
@@ -368,6 +385,7 @@ function main () {
     $os = (get-WMiObject -computername $env:computername -Class win32_operatingSystem).caption
     LogMessage "Host OS: '$os'"
     LogMessage "Host Architecture: '$(Get-WindowsArchitecture)'"
+    LogMessage "PowerShell Architecture: '$PowerShellArch'"
     LogMessage "Re-register agent: '$reregister'"
     LogMessage "Installer location: '$InstallerPath'"
     LogMessage "Installer log: '$DebugLog'"
