@@ -60,20 +60,18 @@ Set-StrictMode -Version Latest
 
 # Do not modify the following variables.
 # These are used by the Huntress support team when troubleshooting.
-$ScriptVersion = "2020 February 10; revision 1"
+$ScriptVersion = "2020 February 11; revision 1"
 $ScriptType = "PowerShell"
 
 # Check for an account key specified on the command line.
 if ( ! [string]::IsNullOrEmpty($acctkey) ) {
     $AccountKey = $acctkey
 }
-$AccountKey = $AccountKey.Trim()
 
 # Check for an organization key specified on the command line.
 if ( ! [string]::IsNullOrEmpty($orgkey) ) {
     $OrganizationKey = $orgkey
 }
-$OrganizationKey = $OrganizationKey.Trim()
 
 # Variables used throughout the Huntress Deployment Script.
 $X64 = 64
@@ -85,14 +83,14 @@ $DownloadURL = "https://update.huntress.io/download/" + $AccountKey + "/" + $Ins
 $HuntressAgentServiceName = "HuntressAgent"
 $HuntressUpdaterServiceName = "HuntressUpdater"
 
-$ScriptFailed = "Script Failed!"
-$SupportMessage = "Please send the error message to the Huntress Team for help at support@huntress.com"
-
 $PowerShellArch = $X86
 # 8 byte pointer is 64bit
 if ([IntPtr]::size -eq 8) {
    $PowerShellArch = $X64
 }
+
+$ScriptFailed = "Script Failed!"
+$SupportMessage = "Please send the error message to the Huntress Team for help at support@huntress.com"
 
 function Get-TimeStamp {
     return "[{0:yyyy/MM/dd} {0:HH:mm:ss}]" -f (Get-Date)
@@ -360,8 +358,7 @@ function Test-Installation {
         LogMessage "Agent registered."
     }
 
-    $msg = "Installation verified!"
-    LogMessage $msg
+    LogMessage "Installation verified!"
 }
 
 function StopHuntressServices {
@@ -382,7 +379,7 @@ function main () {
     LogMessage "Script type: '$ScriptType'"
     LogMessage "Script version: '$ScriptVersion'"
     LogMessage "Host name: '$env:computerName'"
-    $os = (get-WMiObject -computername $env:computername -Class win32_operatingSystem).caption
+    $os = (get-WMiObject -computername $env:computername -Class win32_operatingSystem).caption.Trim()
     LogMessage "Host OS: '$os'"
     LogMessage "Host Architecture: '$(Get-WindowsArchitecture)'"
     LogMessage "PowerShell Architecture: '$PowerShellArch'"
@@ -390,11 +387,15 @@ function main () {
     LogMessage "Installer location: '$InstallerPath'"
     LogMessage "Installer log: '$DebugLog'"
 
+    # trim keys before use
+    $AccountKey = $AccountKey.Trim()
+    $OrganizationKey = $OrganizationKey.Trim()
+
+    Test-Parameters
+
     $masked = $AccountKey.Substring(0,10) + "XXXXXXXXXXXXXXXXXXXXXXX"
     LogMessage "AccountKey: '$masked'"
     LogMessage "OrganizationKey: '$OrganizationKey'"
-
-    Test-Parameters
 
     if ($reregister) {
         PrepReregister
