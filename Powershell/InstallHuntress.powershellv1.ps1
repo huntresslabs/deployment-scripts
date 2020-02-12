@@ -383,7 +383,12 @@ function main () {
     LogMessage "Host OS: '$os'"
     LogMessage "Host Architecture: '$(Get-WindowsArchitecture)'"
     LogMessage "PowerShell Architecture: '$PowerShellArch'"
-    LogMessage "Re-register agent: '$reregister'"
+    if ($reinstall) {
+        LogMessage "Re-install agent: '$reinstall'"
+    }
+    if ($reregister) {
+        LogMessage "Re-register agent: '$reregister'"
+    }
     LogMessage "Installer location: '$InstallerPath'"
     LogMessage "Installer log: '$DebugLog'"
 
