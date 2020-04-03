@@ -217,11 +217,12 @@ function Get-Installer {
 
     # Ensure a secure TLS version is used.
     $ProtocolsSupported = [enum]::GetValues('Net.SecurityProtocolType')
-    if ( ($ProtocolsSupported -contains 'Tls13') -and ($ProtocolsSupported -contains 'Tls12') ){
+    if ( ($ProtocolsSupported -contains 'Tls13') -and ($ProtocolsSupported -contains 'Tls12') ) {
         # Use only TLS 1.3 or 1.2
         LogMessage "Using TLS 1.3 or 1.2..."
-        [Net.ServicePointManager]::SecurityProtocol = [Enum]::ToObject([Net.SecurityProtocolType], 12288)
-        [Net.ServicePointManager]::SecurityProtocol += [Enum]::ToObject([Net.SecurityProtocolType], 3072)
+        [Net.ServicePointManager]::SecurityProtocol = (
+            [Enum]::ToObject([Net.SecurityProtocolType], 12288) -bOR [Enum]::ToObject([Net.SecurityProtocolType], 3072)
+        )
     } else {
         LogMessage "Using TLS 1.2..."
         try {
