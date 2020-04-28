@@ -92,7 +92,7 @@
         </Then>
         <Else>
           <Statement name="WriteScriptLogEntry" continueOnFail="false" osType="Windows">
-            <Parameter xsi:type="StringParameter" name="Comment" value="Error: ACCT_KEY Not defined!" />
+            <Parameter xsi:type="StringParameter" name="Comment" value="Error: HUNTRESS_ACCT_KEY variable not defined!" />
           </Statement>
         </Else>
       </If>
