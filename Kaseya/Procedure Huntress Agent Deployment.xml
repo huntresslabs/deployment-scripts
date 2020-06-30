@@ -19,7 +19,7 @@
                 <Parameter xsi:type="StringParameter" name="Comment" value="HuntressAgent service not found, installing..." />
               </Statement>
               <Statement name="GetURL" continueOnFail="false" osType="Windows">
-                <Parameter xsi:type="StringParameter" name="URL" value="https://huntress.io/download/&lt;HUNTRESS_ACCT_KEY&gt;/HuntressInstaller.exe&quot;" />
+                <Parameter xsi:type="StringParameter" name="URL" value="https://update.huntress.io/download/&lt;HUNTRESS_ACCT_KEY&gt;/HuntressInstaller.exe&quot;" />
                 <Parameter xsi:type="StringParameter" name="ResponseFileName" value="#vagentconfiguration.agenttempdir#\HuntressInstaller.exe" />
                 <Parameter xsi:type="BooleanParameter" name="WaitComplete" value="True" />
               </Statement>
