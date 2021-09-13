@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<ScriptExport xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="http://www.kaseya.com/vsa/2008/12/Scripting">
+<ScExport xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="http://www.kaseya.com/vsa/2008/12/Scripting">
   <Procedure name="Huntress Agent Deployment">
     <Body description="">
       <If description="Huntress Agent Deployment Procedure&#xD;&#xA;18 February 2018 (v1.1)&#xD;&#xA;by John Ferrell, Huntress Labs&#xD;&#xA;Before running this procedure define a HUNTRESS_ACCT_KEY variable&#xD;&#xA;set the HUNTRESS_ACCT_KEY variable to your Huntress account key&#xD;&#xA;Your Huntress account key can be found in Huntress console&#xD;&#xA;The procedure will use the Kaseya GroupName as the Huntress organization key (used to group agents)">
@@ -98,4 +98,4 @@
       </If>
     </Body>
   </Procedure>
-</ScriptExport>
+</ScExport>
