@@ -1,3 +1,3 @@
 Various deployment scripts for Huntress
 
-See https://support.huntress.io/article/6-installing-the-huntress-agent for details.
+See https://huntress.zendesk.com/hc/en-us/articles/4404005189011-Installing-the-Huntress-Agent for details.

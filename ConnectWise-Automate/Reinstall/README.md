@@ -14,4 +14,4 @@ This script will download the most recent Huntress Agent installer from the Hunt
 The setup is the same as the normal deployment script. You will need to update the script with your Huntress account key. When scheduled, it should only be run once.
 
 Please see the following document for usage details:
-https://support.huntress.io/article/41-deploying-huntress-via-labtech-automate
+https://huntress.zendesk.com/hc/en-us/articles/4402100845459-Deploying-Huntress-with-ConnectWise-Automate-Labtech-
