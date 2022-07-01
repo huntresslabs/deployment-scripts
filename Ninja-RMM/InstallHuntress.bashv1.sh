@@ -54,19 +54,26 @@ defaultOrgKey="Mac Agents"
 
 ORG_KEY=$1
 dd=`date "+%Y%m%d-%H%M%S"`
-log_file="/tmp/HuntressInstall.log"
+log_file="/tmp/HuntressInstaller.log"
+install_script="/tmp/HuntressMacInstall.sh"
+invalid_key="Invalid account secret key"
 echo "=========== INSTALL START AT $dd ===============" >> "$log_file"
 
+# Clean up any old installer scripts.
+if [ -f "$install_script" ]; then
+    echo "$dd -- Installer file present in /tmp; deleting." >> "$log_file"
+    rm -f "$install_script"
+fi
+
 # Check if organization key was passed; if not, use the default organization set above.
-if [ -z $ORG_KEY ]
-  then
+if [ -z $ORG_KEY ]; then
     # remove any trailing spaces
     orgKey=$(echo "$defaultOrgKey" | xargs)
-    echo "No Organization Key parameter present, defaulting to $defaultOrgKey" >> "$log_file"
+    echo "$dd -- No Organization Key parameter present, defaulting to $defaultOrgKey" >> "$log_file"
   else
     # remove any trailing spaces
     orgKey=$(echo "$ORG_KEY" | xargs)
-    echo "Organization Key parameter present, set to: $ORG_KEY" >> "$log_file"
+    echo "$dd -- Organization Key parameter present, set to: $ORG_KEY" >> "$log_file"
 fi
 
 # Hide most of the account key in the logs, keeping the front and tail end for troubleshooting 
@@ -74,9 +81,22 @@ masked="$(echo ${accountKey:0:4})"
 masked+="************************"
 masked+="$(echo ${accountKey: (-4)})"
 
-echo "Huntress key: $masked" >> "$log_file"
-echo "Organization Key: $orgKey" >> "$log_file"
+echo "$dd -- Huntress key: $masked" >> "$log_file"
+echo "$dd -- Organization Key: $orgKey" >> "$log_file"
 
-/bin/bash -c "$(curl -L "https://huntress.io/script/darwin/$accountKey")" -- -a "$accountKey" -o "$orgKey"
+result=$(curl -w %{http_code} -L "https://huntress.io/script/darwin/$accountKey" -o "$install_script")
+
+if [ $? != "0" ]; then
+   echo "$dd -- Download failed with error: $result" >> "$log_file"
+   exit 1
+fi
+
+if grep -Fq "$invalid_key" "$install_script"; then
+   echo "$dd -- Account key is invalid. You entered: $accountKey" >> "$log_file"
+   exit 1
+fi
+
+install_result="$(/bin/bash "$install_script" -a "$accountKey" -o "$orgKey")"
+echo "$install_result" >> "$log_file"
 
 echo "=========== INSTALL FINISHED AT $dd ===============" >> "$log_file"
