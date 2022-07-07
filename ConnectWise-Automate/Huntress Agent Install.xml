@@ -33,10 +33,10 @@ Updated: 07 July 2022</ScriptNotes>
 		<ScriptFolder>
 			<NewDataSet>
 				<Table>
-					<FolderID>191</FolderID>
+					<FolderID></FolderID>
 					<ParentID>0</ParentID>
-					<Name>nXio Scripts</Name>
-					<GUID>40cd3154-10f9-4231-8d02-31d03c8141e1</GUID>
+					<Name>Huntress Scripts</Name>
+					<GUID></GUID>
 				</Table>
 			</NewDataSet>
 		</ScriptFolder>
