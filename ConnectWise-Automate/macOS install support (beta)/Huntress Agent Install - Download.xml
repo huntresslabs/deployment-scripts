@@ -1,0 +1,44 @@
+﻿<LabTech_Expansion
+	Version="220.124"
+	Name="LabTech Script Expansion"
+	Type="PackedScript">
+	<PackedScript>
+		<NewDataSet>
+			<Table>
+				<ScriptId>6262</ScriptId>
+				<FolderId>191</FolderId>
+				<ScriptName>Copy of Huntress Agent Install - Download</ScriptName>
+				<ScriptNotes>Downloads and installs the Huntress Agent silently. Sets Org Key to company name (ClientName) for easy grouping of clients and uses the LocationName as a tag.
+
+Windows &amp; macOS support
+
+Requirements:
+- Set your ACCT_KEY on Globals and Parameters tab
+
+Updated: 07 July 2022</ScriptNotes>
+				<Permission>0,</Permission>
+				<EditPermission>0,</EditPermission>
+				<ComputerScript>1</ComputerScript>
+				<LocationScript>0</LocationScript>
+				<MaintenanceScript>0</MaintenanceScript>
+				<FunctionScript>0</FunctionScript>
+				<LicenseData>H4sIAAAAAAAEAFWPzQrCMBCE74LvkAdoSLZ/alkCYsWLXlS8N8kecjAtaQP27bVFoR6GYWf4FgbPzpDvqW6GRuF97EgBitnxGv2hjX6goCSKxYXHV+fCxJC6R+ptMyasJkNPTYGlMvkISgaygrTKJNtfUCwQvJnguuFBoXetn37/B9/+FJ1VhspymxHxPDeSA5DmWmvLpYSisECbncx+/AygWC5ar95wg2/34QAAAA==</LicenseData>
+				<ScriptData>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</ScriptData>
+				<ScriptVersion>1</ScriptVersion>
+				<ScriptGuid>ce6683ee-44c0-11eb-bbbd-00155d1e7903</ScriptGuid>
+				<ScriptFlags>0</ScriptFlags>
+				<Parameters></Parameters>
+			</Table>
+		</NewDataSet>
+		<ScriptFolder>
+			<NewDataSet>
+				<Table>
+					<FolderID>191</FolderID>
+					<ParentID>0</ParentID>
+					<Name>nXio Scripts</Name>
+					<GUID>40cd3154-10f9-4231-8d02-31d03c8141e1</GUID>
+				</Table>
+			</NewDataSet>
+		</ScriptFolder>
+	</PackedScript>
+</LabTech_Expansion>
