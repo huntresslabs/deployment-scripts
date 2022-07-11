@@ -1,5 +1,11 @@
 #!/bin/sh
 
+#
+# BETA SCRIPT NOTICE: This script is part of the Huntress beta, and is subject to change
+#                     prior to General Availability. Please check the Huntress Support
+#                     Knowledgebase for the latest information regarding deployment scripts.
+#
+
 # Copyright (c) 2022 Huntress Labs, Inc.
 # All rights reserved.
 #
