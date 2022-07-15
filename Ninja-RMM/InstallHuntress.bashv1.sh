@@ -106,3 +106,4 @@ install_result="$(/bin/bash "$install_script" -a "$accountKey" -o "$orgKey")"
 echo "$install_result" >> "$log_file"
 
 echo "=========== INSTALL FINISHED AT $dd ===============" >> "$log_file"
+exit 0
