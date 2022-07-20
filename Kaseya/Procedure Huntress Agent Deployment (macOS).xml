@@ -1,0 +1,66 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ScExport xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="http://www.kaseya.com/vsa/2008/12/Scripting">
+  <Procedure name="Huntress Agent Deployment [macOS]">
+    <Body description="">
+      <If description="Huntress Agent Deployment Procedure&#xD;&#xA;1 July 2022 (v1.0 BETA)&#xD;&#xA;by Jason Phelps, Huntress Labs&#xD;&#xA;Before running this procedure define a HUNTRESS_ACCT_KEY variable&#xD;&#xA;set the HUNTRESS_ACCT_KEY variable to your Huntress account key&#xD;&#xA;Your Huntress account key can be found in Huntress console&#xD;&#xA;The procedure will use the Kaseya GroupName as the Huntress organization key (used to group agents)">
+        <Condition name="CheckVariable">
+          <Parameter xsi:type="StringParameter" name="VariableName" value="HUNTRESS_ACCT_KEY" />
+          <Parameter xsi:type="EnumParameter" name="Condition" value="NotEquals" />
+          <Parameter xsi:type="StringParameter" name="Value" value="" />
+        </Condition>
+        <Then>
+          <Statement name="GetVariable" continueOnFail="false">
+            <Parameter xsi:type="EnumParameter" name="VariableType" value="AgentTempDirectory" />
+            <Parameter xsi:type="StringParameter" name="SourceContent" value="" />
+            <Parameter xsi:type="StringParameter" name="VariableName" value="workdir" />
+          </Statement>
+          <Statement name="WriteScriptLogEntry" continueOnFail="false" osType="MacOS">
+            <Parameter xsi:type="StringParameter" name="Comment" value="Downloading Huntress install script...." />
+          </Statement>
+          <If description="">
+            <Condition name="TestFile">
+              <Parameter xsi:type="StringParameter" name="Path" value="#workdir#/HuntressInstall.sh" />
+              <Parameter xsi:type="EnumParameter" name="Condition" value="Exists" />
+              <Parameter xsi:type="StringParameter" name="Value" value="" />
+            </Condition>
+            <Then>
+              <Statement name="DeleteFile" continueOnFail="false">
+                <Parameter xsi:type="StringParameter" name="Path" value="#workdir#/HuntressInstall.sh" />
+              </Statement>
+            </Then>
+          </If>
+          <Statement name="GetURL" continueOnFail="false">
+            <Parameter xsi:type="StringParameter" name="URL" value="https://huntress.io/script/darwin/&lt;HUNTRESS_ACCT_KEY&gt;" />
+            <Parameter xsi:type="StringParameter" name="ResponseFileName" value="#workdir#/HuntressInstall.sh" />
+            <Parameter xsi:type="BooleanParameter" name="WaitComplete" value="True" />
+          </Statement>
+          <If description="">
+            <Condition name="TestFile">
+              <Parameter xsi:type="StringParameter" name="Path" value="#workdir#/HuntressInstall.sh" />
+              <Parameter xsi:type="EnumParameter" name="Condition" value="Exists" />
+              <Parameter xsi:type="StringParameter" name="Value" value="" />
+            </Condition>
+            <Then>
+              <Statement name="WriteScriptLogEntry" continueOnFail="false">
+                <Parameter xsi:type="StringParameter" name="Comment" value="Install script downloaded successfully, installing Huntress Agent" />
+              </Statement>
+              <Statement name="ExecuteShellCommand" continueOnFail="false">
+                <Parameter xsi:type="StringParameter" name="Command" value="/bin/bash ./#workdir#/HuntressInstall.sh -a &lt;HUNTRESS_ACCT_KEY&gt; -o #vAgentConfiguration.groupName#" />
+                <Parameter xsi:type="EnumParameter" name="ExecuteAccount" value="System" />
+                <Parameter xsi:type="BooleanParameter" name="Is64Bit" value="False" />
+              </Statement>
+            </Then>
+          </If>
+          <Statement name="DeleteFile" continueOnFail="false" osType="MacOS">
+            <Parameter xsi:type="StringParameter" name="Path" value="#workdir#/HuntressInstall.sh" />
+          </Statement>
+        </Then>
+        <Else>
+          <Statement name="WriteScriptLogEntry" continueOnFail="false">
+            <Parameter xsi:type="StringParameter" name="Comment" value="HUNTRESS_ACCT_KEY variable not set, please check Huntress Support documentation!" />
+          </Statement>
+        </Else>
+      </If>
+    </Body>
+  </Procedure>
+</ScExport>
