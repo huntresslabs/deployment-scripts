@@ -58,44 +58,107 @@ defaultOrgKey="__ORGANIZATION_KEY__"
 ##############################################################################
 ## Do not modify anything below this line
 ##############################################################################
-ORG_KEY=$1
-ACCOUNT_KEY=$2
 dd=`date "+%Y%m%d-%H%M%S"`
 log_file="/tmp/HuntressInstaller.log"
 install_script="/tmp/HuntressMacInstall.sh"
 invalid_key="Invalid account secret key"
-paramOrgKey=$(echo "$ORG_KEY" | cut -d "=" -f 2-)
-paramAcctKey=$(echo "$ACCOUNT_KEY" | cut -d "=" -f 2-)
 pattern="[a-f0-9]{32}"
-echo "=========== INSTALL START AT $dd ===============" >> "$log_file"
+
+## Using logger function to provide helpful logs within RMM tools in addition to log file
+logger() {
+    echo "$dd -- $*";
+    echo "$dd -- $*" >> $log_file;
+}
+
+# Check for root
+if [[ $EUID -ne 0 ]]; then
+    logger "This script must be run as root, exiting..."
+    exit 1
+fi
 
 # Clean up any old installer scripts.
 if [ -f "$install_script" ]; then
-    echo "$dd -- Installer file present in /tmp; deleting." >> "$log_file"
+    logger "Installer file present in /tmp; deleting."
     rm -f "$install_script"
 fi
 
-# CHECK FOR VALID ORGANIZATION KEY, USE defaultOrgKey IF NONE PRESENT
-if [ ${#paramOrgKey} -ge 1 ]; then
-    # remove any trailing spaces
-    organizationKey=$(echo "$paramOrgKey" | xargs)
-    echo "$dd -- Organization Key parameter present, set to: $organizationKey" >> "$log_file"
+##
+## This section handles the assigning `=` character for options.
+## Since most RMMs treat spaces as delimiters in Mac Scripting,
+## we have to use `=` to assign the option value, but must remove
+## it because, well, bash. https://stackoverflow.com/a/28466267/519360
+##
+
+usage() {
+    cat <<EOF
+Usage: $0 [options...] --account_key=<account_key> --organization_key=<organization_key>
+
+-a, --account_key      <account_key>      The account key to use for this agent install
+-o, --organization_key <organization_key> The org key to use for this agent install
+-h, --help                                Print this message
+
+EOF
+}
+
+while getopts a:o:h:-: OPT; do
+  if [ "$OPT" = "-" ]; then
+    OPT="${OPTARG%%=*}"       # extract long option name
+    OPTARG="${OPTARG#$OPT}"   # extract long option argument (may be empty)
+    OPTARG="${OPTARG#=}"      # if long option argument, remove assigning `=`
   else
-    # remove any trailing spaces
+    # the user used a short option, but we still want to strip the assigning `=`
+    OPTARG="${OPTARG#=}"      # if long option argument, remove assigning `=`
+  fi
+  case "$OPT" in
+    a | account_key)
+        account_key="$OPTARG"
+        ;;
+    o | organization_key)
+        organization_key="$OPTARG"
+        ;;
+    h | help)
+        usage
+        ;;
+    ??*)
+        logger "Illegal option --$OPT"
+        exit 2
+        ;;  # bad long option
+    \? )
+        exit 2
+        ;;  # bad short option (error reported via getopts)
+  esac
+done
+shift $((OPTIND-1)) # remove parsed options and args from $@ list
+
+logger "=========== INSTALL START AT $dd ==============="
+
+# VALIDATE OPTIONS PASSED TO SCRIPT
+if [[ -z $organization_key ]]; then
     organizationKey=$(echo "$defaultOrgKey" | xargs)
-    echo "$dd -- No Organization Key parameter present, defaulting to $defaultOrgKey" >> "$log_file"
+    logger "Missing --organization_key parameter, switching to use $defaultOrgKey"
+  else
+    organizationKey=$(echo "$organization_key" | xargs)
+    logger "--organization_key parameter present, set to: $organizationKey"
 fi
 
-# CHECK FOR VALID ACCOUNT KEY, USE defaultAccountKey IF NONE PRESENT
-if [[ $paramAcctKey =~ $pattern ]]; then
-    accountKey=$(echo "$paramAcctKey")
-  else
-    echo "$dd -- Invalid Account Key provided as parameter, checking defaultAccountKey..."
+if ! [[ $account_key =~ $pattern ]]; then
+    logger "Invalid --account_key provided, checking defaultAccountKey..."
     accountKey=$(echo "$defaultAccountKey" | xargs)
     if ! [[ $accountKey =~ $pattern ]]; then
-        echo "$dd -- Invalid Account Key - exiting. Please check Huntress support documentation."
+        logger "ERROR: Invalid --account_key. Please check Huntress support documentation."
         exit 1
     fi
+    else
+        accountKey=$(echo "$account_key" | xargs)
+fi
+
+# OPTIONS REQUIRED
+if [[ -z $accountKey || -z $organizationKey ]]
+then
+    logger "Error: --account_key and --organization_key are both required" >> $log_file
+    echo
+    usage
+    exit 1
 fi
 
 # Hide most of the account key in the logs, keeping the front and tail end for troubleshooting 
@@ -103,26 +166,29 @@ masked="$(echo ${accountKey:0:4})"
 masked+="************************"
 masked+="$(echo ${accountKey: (-4)})"
 
-echo "$dd -- Provided Huntress key: $masked" >> "$log_file"
-echo "$dd -- Provided Organization Key: $organizationKey" >> "$log_file"
+logger "Provided Huntress key: $masked"
+logger "Provided Organization Key: $organizationKey"
 
 result=$(curl -w %{http_code} -L "https://huntress.io/script/darwin/$accountKey" -o "$install_script")
 
 if [ $? != "0" ]; then
-   echo "$dd -- Download failed with error: $result" >> "$log_file"
+   logger "ERROR: Download failed with error: $result"
    exit 1
 fi
 
 if grep -Fq "$invalid_key" "$install_script"; then
-   echo "$dd -- Account key is invalid. You entered: $accountKey" >> "$log_file"
+   logger "ERROR: --account_key is invalid. You entered: $accountKey"
    exit 1
 fi
 
-install_result="$(/bin/bash "$install_script" -a $accountKey -o "$organizationKey")"
+install_result="$(/bin/bash "$install_script" -a $accountKey -o "$organizationKey" -v)"
+logger "=============== Begin Installer Logs ==============="
+
 if [ $? != "0" ]; then
-    echo "$install_result" >> "$log_file"
+    logger "Installer Error: $install_result"
     exit 1
 fi
 
-
-echo "=========== INSTALL FINISHED AT $dd ===============" >> "$log_file"
+logger "$install_result"
+logger "=========== INSTALL FINISHED AT $dd ==============="
+exit
