@@ -17,15 +17,12 @@
 # Authors: John Ferrell, Dave Kleinatland, Alan Bishop, Cameron Granger
 
 
-# The Huntress installer needs an Account Key and an Organization Key (a user
-# specified name or description) which is used to affiliate an Agent with a
-# specific Organization within the Huntress Partner's Account. These keys can be
-# hard coded below or passed in when the script is run.
-# For more details, see our KB article
-# https://support.huntress.io/hc/en-us/articles/4404004936339-Deploying-Huntress-with-PowerShell
+# The Huntress installer needs an Account Key and an Organization Key (a user specified name or description) which is used to affiliate an Agent with a
+# specific Organization within the Huntress Partner's Account. These keys can be hard coded below or passed in when the script is run.
+# For more details, see our KB article  https://support.huntress.io/hc/en-us/articles/4404004936339-Deploying-Huntress-with-PowerShell
 
 # Usage (remove brackets [] and substitute <variable> for your value):
-# powershell -executionpolicy bypass -f ./InstallHuntress.powershellv2.ps1 [-acctkey <account_key>] [-orgkey <organization_key>] [-tags <tags>] [-reregister] [-reinstall] [-uninstall]
+# powershell -executionpolicy bypass -f ./InstallHuntress.powershellv2.ps1 [-acctkey <account_key>] [-orgkey <organization_key>] [-tags <tags>] [-reregister] [-reinstall] [-uninstall] [-repair]
 #
 # example:
 # powershell -executionpolicy bypass -f ./InstallHuntress.powershellv2.ps1 -acctkey "0b8a694b2eb7b642069" -orgkey "Buzzword Company Name" -tags "production,US West" 
@@ -570,15 +567,10 @@ function getAgentVersion {
     return $agentVersion
 }
 
-# ensure all the Huntress services are running and set them to delayed start AB
+# ensure all the Huntress services are running AB
 function repairAgent {
-    sc.exe stop HuntressAgent 
-    sc.exe stop HuntressUpdater 
-    sc.exe config HuntressAgent start= delayed-auto 
-    sc.exe config HuntressUpdater start= delayed-auto 
-    Start-Sleep 5
-    sc.exe start HuntressAgent 
-    sc.exe start HuntressUpdater 
+    Start-Service HuntressAgent
+    Start-Service HuntressUpdater
 }
 
 function main () {
@@ -630,14 +622,8 @@ function main () {
     # if run with the repair flag, check if installed (install if not), if ver < 0.13.16 apply the fix
     if ($repair) {
         if (Test-Path(getAgentPath)){
-            $agentVersion = getAgentVersion
-            if ($agentVersion -notlike "0.13.16" -and $agentVersion -notlike "0.13.18") {
-                repairAgent
-                exit 0
-            } else {
-                LogMessage "Fix not required for this version, exiting."
-                exit 0
-            }
+            repairAgent
+            exit 0
         } else {
             LogMessage "Agent not found! Attempting to install"
             $reregister = $true
