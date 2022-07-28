@@ -13,18 +13,16 @@
 # INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS 
 # OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+# Authors: John Ferrell, Dave Kleinatland, Alan Bishop, Cameron Granger
 
 
-# The Huntress installer needs an Account Key and an Organization Key (a user
-# specified name or description) which is used to affiliate an Agent with a
-# specific Organization within the Huntress Partner's Account. These keys can be
-# hard coded below or passed in when the script is run.
-
-# For more details, see our KB article
-# https://support.huntress.io/hc/en-us/articles/4404004936339-Deploying-Huntress-with-PowerShell
+# The Huntress installer needs an Account Key and an Organization Key (a user specified name or description) which is used to affiliate an Agent with a
+# specific Organization within the Huntress Partner's Account. These keys can be hard coded below or passed in when the script is run.
+# For more details, see our KB article  https://support.huntress.io/hc/en-us/articles/4404004936339-Deploying-Huntress-with-PowerShell
 
 # Usage (remove brackets [] and substitute <variable> for your value):
-# powershell -executionpolicy bypass -f ./InstallHuntress.powershellv2.ps1 [-acctkey <account_key>] [-orgkey <organization_key>] [-tags <tags>] [-reregister] [-reinstall] [-uninstall]
+# powershell -executionpolicy bypass -f ./InstallHuntress.powershellv2.ps1 [-acctkey <account_key>] [-orgkey <organization_key>] [-tags <tags>] [-reregister] [-reinstall] [-uninstall] [-repair]
 #
 # example:
 # powershell -executionpolicy bypass -f ./InstallHuntress.powershellv2.ps1 -acctkey "0b8a694b2eb7b642069" -orgkey "Buzzword Company Name" -tags "production,US West" 
@@ -36,7 +34,8 @@ param (
   [string]$tags,
   [switch]$reregister,
   [switch]$reinstall,
-  [switch]$uninstall
+  [switch]$uninstall, 
+  [switch]$repair
 )
 
 
@@ -64,14 +63,14 @@ $DebugPreference = "SilentlyContinue"
 # Find poorly written code faster with the most stringent setting.
 Set-StrictMode -Version Latest
 
-# Check for old outdated Windows PowerShell (script works as low as PoSh 2.0, this is for logging/debugging)
+# Check for old outdated Windows PowerShell (script works as low as PoSh 2.0)
 $oldOS = $false
 if ($PsVersionTable.PsVersion.Major -lt 3){
     $oldOS = $true
 }
 
 # These are used by the Huntress support team when troubleshooting.
-$ScriptVersion = "2022 July 21; revision 2"
+$ScriptVersion = "Version 2, 2022 July 28, revision 3"
 $ScriptType = "PowerShell"
 
 # Check for an account key specified on the command line.
@@ -89,17 +88,24 @@ if ( ! [string]::IsNullOrEmpty($tags) ) {
     $TagsKey = $tags
 }
 
-
 # variables used throughout this script
 $X64 = 64
 $X86 = 32
 $InstallerName   = "HuntressInstaller.exe"
 $InstallerPath   = Join-Path $Env:TMP $InstallerName
 $DebugLog        = Join-Path $Env:TMP HuntressInstaller.log
-$DownloadURL     = "https://update.huntress.io/download/" + $AccountKey + "/" + $InstallerName
 $HuntressKeyPath = "HKLM:\SOFTWARE\Huntress Labs\Huntress"
 $HuntressRegKey  = "HKLM:\SOFTWARE\Huntress Labs"
-$timeout         = 30  # Seconds to wait (used for installing/uninstalling)
+$timeout         = 30         # number of seconds to wait before continuing the install
+
+# pick the appropriate file to download based on the OS version
+if ($oldOS -eq $true) {
+    # For Windows Vista, Server 2008 (PoSh 2)
+    $DownloadURL = "https://update.huntress.io/legacy_download/" + $AccountKey + "/" + $InstallerName
+} else {
+    # For Windows 7+, Server 2008 R2+ (PoSh 3+)
+    $DownloadURL = "https://update.huntress.io/download/" + $AccountKey + "/" + $InstallerName
+}
 
 # strings used throughout this script
 $ScriptFailed               = "Script Failed!"
@@ -137,14 +143,15 @@ function Test-Parameters {
     }
 
     # Ensure we have an account key (either hard coded or from the command line params).
-    if ($AccountKey -eq "__ACCOUNT_KEY__") {
+    if (($AccountKey -eq "__ACCOUNT_KEY__") -and ($args.count -gt 1)) {
         $err = "AccountKey not set! Suggest using the -acctkey flag followed by your account key."
         LogMessage $err
         Write-Host $err -ForegroundColor white -BackgroundColor red
         throw $ScriptFailed + " " + $err
         exit 1
-    } elseif ($AccountKey.length -ne 32) {
+    } elseif (($AccountKey.length -ne 32) -and ($args.count -gt 1)) {
         $err = "Invalid AccountKey specified (incorrect length)! Suggest double checking the key was copy/pasted fully"
+        $err = $args.count
         LogMessage $err
         Write-Host $err -ForegroundColor white -BackgroundColor red
         throw $ScriptFailed + " " + $err
@@ -152,7 +159,7 @@ function Test-Parameters {
     }
 
     # Ensure the account key doesn't have any invalid characters
-    if ($AccountKey -match '[^a-zA-Z0-9]')
+    if (($AccountKey -match '[^a-zA-Z0-9]') -and ($args.count -gt 1))
     {
         $err = "Invalid AccountKey specified (invalid characters found)! Suggest double checking the key was copy/pasted fully"
         LogMessage $err
@@ -163,7 +170,7 @@ function Test-Parameters {
 
 
     # Ensure we have an organization key (either hard coded or from the command line params).
-    if ($OrganizationKey -eq "__ORGANIZATION_KEY__") {
+    if (($OrganizationKey -eq "__ORGANIZATION_KEY__") -and ($args.count -gt 1)) {
         $err = "OrganizationKey not specified! This is a user defined identifier set by you (usually your customer's organization name)"
         LogMessage $err
         Write-Host $err -ForegroundColor white -BackgroundColor red
@@ -265,17 +272,15 @@ function Get-Installer {
         }
     }
 
-    # Attempt to download the file, throw error if it fails
+    # Attempt to download the correct installer for the given OS, throw error if it fails
     $WebClient = New-Object System.Net.WebClient
     try {
         $WebClient.DownloadFile($DownloadURL, $InstallerPath)
     } catch {
         $msg = $_.Exception.Message
-        $err = ( "ERROR: Failed to download the Huntress Installer. Please try accessing $DownloadURL " +
-                 "from a web browser on the host where the download failed. If the issue persists, please " +
-                "send the error message to the Huntress Team for help at support@huntress.com.")
+        $err = "ERROR: Failed to download the Huntress Installer. Try accessing $($DownloadURL) from the host where the download failed. Contact support@huntress.io if the problem persists"
         LogMessage $msg
-        LogMessage $err
+        LogMessage "$($err)  Please contact support@huntress.io if the problem persists"
         throw $ScriptFailed + " " + $err + " " + $msg
     }
 
@@ -552,6 +557,23 @@ function uninstallHuntress {
     }
 }
 
+
+
+
+# grab the currently installed agent version AB
+function getAgentVersion {
+    $exeAgentPath = Join-Path (getAgentPath) "HuntressAgent.exe"
+    $agentVersion = (Get-Item $exeAgentPath).VersionInfo.FileVersion
+    LogMessage "Agent version $($agentVersion) found"
+    return $agentVersion
+}
+
+# ensure all the Huntress services are running AB
+function repairAgent {
+    Start-Service HuntressAgent
+    Start-Service HuntressUpdater
+}
+
 function main () {
     # gather info on the host for logging purposes
     LogMessage "Script type: '$ScriptType'"
@@ -592,6 +614,25 @@ function main () {
         }
     }
 
+    # if run with no flags and no account key, assume repair
+    if (!$repair -and !$reregister -and !$uninstall -and !$reinstall -and ($AccountKey -eq "__ACCOUNT_KEY__")) {
+        LogMessage "No flags or account key found! Defaulting to the -repair flag."
+        $repair = $true
+    }
+
+    # if run with the repair flag, check if installed (install if not), if ver < 0.13.16 apply the fix
+    if ($repair) {
+        if (Test-Path(getAgentPath)){
+            repairAgent
+            LogMessage "Repair complete!"
+            exit 0
+        } else {
+            LogMessage "Agent not found! Attempting to install"
+            $reregister = $true
+        }
+    }
+
+
     # trim keys for blanks before use
     $AccountKey = $AccountKey.Trim()
     $OrganizationKey = $OrganizationKey.Trim()
@@ -600,10 +641,12 @@ function main () {
     Test-Parameters
 
     # Hide most of the account key in the logs, keeping the front and tail end for troubleshooting 
-    $masked = $AccountKey.Substring(0,4) + "************************" + $AccountKey.SubString(28,4)
-    LogMessage "AccountKey: '$masked'"
-    LogMessage "OrganizationKey: '$OrganizationKey'"
-    LogMessage "Tags: $($Tags)"
+    if ($AccountKey -ne "__Account_Key__") {
+        $masked = $AccountKey.Substring(0,4) + "************************" + $AccountKey.SubString(28,4)
+        LogMessage "AccountKey: '$masked'"
+        LogMessage "OrganizationKey: '$OrganizationKey'"
+        LogMessage "Tags: $($Tags)"
+    }
 
     # reregister > reinstall > uninstall > install (in decreasing order of impact)
     # reregister = reinstall + delete registry keys
