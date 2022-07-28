@@ -339,6 +339,12 @@ function StopHuntressServices {
     Stop-Service -Name "$HuntressUpdaterServiceName"
 }
 
+function StartHuntressServices {
+    LogMessage "Attempting to Start Huntress services..."
+    Start-Service -Name "$HuntressAgentServiceName"
+    Start-Service -Name "$HuntressUpdaterServiceName"
+}
+
 function PrepReregister {
     LogMessage "Preparing to re-register agent..."
     StopHuntressServices
@@ -371,7 +377,8 @@ function main () {
 
     LogMessage "Checking for HuntressAgent service..."
     if ( Confirm-ServiceExists($HuntressAgentServiceName) ) {
-        $err = "The Huntress Agent is already installed. Exiting."
+        StartHuntressServices
+        $err = "The Huntress Agent is already installed. Starting Services and Exiting."
         LogMessage "$err"
         exit 0
     }
