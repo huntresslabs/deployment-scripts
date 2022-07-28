@@ -369,7 +369,7 @@ function StopHuntressServices {
 }
 
 function StartHuntressServices {
-    LogMessage "Stopping Huntress services..."
+    LogMessage "Starting Huntress services..."
     Start-Service -Name "$HuntressAgentServiceName"
     Start-Service -Name "$HuntressUpdaterServiceName"
 }
