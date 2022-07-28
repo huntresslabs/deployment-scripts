@@ -47,7 +47,7 @@ Set-StrictMode -Version Latest
 
 # Do not modify the following variables.
 # These are used by the Huntress support team when troubleshooting.
-$ScriptVersion = "2020 April 3; revision 1"
+$ScriptVersion = "2022 July 28; revision 2"
 $ScriptType = "Syncro"
 
 # Variables used throughout the Huntress Deployment Script.
