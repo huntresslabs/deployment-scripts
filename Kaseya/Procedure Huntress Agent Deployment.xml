@@ -84,6 +84,16 @@
               </If>
             </Then>
             <Else>
+              <Statement name="ExecuteShellCommand" continueOnFail="true">
+                <Parameter xsi:type="StringParameter" name="Command" value="sc start HuntressUpdater" />
+                <Parameter xsi:type="EnumParameter" name="ExecuteAccount" value="System" />
+                <Parameter xsi:type="BooleanParameter" name="Is64Bit" value="False" />
+              </Statement>
+              <Statement name="ExecuteShellCommand" continueOnFail="true">
+                <Parameter xsi:type="StringParameter" name="Command" value="sc start HuntressAgent" />
+                <Parameter xsi:type="EnumParameter" name="ExecuteAccount" value="System" />
+                <Parameter xsi:type="BooleanParameter" name="Is64Bit" value="False" />
+              </Statement>
               <Statement name="WriteScriptLogEntry" continueOnFail="false" osType="Windows">
                 <Parameter xsi:type="StringParameter" name="Comment" value="The Huntress agent is already installed." />
               </Statement>
