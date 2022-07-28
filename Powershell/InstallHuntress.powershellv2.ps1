@@ -143,14 +143,15 @@ function Test-Parameters {
     }
 
     # Ensure we have an account key (either hard coded or from the command line params).
-    if ($AccountKey -eq "__ACCOUNT_KEY__") {
+    if (($AccountKey -eq "__ACCOUNT_KEY__") -and ($args.count -gt 1)) {
         $err = "AccountKey not set! Suggest using the -acctkey flag followed by your account key."
         LogMessage $err
         Write-Host $err -ForegroundColor white -BackgroundColor red
         throw $ScriptFailed + " " + $err
         exit 1
-    } elseif ($AccountKey.length -ne 32) {
+    } elseif (($AccountKey.length -ne 32) -and ($args.count -gt 1)) {
         $err = "Invalid AccountKey specified (incorrect length)! Suggest double checking the key was copy/pasted fully"
+        $err = $args.count
         LogMessage $err
         Write-Host $err -ForegroundColor white -BackgroundColor red
         throw $ScriptFailed + " " + $err
@@ -158,7 +159,7 @@ function Test-Parameters {
     }
 
     # Ensure the account key doesn't have any invalid characters
-    if ($AccountKey -match '[^a-zA-Z0-9]')
+    if (($AccountKey -match '[^a-zA-Z0-9]') -and ($args.count -gt 1))
     {
         $err = "Invalid AccountKey specified (invalid characters found)! Suggest double checking the key was copy/pasted fully"
         LogMessage $err
@@ -169,7 +170,7 @@ function Test-Parameters {
 
 
     # Ensure we have an organization key (either hard coded or from the command line params).
-    if ($OrganizationKey -eq "__ORGANIZATION_KEY__") {
+    if (($OrganizationKey -eq "__ORGANIZATION_KEY__") -and ($args.count -gt 1)) {
         $err = "OrganizationKey not specified! This is a user defined identifier set by you (usually your customer's organization name)"
         LogMessage $err
         Write-Host $err -ForegroundColor white -BackgroundColor red
@@ -614,7 +615,7 @@ function main () {
     }
 
     # if run with no flags and no account key, assume repair
-    if (!$repair -and !$reregister -and !$uninstall -and !$reinstall -and ($AccountKey -ne "__ACCOUNT KEY__")) {
+    if (!$repair -and !$reregister -and !$uninstall -and !$reinstall -and ($AccountKey -eq "__ACCOUNT_KEY__")) {
         LogMessage "No flags or account key found! Defaulting to the -repair flag."
         $repair = $true
     }
@@ -623,6 +624,7 @@ function main () {
     if ($repair) {
         if (Test-Path(getAgentPath)){
             repairAgent
+            LogMessage "Repair complete!"
             exit 0
         } else {
             LogMessage "Agent not found! Attempting to install"
@@ -639,10 +641,12 @@ function main () {
     Test-Parameters
 
     # Hide most of the account key in the logs, keeping the front and tail end for troubleshooting 
-    $masked = $AccountKey.Substring(0,4) + "************************" + $AccountKey.SubString(28,4)
-    LogMessage "AccountKey: '$masked'"
-    LogMessage "OrganizationKey: '$OrganizationKey'"
-    LogMessage "Tags: $($Tags)"
+    if ($AccountKey -ne "__Account_Key__") {
+        $masked = $AccountKey.Substring(0,4) + "************************" + $AccountKey.SubString(28,4)
+        LogMessage "AccountKey: '$masked'"
+        LogMessage "OrganizationKey: '$OrganizationKey'"
+        LogMessage "Tags: $($Tags)"
+    }
 
     # reregister > reinstall > uninstall > install (in decreasing order of impact)
     # reregister = reinstall + delete registry keys
