@@ -1,4 +1,4 @@
-# Copyright (c) 2020 Huntress Labs, Inc.
+# Copyright (c) 2022 Huntress Labs, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -65,7 +65,7 @@ Set-StrictMode -Version Latest
 
 # Do not modify the following variables.
 # These are used by the Huntress support team when troubleshooting.
-$ScriptVersion = "2020 August 10; revision 1"
+$ScriptVersion = "2022 July 29; revision 1"
 $ScriptType = "SolarWindsRMM"
 
 # Check for an account key specified on the command line.
@@ -407,6 +407,13 @@ function main () {
     LogMessage "AccountKey: '$masked'"
     LogMessage "OrganizationKey: '$OrganizationKey'"
 
+    function StartHuntressServices {
+        LogMessage "Starting Huntress services..."
+        Start-Service -Name "$HuntressAgentServiceName"
+        Start-Service -Name "$HuntressUpdaterServiceName"
+    }
+
+
     if ($reregister) {
         PrepReregister
     } elseif ($reinstall) {
@@ -420,6 +427,7 @@ function main () {
     } else {
         LogMessage "Checking for HuntressAgent service..."
         if ( Confirm-ServiceExists($HuntressAgentServiceName) ) {
+        StartHuntressServices
             $err = "The Huntress Agent is already installed. Exiting."
             LogMessage "$err"
             exit 0
