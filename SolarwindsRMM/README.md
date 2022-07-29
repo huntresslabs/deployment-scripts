@@ -1,4 +1,4 @@
 SolarWinds RMM AMP for installing the Huntress agent.
 
 
-See https://support.huntress.io/article/62-deploying-huntress-with-solarwinds-rmm for details.
+See https://support.huntress.io/hc/en-us/articles/4404012639379-Deploying-Huntress-with-N-able-Solarwinds-MSP-RMM for details.
