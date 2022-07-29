@@ -1,4 +1,4 @@
-# Copyright (c) 2020 Huntress Labs, Inc.
+# Copyright (c) 2022 Huntress Labs, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -66,7 +66,7 @@ Set-StrictMode -Version Latest
 
 # Do not modify the following variables.
 # These are used by the Huntress support team when troubleshooting.
-$ScriptVersion = "2020 April 3; revision 1"
+$ScriptVersion = "2022 July 29; revision 1"
 $ScriptType = "DattoRMM"
 
 # Check for an account key specified on the command line.
