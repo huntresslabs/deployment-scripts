@@ -57,7 +57,7 @@ Set-StrictMode -Version Latest
 
 # Do not modify the following variables.
 # These are used by the Huntress support team when troubleshooting.
-$ScriptVersion = "2022 July 22; revision 22"
+$ScriptVersion = "2022 July 22; revision 2"
 $ScriptType = "Continuum"
 
 # Check for an account key specified on the command line.
