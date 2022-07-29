@@ -524,15 +524,19 @@ function uninstallHuntress {
 
     # attempt to use the built in uninstaller, if not found use the uninstallers built into the Agent and Updater
     if (Test-Path $agentPath) {
+        Write-Host "Uninstalling, please wait :) "
         # run uninstaller.exe, if not found run the Agent's built in uninstaller and the Updater's built in uninstaller
         if (Test-Path $uninstallerPath) {
-            runProcess "$($uninstallerPath)" "/S" "Uninstall.exe"
+            runProcess "$($uninstallerPath)" "/S" "Uninstall.exe" -wait
+            Start-Sleep 15
         } elseif (Test-Path $exeAgentPath) {
-            runProcess "$($exeAgentPath)" "/S" "Huntress Agent uninstaller"
+            runProcess "$($exeAgentPath)" "/S" "Huntress Agent uninstaller" -wait
+            Start-Sleep 15
         } elseif (Test-Path $updaterPath) {
-            runProcess "$($updaterPath)" "/S" "Updater uninstaller"
+            runProcess "$($updaterPath)" "/S" "Updater uninstaller" -wait
+            Start-Sleep 15 
         } else {
-
+            LogMessage "Agent path found but no uninstallers found. Attempting to manually uninstall"
         }
     } else {
         $err = "Note: unable to find Huntress install folder. Attempting to manually uninstall."
