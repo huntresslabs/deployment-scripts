@@ -89,8 +89,10 @@ $DownloadURL = "https://update.huntress.io/download/" + $AccountKey + "/" + $Ins
 $HuntressAgentServiceName = "HuntressAgent"
 $HuntressUpdaterServiceName = "HuntressUpdater"
 
-$CertSigner = 'DigiCert EV Code Signing CA'
-$CertThumbprint = '60EE3FC53D4BDFD1697AE5BEAE1CAB1C0F3AD4E3'
+$CertSigner = ‘DigiCert Trusted G4 Code Signing RSA4096 SHA384 2021 CA1’
+$CertThumbprint = ‘7B0F360B775F76C94A12CA48445AA2D2A875701C’
+
+# old $CertSigner = 'DigiCert EV Code Signing CA' $CertThumbprint = '60EE3FC53D4BDFD1697AE5BEAE1CAB1C0F3AD4E3'
 
 $PowerShellArch = $X86
 # 8 byte pointer is 64bit
