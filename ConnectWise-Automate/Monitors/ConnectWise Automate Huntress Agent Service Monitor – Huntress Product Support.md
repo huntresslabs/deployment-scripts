@@ -6,7 +6,7 @@
 
   <title>ConnectWise Automate Huntress Agent Service Monitor &ndash; Huntress Product Support</title>
 
-  
+
 
   <meta name="description" content="If you are also interested in the Remote Monitor (Orphaned Agent), you can kill 2 birds with one stone by downloading and uploading the..." /><meta property="og:image" content="https://theme.zdassets.com/theme_assets/10724734/ed7fd942638ffb555c05504792ad5b12762affd8.png" />
 <meta property="og:type" content="website" />
@@ -24,7 +24,7 @@ NOTE: This only works on..." />
 
   <link rel="shortcut icon" type="image/x-icon" href="//theme.zdassets.com/theme_assets/10724734/888f4c544c9e9ef8225ee6ea20770a1a5c34585f.png" />
 
-    
+
 
     <!-- Google Tag Manager -->
 <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
@@ -43,11 +43,11 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
 
 
-  
+
 <script async src='/cdn-cgi/bm/cv/669835187/api.js'></script></head>
 <body class="">
   <div id="navbar-container" data-navbar="{&quot;locale&quot;:&quot;en-us&quot;,&quot;locale_direction&quot;:&quot;ltr&quot;,&quot;show_brand_settings_link&quot;:true,&quot;avatar_url&quot;:&quot;https://support.huntress.io/system/photos/1900382896225/profile_image_1503597291182_10724734.jpg&quot;,&quot;current_brand&quot;:&quot;Huntress Support&quot;,&quot;brand_selector_payload&quot;:{&quot;brands&quot;:[{&quot;type&quot;:&quot;item&quot;,&quot;url&quot;:&quot;https://huntressinternal.zendesk.com/hc/signin&quot;,&quot;label&quot;:&quot;Huntress Internal&quot;},{&quot;type&quot;:&quot;item&quot;,&quot;url&quot;:&quot;https://support.huntress.io/hc/signin&quot;,&quot;label&quot;:&quot;Huntress Support&quot;}],&quot;brand_settings_url&quot;:&quot;https://huntress.zendesk.com/agent/admin/brands&quot;,&quot;brand_settings_label&quot;:&quot;Brand settings&quot;},&quot;user_dropdown_items&quot;:[{&quot;type&quot;:&quot;item&quot;,&quot;url&quot;:&quot;/access/return_to?return_to=https%3A%2F%2Fhuntress.zendesk.com%2Fagent%2Fusers%2F1503597291182&quot;,&quot;label&quot;:&quot;View profile&quot;,&quot;target&quot;:&quot;_blank&quot;,&quot;options&quot;:{&quot;identifier&quot;:&quot;user_profile&quot;,&quot;name&quot;:&quot;Cameron Granger&quot;,&quot;avatar&quot;:&quot;https://support.huntress.io/system/photos/1900382896225/profile_image_1503597291182_10724734.jpg&quot;}},{&quot;type&quot;:&quot;separator&quot;},{&quot;type&quot;:&quot;item&quot;,&quot;url&quot;:&quot;https://support.zendesk.com/hc/en-us/sections/360004109213&quot;,&quot;label&quot;:&quot;Guide help center&quot;,&quot;target&quot;:&quot;_blank&quot;},{&quot;type&quot;:&quot;item&quot;,&quot;url&quot;:&quot;https://support.zendesk.com/hc/en-us/community/topics/1260801308530&quot;,&quot;label&quot;:&quot;Give feedback&quot;,&quot;target&quot;:&quot;_blank&quot;},{&quot;type&quot;:&quot;item&quot;,&quot;url&quot;:&quot;https://www.zendesk.com/company/customers-partners/privacy-policy/&quot;,&quot;label&quot;:&quot;Privacy policy&quot;,&quot;target&quot;:&quot;_blank&quot;},{&quot;type&quot;:&quot;separator&quot;},{&quot;type&quot;:&quot;item&quot;,&quot;url&quot;:&quot;/access/logout?return_to=https%3A%2F%2Fsupport.huntress.io%2Fhc%2Fen-us&quot;,&quot;label&quot;:&quot;Sign out&quot;}],&quot;record_action_button&quot;:{&quot;label&quot;:&quot;Edit article&quot;,&quot;url&quot;:&quot;https://huntress.zendesk.com/knowledge/articles/8949567617939/en-us?brand_id=1500000232522\u0026return_to=%2Fhc%2Fen-us%2Farticles%2F8949567617939&quot;,&quot;target&quot;:&quot;_parent&quot;,&quot;disabled&quot;:false},&quot;user_profile_button&quot;:{&quot;label&quot;:&quot;&quot;,&quot;url&quot;:&quot;&quot;,&quot;target&quot;:&quot;&quot;,&quot;disabled&quot;:true},&quot;user_identifier&quot;:&quot;c29ce3e3fb750ad15e434f4ea1bcf9992275e90f&quot;,&quot;products_endpoint&quot;:&quot;/api/v2/products.json&quot;,&quot;product&quot;:&quot;guide&quot;,&quot;appearance_version&quot;:&quot;2.0&quot;,&quot;plan_information&quot;:{&quot;trial_active&quot;:false},&quot;general_dropdown_title&quot;:&quot;Add&quot;,&quot;general_dropdown_items&quot;:[{&quot;type&quot;:&quot;item&quot;,&quot;url&quot;:&quot;https://huntress.zendesk.com/knowledge/articles/new?brand_id=1500000232522\u0026section_id=4404238347795&quot;,&quot;label&quot;:&quot;Article&quot;},{&quot;type&quot;:&quot;item&quot;,&quot;url&quot;:&quot;https://huntress.zendesk.com/knowledge/sections/new?brand_id=1500000232522\u0026category_id=4404203853459&quot;,&quot;label&quot;:&quot;Section&quot;},{&quot;type&quot;:&quot;item&quot;,&quot;url&quot;:&quot;https://support.huntress.io/hc/admin/categories/new&quot;,&quot;label&quot;:&quot;Category&quot;}],&quot;guide_admin_button&quot;:{&quot;label&quot;:&quot;Guide admin&quot;,&quot;url&quot;:&quot;https://huntress.zendesk.com/knowledge/lists/default/1?brand_id=1500000232522&quot;}}" style="height: 50px;width: 100%;background-color: #fff;border-bottom: 1px solid #ddd;box-shadow: 0 0 20px 0 rgba(36, 83, 107, 0.15)"></div>
-  
+
 
   <!-- Google Tag Manager (noscript) -->
 <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-N2VKLZ6"
@@ -59,7 +59,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   <div class="logo">
     <a title="Home" href="/hc/en-us">
       <img src="//theme.zdassets.com/theme_assets/10724734/ed7fd942638ffb555c05504792ad5b12762affd8.png" alt="Huntress Product Support Help Center home page" />
-      
+
     </a>
   </div>
   <div class="nav-wrapper">
@@ -69,10 +69,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       </svg>
     </button>
     <nav class="user-nav" id="user-nav">
-      
+
       <a class="submit-a-request" href="/hc/en-us/requests/new">Submit a request</a>
     </nav>
-    
+
       <div class="user-info dropdown">
         <button class="dropdown-toggle" aria-haspopup="true">
           <img class="user-avatar" alt="" data-user-avatar="true" src="https://assets.zendesk.com/hc/assets/default_avatar.png" />
@@ -86,11 +86,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <div class="dropdown-menu" role="menu">
           <a role="menuitem" href="/hc/en-us/requests">My activities</a>
           <a role="menuitem" href="/hc/en-us/profiles/1503597291182">My profile</a>
-          
+
           <a role="menuitem" href="/access/logout?return_to=https%3A%2F%2Fsupport.huntress.io%2Fhc%2Fen-us">Sign out</a>
         </div>
       </div>
-    
+
   </div>
 </header>
 
@@ -103,25 +103,25 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <div class="container">
   <nav class="sub-nav">
     <ol class="breadcrumbs">
-  
+
     <li title="Huntress Product Support">
-      
+
         <a href="/hc/en-us">Huntress Product Support</a>
-      
+
     </li>
-  
+
     <li title="Introduction to Huntress">
-      
+
         <a href="/hc/en-us/categories/4404203853459-Introduction-to-Huntress">Introduction to Huntress</a>
-      
+
     </li>
-  
+
     <li title="RMM">
-      
+
         <a href="/hc/en-us/sections/4404238347795-RMM">RMM</a>
-      
+
     </li>
-  
+
 </ol>
 
     <div class="search-container">
@@ -136,7 +136,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
   <div class="article-container" id="article-container">
     <aside class="article-sidebar" aria-labelledby="section-articles-title">
-      
+
         <div class="collapsible-sidebar">
           <button type="button" class="collapsible-sidebar-toggle" aria-labelledby="section-articles-title" aria-expanded="false">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" focusable="false" viewBox="0 0 12 12" aria-hidden="true" class="collapsible-sidebar-toggle-icon chevron-icon">
@@ -151,88 +151,88 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           </span>
           <div class="collapsible-sidebar-body">
             <ul>
-              
+
                 <li>
                   <a href="/hc/en-us/articles/4404005219219-ConnectWise-Automate-to-Manage-Agreement-Billing" class="sidenav-item ">ConnectWise Automate to Manage Agreement Billing</a>
                 </li>
-              
+
                 <li>
                   <a href="/hc/en-us/articles/4404005085971-PSA-RMM-Huntress-Name-Matching" class="sidenav-item ">PSA/RMM &amp; Huntress Name Matching</a>
                 </li>
-              
+
                 <li>
                   <a href="/hc/en-us/articles/4404012692243-Deploying-Huntress-with-ConnectWise-Control-ScreenConnect-" class="sidenav-item ">Deploying Huntress with ConnectWise Control (ScreenConnect)</a>
                 </li>
-              
+
                 <li>
                   <a href="/hc/en-us/articles/4404012680339-ConnectWise-Automate-Huntress-Agent-Internal-Monitor" class="sidenav-item ">ConnectWise Automate Huntress Agent Internal Monitor</a>
                 </li>
-              
+
                 <li>
                   <a href="/hc/en-us/articles/4404012626451-Datto-RMM-Service-Monitor-Keep-Alive-" class="sidenav-item ">Datto RMM Service Monitor (Keep Alive)</a>
                 </li>
-              
+
                 <li>
                   <a href="/hc/en-us/articles/4404004935059-ConnectWise-Automate-Remote-monitor-orphaned-agent-" class="sidenav-item ">ConnectWise Automate -  Remote monitor (orphaned agent)</a>
                 </li>
-              
+
                 <li>
                   <a href="/hc/en-us/articles/4404004910739-Datto-RMM-Install-Policy-Automated-Installation-" class="sidenav-item ">Datto RMM Install Policy (Automated Installation)</a>
                 </li>
-              
+
                 <li>
                   <a href="/hc/en-us/articles/4404012544403-Datto-RMM-Uninstall-Alerts" class="sidenav-item ">Datto RMM Uninstall Alerts</a>
                 </li>
-              
+
             </ul>
-            
+
           </div>
         </div>
-      
+
     </aside>
 
     <article id="main-content" class="article">
       <header class="article-header">
         <h1 title="ConnectWise Automate Huntress Agent Service Monitor" class="article-title">
           ConnectWise Automate Huntress Agent Service Monitor
-          
+
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" focusable="false" viewBox="0 0 16 16" class="icon-lock" title="Only visible to agents and admins">
               <rect width="12" height="9" x="2" y="7" fill="currentColor" rx="1" ry="1"/>
               <path fill="none" stroke="currentColor" d="M4.5 7.5V4a3.5 3.5 0 017 0v3.5"/>
             </svg>
-          
+
         </h1>
 
         <div class="article-author">
-          
+
             <div class="avatar article-avatar">
-              
+
                 <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" focusable="false" viewBox="0 0 12 12" class="icon-agent">
                   <path fill="currentColor" d="M6 0C2.7 0 0 2.7 0 6s2.7 6 6 6 6-2.7 6-6-2.7-6-6-6zm0 2c1.1 0 2 .9 2 2s-.9 2-2 2-2-.9-2-2 .9-2 2-2zm2.3 7H3.7c-.3 0-.4-.3-.3-.5C3.9 7.6 4.9 7 6 7s2.1.6 2.6 1.5c.1.2 0 .5-.3.5z"/>
                 </svg>
-              
+
               <img src="https://support.huntress.io/system/photos/1900382896225/profile_image_1503597291182_10724734.jpg" alt="" class="user-avatar"/>
             </div>
-          
+
           <div class="article-meta">
-            
+
               <a href="/hc/en-us/profiles/1503597291182-Cameron-Granger">
                 Cameron Granger
               </a>
-            
+
 
             <ul class="meta-group">
-              
+
                 <li class="meta-data"><time datetime="2022-08-24T21:44:15Z" title="2022-08-24T21:44:15Z" data-datetime="relative">August 24, 2022 21:44</time></li>
                 <li class="meta-data">Updated</li>
-              
+
             </ul>
           </div>
         </div>
 
-        
+
           <div class="article-subscribe"></div>
-        
+
       </header>
 
       <section class="article-info">
@@ -297,13 +297,13 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 </ol>
 <p>&nbsp;</p>
 <p>&nbsp;</p></div>
-          
+
         </div>
       </section>
 
       <footer>
         <div class="article-footer">
-          
+
             <div class="article-share">
   <ul class="share">
     <li>
@@ -330,12 +330,12 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   </ul>
 
 </div>
-          
-          
-            
-          
+
+
+
+
         </div>
-        
+
           <div class="article-votes">
             <span class="article-votes-question" id="article-votes-label">Was this article helpful?</span>
             <div class="article-votes-controls" role="group" aria-labelledby="article-votes-label">
@@ -346,7 +346,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
               <span class="article-vote-label" data-helper="vote" data-item="article" data-type="label" data-id="8949567617939" data-upvote-count="0" data-vote-count="0" data-vote-sum="0" data-vote-url="/hc/en-us/articles/8949567617939/vote" data-value="null" data-label="0 out of 0 found this helpful">0 out of 0 found this helpful</span>
             </small>
           </div>
-        
+
 
         <div class="article-more-questions">
           Have more questions? <a href="/hc/en-us/requests/new">Submit a request</a>
@@ -362,7 +362,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       </footer>
 
 
-      
+
         <div class="article-comments" id="article-comments">
           <section class="comments">
             <header class="comment-overview">
@@ -370,14 +370,14 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 Comments
               </h2>
               <p class="comment-callout">0 comments</p>
-              
+
             </header>
 
             <ul id="comments" class="comment-list">
-              
+
             </ul>
 
-            
+
 
             <form data-form="" data-form-type="comment" class="comment-form" action="/hc/en-us/articles/8949567617939-ConnectWise-Automate-Huntress-Agent-Service-Monitor/comments" accept-charset="UTF-8" method="post"><input name="utf8" type="hidden" value="&#x2713;" />
               <div class="avatar comment-avatar">
@@ -394,15 +394,15 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             <p class="comment-callout">Be the first to write a comment.</p>
           </section>
         </div>
-      
-            <div class="article-relatives">
-        
-          <div data-recent-articles></div>
-        
-        
-          
 
-        
+            <div class="article-relatives">
+
+          <div data-recent-articles></div>
+
+
+
+
+
       </div>
     </article>
   </div>
@@ -415,7 +415,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <a title="Home" href="/hc/en-us">Huntress Product Support</a>
 
     <div class="footer-language-selector">
-      
+
     </div>
   </div>
 </footer>
@@ -424,7 +424,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
   <!-- / -->
 
-  
+
   <script src="//static.zdassets.com/hc/assets/en-us.21b1aabd31abf1ad6ee1.js" data-ot-ignore=""></script>
   <script src="https://huntress.zendesk.com/auth/v2/host.js" data-brand-id="1500000232522" data-return-to="https://support.huntress.io/hc/en-us/articles/8949567617939" data-theme="hc" data-locale="en-us" data-auth-origin="1500000232522,true,true"></script>
 
@@ -446,7 +446,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   HelpCenter.analytics = {"has_user_session_cookie_enabled":false};
 </script>
 
-  
+
   <script src="//static.zdassets.com/hc/assets/hc_enduser-e34c674466b15736b8d278eaa04524d1.js" data-ot-ignore=""></script>
   <script type="text/javascript" src="//p19.zdassets.com/hc/theming_assets/10724734/1500000232522/script.js?digest=6647812601107"></script>
 <script>(function(){window['__CF$cv$params']={r:'73ff44b3494aada1',m:'yjJY4yOlF4HZchE9TERuVgZOkolpWK.OZ6IhNHc2DC8-1661377457-0-AfR6K/+AL5Dqzp0v/nDszk7IfFdoh0Y5m2Tll8j+/pqBKo7B0QTM0X/6a/8UKza9nWsKYo1hAcQDNcyDuclkXQmYYZD7qJx4isD1uZ+NRUpjJ0IHpUinVz9I4iv/5NeftU3JCzQf9It5IrBS2BrzTAkdAyBKvWV46V2SP6ezK9uT',s:[0x676f3aa3b4,0x90a0cacf24],}})();</script></body>
