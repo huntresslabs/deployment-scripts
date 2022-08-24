@@ -6,4 +6,11 @@ The XML file in this repository will automatically create:
 - A Remote Monitor checking that the Huntress Service is running
 
 
-If you import the XML expansion via the Automate Control Center, the above items will be added automatically. 
+If you import the XML expansion via the Automate Control Center, the above items will be added automatically.
+
+To upload XML:
+- Log into CW Automate Control center
+- Click <b>System</b> in the bottom left
+- Click <b>General>Import>XML Expansion</b>
+- Select the "Computer.Application.Name Contains Huntress.xml"
+- Click <b> Open</b>
