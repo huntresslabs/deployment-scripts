@@ -1,0 +1,33 @@
+﻿<LabTech_Expansion
+	Version="220.237"
+	Name="LabTech Search Expansion"
+	Type="Search">
+	<Search>
+		<NewDataSet>
+			<Table>
+				<SensID>1176</SensID>
+				<Name>Software - Huntress Installed - Universal</Name>
+				<SQL>SELECT 
+   computers.computerid as `Computer Id`,
+   computers.name as `Computer Name`,
+   clients.name as `Client Name`,
+   computers.domain as `Computer Domain`,
+   computers.username as `Computer User`,
+   Software.Name as `Computer.Applications.Name`
+FROM Computers 
+LEFT JOIN inv_operatingsystem ON (Computers.ComputerId=inv_operatingsystem.ComputerId)
+LEFT JOIN Clients ON (Computers.ClientId=Clients.ClientId)
+LEFT JOIN Locations ON (Computers.LocationId=Locations.LocationID)
+LEFT JOIN Software ON (Software.ComputerId = Computers.ComputerId)
+ WHERE 
+((Instr(Software.Name,'Huntress') &gt; 0))
+</SQL>
+				<QueryType>4</QueryType>
+				<ListDATA>Select||=||=||=|^Select|||||||^</ListDATA>
+				<FolderID>9</FolderID>
+				<GUID>a517770d-c8a6-4647-9bd4-9473a839fec2</GUID>
+				<SearchXML>&lt;LabTechAbstractSearch&gt;&lt;asn&gt;&lt;st&gt;AndNode&lt;/st&gt;&lt;cn&gt;&lt;asn&gt;&lt;st&gt;ComparisonNode&lt;/st&gt;&lt;lon&gt;Computer.Applications.Name&lt;/lon&gt;&lt;lok&gt;Computer.Applications.Name&lt;/lok&gt;&lt;lmo&gt;Contains&lt;/lmo&gt;&lt;dv&gt;Huntress&lt;/dv&gt;&lt;dk&gt;Huntress&lt;/dk&gt;&lt;/asn&gt;&lt;/cn&gt;&lt;/asn&gt;&lt;/LabTechAbstractSearch&gt;</SearchXML>
+			</Table>
+		</NewDataSet>
+	</Search>
+</LabTech_Expansion>

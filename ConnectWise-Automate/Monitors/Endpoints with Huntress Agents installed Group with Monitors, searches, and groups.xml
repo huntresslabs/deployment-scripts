@@ -1,0 +1,148 @@
+﻿<LabTech_Expansion
+	Version="220.237"
+	Name="LabTech Group Expansion"
+	Type="Group">
+	<Group>
+		<NewDataSet>
+			<Table>
+				<GroupID>1719</GroupID>
+				<ParentID>0</ParentID>
+				<Parents>,</Parents>
+				<Children>,</Children>
+				<depth>0</depth>
+				<Name>Endpoints with Huntress Agent Installed</Name>
+				<FullName>Endpoints with Huntress Agent Installed</FullName>
+				<Permissions>0</Permissions>
+				<Template>0</Template>
+				<AutoJoinScript>1176</AutoJoinScript>
+				<Master>0</Master>
+				<LimitToParent>0</LimitToParent>
+				<Control>0</Control>
+				<ControlID>0</ControlID>
+				<Notes></Notes>
+				<MaintenanceID>0</MaintenanceID>
+				<MaintWindowApplied>2022-08-24T13:56:01-07:00</MaintWindowApplied>
+				<GroupType>0</GroupType>
+				<Priority>5</Priority>
+				<GUID>5aea263f-8bdd-11ea-a7cc-00155d1e7903</GUID>
+				<NetworkJoin>0</NetworkJoin>
+				<NetworkJoinOptions>0</NetworkJoinOptions>
+				<ContactJoin>0</ContactJoin>
+				<ContactJoinOptions>0</ContactJoinOptions>
+			</Table>
+		</NewDataSet>
+		<Search>
+			<NewDataSet>
+				<Table>
+					<SensID>1176</SensID>
+					<Name>Software - Huntress Installed - Universal</Name>
+					<SQL>SELECT 
+   computers.computerid as `Computer Id`,
+   computers.name as `Computer Name`,
+   clients.name as `Client Name`,
+   computers.domain as `Computer Domain`,
+   computers.username as `Computer User`,
+   Software.Name as `Computer.Applications.Name`
+FROM Computers 
+LEFT JOIN inv_operatingsystem ON (Computers.ComputerId=inv_operatingsystem.ComputerId)
+LEFT JOIN Clients ON (Computers.ClientId=Clients.ClientId)
+LEFT JOIN Locations ON (Computers.LocationId=Locations.LocationID)
+LEFT JOIN Software ON (Software.ComputerId = Computers.ComputerId)
+ WHERE 
+((Instr(Software.Name,'Huntress') &gt; 0))
+</SQL>
+					<QueryType>4</QueryType>
+					<ListDATA>Select||=||=||=|^Select|||||||^</ListDATA>
+					<FolderID>9</FolderID>
+					<GUID>a517770d-c8a6-4647-9bd4-9473a839fec2</GUID>
+					<SearchXML>&lt;LabTechAbstractSearch&gt;&lt;asn&gt;&lt;st&gt;AndNode&lt;/st&gt;&lt;cn&gt;&lt;asn&gt;&lt;st&gt;ComparisonNode&lt;/st&gt;&lt;lon&gt;Computer.Applications.Name&lt;/lon&gt;&lt;lok&gt;Computer.Applications.Name&lt;/lok&gt;&lt;lmo&gt;Contains&lt;/lmo&gt;&lt;dv&gt;Huntress&lt;/dv&gt;&lt;dk&gt;Huntress&lt;/dk&gt;&lt;/asn&gt;&lt;/cn&gt;&lt;/asn&gt;&lt;/LabTechAbstractSearch&gt;</SearchXML>
+				</Table>
+			</NewDataSet>
+		</Search>
+		<GroupMonitor>
+			<NewDataSet>
+				<Table>
+					<AgentID>1185</AgentID>
+					<GroupID>1719</GroupID>
+					<SearchID>0</SearchID>
+					<Name>Huntress Agent Orphan Detector</Name>
+					<CheckAction>6</CheckAction>
+					<AlertAction>56</AlertAction>
+					<AlertMessage>%NAME% reports that the Huntress Agent %STATUS% on %CLIENTNAME%\%COMPUTERNAME% at %LOCATIONNAME% for %FIELDNAME% result %RESULT%.!!!%NAME% reports that the Huntress Agent %STATUS% on %CLIENTNAME%\%COMPUTERNAME% at %LOCATIONNAME% for %FIELDNAME% result %RESULT%.</AlertMessage>
+					<ContactID>0</ContactID>
+					<interval>3600</interval>
+					<Where>127.0.0.1</Where>
+					<What>7</What>
+					<DataOut>%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe -NoLogo -NonInteractive -NoProfile -ExecutionPolicy Bypass -Encoded WwBTAHkAcwB0AGUAbQAuAFQAZQB4AHQALgBFAG4AYwBvAGQAaQBuAGcAXQA6ADoAVQBUAEYAOAAuAEcAZQB0AFMAdAByAGkAbgBnACgAWwBTAHkAcwB0AGUAbQAuAEMAbwBuAHYAZQByAHQAXQA6ADoARgByAG8AbQBCAGEAcwBlADYANABTAHQAcgBpAG4AZwAoACgAJwB7ACIAUwBjAHIAaQBwAHQAIgA6ACIASgBHAFoAcABiAEcAVQBnAFAAUwBBAG4AUQB6AHAAYwBVAEgASgB2AFoAMwBKAGgAYgBTAEIARwBhAFcAeABsAGMAeQBBAG8AZQBEAGcAMgBLAFYAeABJAGQAVwA1ADAAYwBtAFYAegBjADEAeABJAGQAVwA1ADAAYwBtAFYAegBjADAARgBuAFoAVwA1ADAATABtAHgAdgBaAHkAYwBOAEMAZwAwAEsAYQBXAFkAZwBLAEMAMQB1AGIAMwBRAG8AVgBHAFYAegBkAEMAMQBRAFkAWABSAG8ASQBDADEAUQBZAFgAUgBvAEkAQwBSAG0AYQBXAHgAbABJAEMAMQBRAFkAWABSAG8AVgBIAGwAdwBaAFMAQgBNAFoAVwBGAG0ASwBTAGsAZwBlAHcAMABLAEkAQwBBAGcASQBDAFIAbQBhAFcAeABsAEkARAAwAGcASgAwAE0ANgBYAEYAQgB5AGIAMgBkAHkAWQBXADAAZwBSAG0AbABzAFoAWABOAGMAUwBIAFYAdQBkAEgASgBsAGMAMwBOAGMAUwBIAFYAdQBkAEgASgBsAGMAMwBOAEIAWgAyAFYAdQBkAEMANQBzAGIAMgBjAG4ARABRAG8AZwBJAEMAQQBnAFIAMgBWADAATABVAE4AdgBiAG4AUgBsAGIAbgBRAGcASgBHAFoAcABiAEcAVQBnAEwAVgBSAGgAYQBXAHcAZwBNAFQAQQBnAGYAQwBCAEcAYgAzAEoARgBZAFcATgBvAEwAVQA5AGkAYQBtAFYAagBkAEMAQgA3AEkARwBsAG0ASQBDAGcAawBYAHkAQQB0AGIAVwBGADAAWQAyAGcAZwBKAHoAUQB3AE0AUwBjAHAASQBIAHQARgBZADIAaAB2AEkAQwBkAFAAVQBsAEIASQBRAFUANQBGAFIAQwBkADkAZgBRADAASwBJAEgAMABOAEMAaQBCAGwAYgBIAE4AbABEAFEAbwBnAGUAdwAwAEsASQBFAGQAbABkAEMAMQBEAGIAMgA1ADAAWgBXADUAMABJAEMAUgBtAGEAVwB4AGwASQBDADEAVQBZAFcAbABzAEkARABFAHcASQBIAHcAZwBSAG0AOQB5AFIAVwBGAGoAYQBDADEAUABZAG0AcABsAFkAMwBRAGcAZQB5AEIAcABaAGkAQQBvAEoARgA4AGcATABXADEAaABkAEcATgBvAEkAQwBjADAATQBEAEUAbgBLAFMAQgA3AFIAVwBOAG8AYgB5AEEAbgBUADEASgBRAFMARQBGAE8AUgBVAFEAbgBmAFgAMABOAEMAaQBCADkARABRAG8ATgBDAGcAMABLAEQAUQBvAD0AIgB9ACcAIAB8ACAAQwBvAG4AdgBlAHIAdABGAHIAbwBtAC0ASgBzAG8AbgApAC4AUwBjAHIAaQBwAHQAKQApACAAfAAgAGkAZQB4AA==</DataOut>
+					<Comparor>9</Comparor>
+					<DataIn>ORPHANED</DataIn>
+					<IDField></IDField>
+					<AlertStyle>1</AlertStyle>
+					<ScriptID></ScriptID>
+					<datacollector></datacollector>
+					<Category>5</Category>
+					<TicketCategory>0</TicketCategory>
+					<ScriptTarget>1</ScriptTarget>
+					<GUID>42ae9b08-bfa1-4d90-a12b-5acb85b16151</GUID>
+				</Table>
+			</NewDataSet>
+		</GroupMonitor>
+		<GroupMonitor>
+			<NewDataSet>
+				<Table>
+					<AgentID>1187</AgentID>
+					<GroupID>1719</GroupID>
+					<SearchID>78</SearchID>
+					<Name>SVC-HuntressAgent</Name>
+					<CheckAction>6</CheckAction>
+					<AlertAction>15</AlertAction>
+					<AlertMessage>Huntree Agent is running~~~%NAME% %STATUS% on %CLIENTNAME%\%COMPUTERNAME% at %LOCATIONNAME% for %FIELDNAME% result %RESULT%.!!!Huntress Agent is not running! ~~~%NAME% %STATUS% on %CLIENTNAME%\%COMPUTERNAME% at %LOCATIONNAME% for %FIELDNAME% result %RESULT%.</AlertMessage>
+					<ContactID>0</ContactID>
+					<interval>300</interval>
+					<Where>127.0.0.1</Where>
+					<What>2</What>
+					<DataOut>HuntressAgent</DataOut>
+					<Comparor>1</Comparor>
+					<DataIn>1</DataIn>
+					<IDField></IDField>
+					<AlertStyle>0</AlertStyle>
+					<ScriptID>0</ScriptID>
+					<datacollector></datacollector>
+					<Category>5</Category>
+					<TicketCategory>135</TicketCategory>
+					<ScriptTarget>1</ScriptTarget>
+					<GUID>75bfcb2d-31d9-4b5d-a5c1-e721da8581e4</GUID>
+					<UpdatedBy>cgranger</UpdatedBy>
+					<UpdateDate>2022-08-24T14:06:48-07:00</UpdateDate>
+				</Table>
+			</NewDataSet>
+			<Search>
+				<NewDataSet>
+					<Table>
+						<SensID>78</SensID>
+						<Name>Windows Computers</Name>
+						<SQL>SELECT 
+   computers.computerid as `Computer Id`,
+   computers.name as `Computer Name`,
+   clients.name as `Client Name`,
+   computers.domain as `Computer Domain`,
+   computers.username as `Computer User`,
+   IF(INSTR(IFNULL(inv_operatingsystem.Name, Computers.OS), 'windows')&gt;0, 1, IF(INSTR(IFNULL(inv_operatingsystem.Name, Computers.OS), 'darwin') &gt;0, 2, 3)) as `Computer.OS.Type`
+FROM Computers 
+LEFT JOIN inv_operatingsystem ON (Computers.ComputerId=inv_operatingsystem.ComputerId)
+LEFT JOIN Clients ON (Computers.ClientId=Clients.ClientId)
+LEFT JOIN Locations ON (Computers.LocationId=Locations.LocationID)
+ WHERE 
+((IF(INSTR(IFNULL(inv_operatingsystem.Name, Computers.OS), 'windows')&gt;0, 1, IF(INSTR(IFNULL(inv_operatingsystem.Name, Computers.OS), 'darwin') &gt;0, 2, 3)) = '1'))
+</SQL>
+						<QueryType>4</QueryType>
+						<ListDATA>READONLY</ListDATA>
+						<FolderID>1</FolderID>
+						<GUID>4477e4d6-40f7-11e0-8c74-0050568b5553</GUID>
+						<SearchXML>&lt;LabTechAbstractSearch&gt;&lt;asn&gt;&lt;st&gt;AndNode&lt;/st&gt;&lt;cn&gt;&lt;asn&gt;&lt;st&gt;ComparisonNode&lt;/st&gt;&lt;lon&gt;Computer.OS.Type&lt;/lon&gt;&lt;lok&gt;Computer.OS.Type&lt;/lok&gt;&lt;lmo&gt;Equals&lt;/lmo&gt;&lt;dv&gt;Windows&lt;/dv&gt;&lt;dk&gt;1&lt;/dk&gt;&lt;/asn&gt;&lt;/cn&gt;&lt;/asn&gt;&lt;/LabTechAbstractSearch&gt;</SearchXML>
+					</Table>
+				</NewDataSet>
+			</Search>
+		</GroupMonitor>
+	</Group>
+</LabTech_Expansion>
