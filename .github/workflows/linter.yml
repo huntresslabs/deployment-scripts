@@ -15,3 +15,5 @@ jobs:
 
       - name: Lint
         uses: docker://github/super-linter
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
