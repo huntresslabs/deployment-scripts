@@ -75,6 +75,8 @@ log_file="/tmp/HuntressInstaller.log"
 install_script="/tmp/HuntressMacInstall.sh"
 invalid_key="Invalid account secret key"
 pattern="[a-f0-9]{32}"
+rmm="Addigy macOS deployment script"
+version="1.1"
 
 ## Using logger function to provide helpful logs within RMM tools in addition to log file
 logger() {
@@ -143,6 +145,7 @@ done
 shift $((OPTIND-1)) # remove parsed options and args from $@ list
 
 logger "=========== INSTALL START AT $dd ==============="
+logger "=========== $rmm | Version: $version ==============="
 
 # VALIDATE OPTIONS PASSED TO SCRIPT
 if [[ -z $organization_key ]]; then
