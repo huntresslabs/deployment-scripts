@@ -14,4 +14,4 @@ jobs:
         uses: actions/checkout@main
 
       - name: Lint
-        uses: docker://github/super-linter:v3
+        uses: docker://github/super-linter
