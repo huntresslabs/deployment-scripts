@@ -1,5 +1,6 @@
- name: Super-Linter
-  on: [push, pull_request]
+name: Super-Linter
+
+on: [push, pull_request]
 
   jobs:
       build:
