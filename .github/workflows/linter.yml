@@ -1,17 +1,17 @@
-name: Super-Linter
+name: Lint
 
-on: [push, pull_request]
+on:
+  push:
 
-  jobs:
-      build:
-        name:Super-Linter
-        runs-on: ubuntu-latest
+jobs:
+  build:
+    name: Lint
 
-        steps:
-          - name: Checkout Code
-            uses: actions/checout@v3
-            with:
-              fetch-depth: 0
+    runs-on: ubuntu-latest
 
-          - name: Super-Linter
-            uses: github/super-linter@v4.9.7
+    steps:
+      - name: Checkout
+        uses: actions/checkout@main
+
+      - name: Lint
+        uses: docker://github/super-linter:v3
