@@ -1,2 +1,16 @@
  name: Super-Linter
-  uses: github/super-linter@v4.9.7
+  on: [push, pull_request]
+
+  jobs:
+      build:
+        name:Super-Linter
+        runs-on: ubuntu-latest
+
+        steps:
+          - name: Checkout Code
+            uses: actions/checout@v3
+            with:
+              fetch-depth: 0
+
+          - name: Super-Linter
+            uses: github/super-linter@v4.9.7
