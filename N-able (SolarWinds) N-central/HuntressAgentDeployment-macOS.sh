@@ -135,7 +135,7 @@ logger "=========== INSTALL START AT $dd ==============="
 # VALIDATE OPTIONS PASSED TO SCRIPT
 if [[ -z $organization_key ]]; then
     organizationKey=$(echo "$defaultOrgKey" | xargs)
-    logger "Missing --organization_key parameter, switching to use $defaultOrgKey"
+    logger "--organization_key parameter not present, using defaultOrgKey instead: $defaultOrgKey"
   else
     organizationKey=$(echo "$organization_key" | xargs)
     logger "--organization_key parameter present, set to: $organizationKey"
