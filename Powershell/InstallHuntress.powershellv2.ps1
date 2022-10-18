@@ -70,7 +70,7 @@ if ($PsVersionTable.PsVersion.Major -lt 3){
 }
 
 # These are used by the Huntress support team when troubleshooting.
-$ScriptVersion = "Version 2, 2022 July 28, revision 3"
+$ScriptVersion = "Version 2, 2022 Oct 18, revision 4"
 $ScriptType = "PowerShell"
 
 # Check for an account key specified on the command line.
@@ -96,7 +96,7 @@ $InstallerPath   = Join-Path $Env:TMP $InstallerName
 $DebugLog        = Join-Path $Env:TMP HuntressInstaller.log
 $HuntressKeyPath = "HKLM:\SOFTWARE\Huntress Labs\Huntress"
 $HuntressRegKey  = "HKLM:\SOFTWARE\Huntress Labs"
-$timeout         = 30         # number of seconds to wait before continuing the install
+$timeout         = 120         # number of seconds to wait before continuing the install
 
 # pick the appropriate file to download based on the OS version
 if ($oldOS -eq $true) {
