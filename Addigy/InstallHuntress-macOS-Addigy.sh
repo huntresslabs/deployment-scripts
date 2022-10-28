@@ -1,10 +1,5 @@
-#!/bin/sh
-
-#
-# BETA SCRIPT NOTICE: This script is part of the Huntress beta, and is subject to change
-#                     prior to General Availability. Please check the Huntress Support
-#                     Knowledgebase for the latest information regarding deployment scripts.
-#
+#!/bin/bash
+#shellcheck disable=SC2181,SC2295,SC2116
 
 # Copyright (c) 2022 Huntress Labs, Inc.
 # All rights reserved.
@@ -70,11 +65,13 @@ defaultOrgKey="__ORGANIZATION_KEY__"
 ##############################################################################
 ## Do not modify anything below this line
 ##############################################################################
-dd=`date "+%Y%m%d-%H%M%S"`
+dd=$(date "+%Y%m%d-%H%M%S")
 log_file="/tmp/HuntressInstaller.log"
 install_script="/tmp/HuntressMacInstall.sh"
 invalid_key="Invalid account secret key"
 pattern="[a-f0-9]{32}"
+rmm="Addigy macOS deployment script"
+version="1.1"
 
 ## Using logger function to provide helpful logs within RMM tools in addition to log file
 logger() {
@@ -83,7 +80,7 @@ logger() {
 }
 
 # Check for root
-if [[ $EUID -ne 0 ]]; then
+if [ $EUID -ne 0 ]; then
     logger "This script must be run as root, exiting..."
     exit 1
 fi
@@ -143,17 +140,18 @@ done
 shift $((OPTIND-1)) # remove parsed options and args from $@ list
 
 logger "=========== INSTALL START AT $dd ==============="
+logger "=========== $rmm | Version: $version ==============="
 
 # VALIDATE OPTIONS PASSED TO SCRIPT
-if [[ -z $organization_key ]]; then
+if [ -z "$organization_key" ]; then
     organizationKey=$(echo "$defaultOrgKey" | xargs)
-    logger "Missing --organization_key parameter, switching to use $defaultOrgKey"
+    logger "--organization_key parameter not present, using defaultOrgKey instead: $defaultOrgKey"
   else
     organizationKey=$(echo "$organization_key" | xargs)
     logger "--organization_key parameter present, set to: $organizationKey"
 fi
 
-if ! [[ $account_key =~ $pattern ]]; then
+if ! [[ "$account_key" =~ $pattern ]]; then
     logger "Missing --account_key parameter, switching to use defaultAccountKey..."
     accountKey=$(echo "$defaultAccountKey" | xargs)
     if ! [[ $accountKey =~ $pattern ]]; then
@@ -165,7 +163,7 @@ if ! [[ $account_key =~ $pattern ]]; then
 fi
 
 # OPTIONS REQUIRED
-if [[ -z $accountKey || -z $organizationKey ]]
+if [ -z "$accountKey" ] || [ -z "$organizationKey" ]
 then
     logger "Error: --account_key and --organization_key are both required"
     echo
@@ -174,14 +172,14 @@ then
 fi
 
 # Hide most of the account key in the logs, keeping the front and tail end for troubleshooting 
-masked="$(echo ${accountKey:0:4})"
+masked="$(echo "${accountKey:0:4}")"
 masked+="************************"
-masked+="$(echo ${accountKey: (-4)})"
+masked+="$(echo "${accountKey: (-4)}")"
 
 logger "Provided Huntress key: $masked"
 logger "Provided Organization Key: $organizationKey"
 
-result=$(curl -w %{http_code} -L "https://huntress.io/script/darwin/$accountKey" -o "$install_script")
+result=$(curl -w "%{http_code}" -L "https://huntress.io/script/darwin/$accountKey" -o "$install_script")
 
 if [ $? != "0" ]; then
    logger "ERROR: Download failed with error: $result"
@@ -193,7 +191,7 @@ if grep -Fq "$invalid_key" "$install_script"; then
    exit 1
 fi
 
-install_result="$(/bin/bash "$install_script" -a $accountKey -o "$organizationKey" -v)"
+install_result="$(/bin/bash "$install_script" -a "$accountKey" -o "$organizationKey" -v)"
 logger "=============== Begin Installer Logs ==============="
 
 if [ $? != "0" ]; then
