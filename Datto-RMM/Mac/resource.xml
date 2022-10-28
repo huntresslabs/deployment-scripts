@@ -1,11 +1,11 @@
 <component info='CentraStage Component'>
   <general>
-    <name>Huntress Agent Deployment [MAC] (Beta)</name>
+    <name>Huntress Agent Deployment [MAC]</name>
     <category>scripts</category>
-    <description>This script will install the Huntress Agent on your computers. The variable HUNTRESS_ACCOUNT_KEY must be defined with the secret key from Huntress' download section. See https://support.huntress.io/article/116-deploying-huntress-with-datto-rmm-comstore for complete details.</description>
-    <uid>e926b5d8-26c0-4a16-b0f1-8a473602f604</uid>
+    <description>This script will install the Huntress Agent on your computers. The variable HUNTRESS_ACCOUNT_KEY must be defined with the secret key from Huntress' download section. See https://support.huntress.io/hc/en-us/articles/10780146108563 for complete details.</description>
+    <uid>c88f421f-f362-461a-b62f-7e2df68a8800</uid>
     <hash />
-    <version>20</version>
+    <version>12</version>
     <timeout>3600</timeout>
     <securityLevel>5</securityLevel>
     <installType>unix</installType>
