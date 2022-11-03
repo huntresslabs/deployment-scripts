@@ -4,4 +4,4 @@
 
 ## Deploying the Huntress macOS Agent using Syncro
 
-This script is in Syncro's [Shared Script library](https://huntress.syncromsp.com/shared_scripts/1612), and documentation is available [here](https://support.huntress.io/hc/en-us/articles/10888685108627).
+This script is in Syncro's Community Script library, and documentation is available [here](https://support.huntress.io/hc/en-us/articles/10888685108627).
