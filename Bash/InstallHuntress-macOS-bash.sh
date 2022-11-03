@@ -44,7 +44,7 @@
 defaultAccountKey="__ACCOUNT_KEY__"
 
 # If you have a preferred "placeholder" organization name for Mac agents, you can set that below.
-# Otherwise, provide the appropriate Organization Key when running the script in Atera.
+# Otherwise, provide the appropriate Organization Key when running the script in your RMM.
 defaultOrgKey="Mac Agents"
 
 # Put the name of your RMM below. This helps our support team understand which RMM tools
