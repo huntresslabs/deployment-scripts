@@ -385,14 +385,18 @@ function Test-Installation {
             $err = "ERROR: The $svc service is not installed. You may need to wait 20 minutes, reboot, or reinstall the agent."
             LogMessage $err
             LogMessage $SupportMessage
-            throw $ScriptFailed + " " + $err + " " + $SupportMessage
+            if ($svc -eq "HuntressAgent") {
+                throw $ScriptFailed + " " + $err + " " + $SupportMessage
+            }
         }
         # check if the service is running.
         elseif ( ! (Confirm-ServiceRunning($svc)) ) {
             $err = "ERROR: The $svc service is not running. You may need to manually start it for more info."
             LogMessage $err
             LogMessage $SupportMessage
-            throw $ScriptFailed + " " + $err + " " + $SupportMessage
+            if ($svc -eq "HuntressAgent") {
+                throw $ScriptFailed + " " + $err + " " + $SupportMessage
+            }
         } else {
             LogMessage "'$svc' is running."
         }
