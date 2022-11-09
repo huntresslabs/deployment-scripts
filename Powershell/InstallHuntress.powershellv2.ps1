@@ -14,7 +14,7 @@
 # OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-# Authors: John Ferrell, Dave Kleinatland, Alan Bishop, Cameron Granger
+# Authors: Alan Bishop, John Ferrell, Dave Kleinatland, Cameron Granger
 
 
 # The Huntress installer needs an Account Key and an Organization Key (a user specified name or description) which is used to affiliate an Agent with a
@@ -55,6 +55,11 @@ $TagsKey = "__TAGS__"
 # Set to "Continue" to enable verbose logging.
 $DebugPreference = "SilentlyContinue"
 
+# Legacy, spinning HDD, or overloaded machines may require tuning this value. Most modern end points install in 10 seconds
+# 3rd party security software (AV/EDR/etc) may significantly slow down the install if Huntress exclusions aren't properly put in!
+$timeout         = 120         # number of seconds to wait before continuing the install
+
+
 ##############################################################################
 ## Do not modify anything below this line
 ##############################################################################
@@ -69,8 +74,11 @@ if ($PsVersionTable.PsVersion.Major -lt 3){
     $oldOS = $true
 }
 
+# Pull the kernel version so we know whether we need to check for EDR or not
+$kernelVersion = [System.Environment]::OSVersion.Version
+
 # These are used by the Huntress support team when troubleshooting.
-$ScriptVersion = "Version 2, 2022 Oct 18, revision 4"
+$ScriptVersion = "Version 2, 2022 Nov 9, revision 4"
 $ScriptType = "PowerShell"
 
 # Check for an account key specified on the command line.
@@ -96,7 +104,6 @@ $InstallerPath   = Join-Path $Env:TMP $InstallerName
 $DebugLog        = Join-Path $Env:TMP HuntressInstaller.log
 $HuntressKeyPath = "HKLM:\SOFTWARE\Huntress Labs\Huntress"
 $HuntressRegKey  = "HKLM:\SOFTWARE\Huntress Labs"
-$timeout         = 120         # number of seconds to wait before continuing the install
 
 # pick the appropriate file to download based on the OS version
 if ($oldOS -eq $true) {
@@ -112,6 +119,7 @@ $ScriptFailed               = "Script Failed!"
 $SupportMessage             = "Please send the error message to support@huntress.com"
 $HuntressAgentServiceName   = "HuntressAgent"
 $HuntressUpdaterServiceName = "HuntressUpdater"
+$HuntressEDRServiceName     = "HuntressRio"
 
 # 32bit PoSh on 64bit Windows is unable to interact with certain assets, so we check for this condition
 $PowerShellArch = $X86
@@ -142,25 +150,20 @@ function Test-Parameters {
         $reinstall = $false
     }
 
-    # Ensure we have an account key (either hard coded or from the command line params).
-    if (($AccountKey -eq "__ACCOUNT_KEY__") -and ($args.count -gt 1)) {
-        $err = "AccountKey not set! Suggest using the -acctkey flag followed by your account key."
+    # Ensure we have an account key (hard coded or passed params) and that it's in the correct form
+    if ($AccountKey -eq "__ACCOUNT_KEY__") {
+        $err = "AccountKey not set! Suggest using the -acctkey flag followed by your account key (you can find it in the Downloads section of your Huntress portal)."
         LogMessage $err
         Write-Host $err -ForegroundColor white -BackgroundColor red
         throw $ScriptFailed + " " + $err
         exit 1
-    } elseif (($AccountKey.length -ne 32) -and ($args.count -gt 1)) {
-        $err = "Invalid AccountKey specified (incorrect length)! Suggest double checking the key was copy/pasted fully"
-        $err = $args.count
+    } elseif ($AccountKey.length -ne 32) {
+        $err = "Invalid AccountKey specified (incorrect length)! Suggest double checking the key was copy/pasted in its entirety"
         LogMessage $err
         Write-Host $err -ForegroundColor white -BackgroundColor red
         throw $ScriptFailed + " " + $err
         exit 1
-    }
-
-    # Ensure the account key doesn't have any invalid characters
-    if (($AccountKey -match '[^a-zA-Z0-9]') -and ($args.count -gt 1))
-    {
+    } elseif (($AccountKey -match '[^a-zA-Z0-9]')) {
         $err = "Invalid AccountKey specified (invalid characters found)! Suggest double checking the key was copy/pasted fully"
         LogMessage $err
         Write-Host $err -ForegroundColor white -BackgroundColor red
@@ -169,8 +172,8 @@ function Test-Parameters {
     }
 
 
-    # Ensure we have an organization key (either hard coded or from the command line params).
-    if (($OrganizationKey -eq "__ORGANIZATION_KEY__") -and ($args.count -gt 1)) {
+    # Ensure we have an organization key (hard coded or passed params).
+    if ($OrganizationKey -eq "__ORGANIZATION_KEY__") {
         $err = "OrganizationKey not specified! This is a user defined identifier set by you (usually your customer's organization name)"
         LogMessage $err
         Write-Host $err -ForegroundColor white -BackgroundColor red
@@ -221,11 +224,10 @@ function StopHuntressServices {
 # return the architecture type (32 or 64 bit)
 function Get-WindowsArchitecture {
     if ($env:ProgramW6432) {
-        $WindowsArchitecture = $X64
+        return $X64
     } else {
-        $WindowsArchitecture = $X86
+        return $X86
     }
-    return $WindowsArchitecture
 }
 
 # Ensure the installer was not modified during download by validating the file signature.
@@ -367,24 +369,37 @@ function Test-Installation {
         LogMessage "'$file' is present."
     }
 
-    # Ensure the services are installed and running.
-    foreach ( $svc in ($HuntressAgentServiceName, $HuntressUpdaterServiceName) ) {
-        # service installed?
-        if ( ! (Confirm-ServiceExists($svc)) ) {
-            $err = "ERROR: The $svc service is not installed. You may need to reinstall."
-            LogMessage $err
-            LogMessage $SupportMessage
-            throw $ScriptFailed + " " + $err + " " + $SupportMessage
-        }
+    # Check for Legacy OS, any kernel below 6.2 cannot run Huntress EDR (so we skip that check) 
+    if ( ($kernelVersion.major -eq 6 -and $kernelVersion.minor -lt 2) -or ($kernelVersion.major -lt 6) ) {
+        $services = @($HuntressAgentServiceName, $HuntressUpdaterServiceName)
+        $err = "WARNING: Legacy OS detected, Huntress EDR will not be installed"
+        LogMessage $err
+    } else {
+        $services = @($HuntressAgentServiceName, $HuntressUpdaterServiceName, $HuntressEDRServiceName)
+    }
 
-        # service running?
-        if ( ! (Confirm-ServiceRunning($svc)) ) {
+    # Ensure the services are installed and running.
+    foreach ($svc in $services) {
+        # check if the service is installed?
+        if ( ! (Confirm-ServiceExists($svc))) {
+            $err = "ERROR: The $svc service is not installed. You may need to wait 20 minutes, reboot, or reinstall the agent."
+            LogMessage $err
+            if ($svc -eq "HuntressAgent") {
+                LogMessage $SupportMessage
+                throw $ScriptFailed + " " + $err + " " + $SupportMessage
+            }
+        }
+        # check if the service is running.
+        elseif ( ! (Confirm-ServiceRunning($svc)) ) {
             $err = "ERROR: The $svc service is not running. You may need to manually start it for more info."
             LogMessage $err
-            LogMessage $SupportMessage
-            throw $ScriptFailed + " " + $err + " " + $SupportMessage
+            if ($svc -eq "HuntressAgent") {
+                LogMessage $SupportMessage
+                throw $ScriptFailed + " " + $err + " " + $SupportMessage
+            }
+        } else {
+            LogMessage "'$svc' is running."
         }
-        LogMessage "'$svc' is running."
     }
 
     # look for a condition that prevents checking registry keys, if not then check for registry keys
