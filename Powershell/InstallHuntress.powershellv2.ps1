@@ -322,9 +322,7 @@ function Install-Huntress ($OrganizationKey) {
     LogMessage $msg
 
     # if $Tags value exists install using the provided tags, then check hardcoded, then set no tags
-    if ($Tags) {
-        $process = Start-Process $InstallerPath "/ACCT_KEY=`"$AccountKey`" /ORG_KEY=`"$OrganizationKey`" /TAGS=`"$TagsKey`" /S" -PassThru
-    } elseif ($TagsKey -ne "__TAGS__") {
+    if (($Tags) -or ($TagsKey -ne "__TAGS__")) {
         $process = Start-Process $InstallerPath "/ACCT_KEY=`"$AccountKey`" /ORG_KEY=`"$OrganizationKey`" /TAGS=`"$TagsKey`" /S" -PassThru
     } else {
         $process = Start-Process $InstallerPath "/ACCT_KEY=`"$AccountKey`" /ORG_KEY=`"$OrganizationKey`" /S" -PassThru
