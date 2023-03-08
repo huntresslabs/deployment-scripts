@@ -46,3 +46,10 @@ installer: Upgrading at base path /
 installer: The upgrade was successful.
 cleaning up...
 20221103-085511 -- =========== INSTALL FINISHED AT 20221103-085511 ===============
+```
+
+## Huntress PPPC
+The `Huntress PPPC.mobileconfig` is designed to upload/import to your MDM and can then be scoped to a collection of devices. This payload will grant the Huntress agent FDA (full disk access) and allow for the optimal performance of the Huntress agent.
+
+Further details: [Generic Deployment and PPPC Payload for Full Disk Access](https://support.huntress.io/hc/en-us/articles/10962515436691)
+
