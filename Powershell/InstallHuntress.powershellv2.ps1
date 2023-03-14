@@ -321,13 +321,12 @@ function Install-Huntress ($OrganizationKey) {
     LogMessage "Checking for installer '$InstallerPath'..."
     if ( ! (Test-Path $InstallerPath) ) {
         $err = "ERROR: The installer was unexpectedly removed from $InstallerPath"
-        $msg = (
+        $msg = ($err + "`n"+
             "A security product may have quarantined the installer. Please check " +
             "your logs. If the issue continues to occur, please send the log to the Huntress " +
             "Team for help at support@huntresslabs.com")
-        LogMessage $err
         LogMessage $msg
-        Write-Output $err + $msg -ForegroundColor white -BackgroundColor red
+        Write-Output $msg -ForegroundColor white -BackgroundColor red
         throw $ScriptFailed + " " + $err + " " + $SupportMessage
     }
 
@@ -367,7 +366,7 @@ function Test-Installation {
 
     LogMessage "Verifying installation..."
 
-    # Watch the agent logs for registration event, log if succeeded, waiting no longer than 10 seconds before outputting failure to log 
+    # Watch the agent logs for registration event, log if succeeded, waiting no longer than 10 seconds before outputting failure to log
     $didAgentRegister = $false
     for ($i = 0; $i -le 40; $i++) {
         if (Test-Path "$($HuntressDirectory)\HuntressAgent.log") {
@@ -426,7 +425,7 @@ function Test-Installation {
                 throw "$($ScriptFailed) $($svc) service is missing! + $($SupportMessage)"
             }
         }
-        # check if the service is running, attempt to restart if not (only for base agent). 
+        # check if the service is running, attempt to restart if not (only for base agent).
         elseif ( (! (Confirm-ServiceRunning($svc))) -AND ($svc -eq $HuntressAgentServiceName)) {
             Start-Service $svc
             # if still not running, log and give up, else inform of success
@@ -705,14 +704,14 @@ function testNetworkConnectivity {
     if ($connectivityTolerance -lt 0) {
         Write-Output "Please fix the closed port 443 for the above domains before attempting to install" -ForegroundColor white -BackgroundColor red
         $err = "Too many connections failed $($connectivityTolerance), exiting"
-        LogMessage $err 
+        LogMessage $err
         Write-Output "$($err), $($SupportMessage)" -ForegroundColor white -BackgroundColor red
         return $false
     }
     return $true
 }
 
-# Log useful data about the machine for troubleshooting AB 
+# Log useful data about the machine for troubleshooting AB
 function logInfo {
     # gather info on the host for logging purposes
     LogMessage "Script type: '$ScriptType'"
@@ -753,7 +752,7 @@ function logInfo {
     LogMessage "Installer location: '$InstallerPath'"
     LogMessage "Installer log: '$DebugLog'"
     LogMessage "Administrator access: $(testAdministrator)"
-    
+
     # Log machine uptime
     $uptime = ((Get-Date)-(GCIM Win32_OperatingSystem).LastBootUpTime).days
     if ($uptime -gt 9) {
@@ -787,7 +786,7 @@ function copyLogAndExit {
     Start-Sleep 1
     $logLocation = $DebugLog
     $agentPath   = getAgentPath
-    Copy-Item -Path $logLocation -Destination $agentPath -Force 
+    Copy-Item -Path $logLocation -Destination $agentPath -Force
     Write-Output "$($Debuglog) copied to $(getAgentPath)"
     Write-Output "Script complete"
     exit 0
