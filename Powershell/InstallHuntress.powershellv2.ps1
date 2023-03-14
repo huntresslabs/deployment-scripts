@@ -97,7 +97,7 @@ if (Test-Path (Join-Path $env:SystemRoot "\temp")) {
 Set-StrictMode -Version Latest
 
 # Pull various software versions for logging purposes
-$PoShVersion   = $PsVersionTable.PsVersion.Major 
+$PoShVersion   = $PsVersionTable.PsVersion.Major
 $KernelVersion = [System.Environment]::OSVersion.Version
 $BuildVersion  = [System.Environment]::OSVersion.Version.Build
 
@@ -163,7 +163,7 @@ function Get-TimeStamp {
 # adds time stamp to a message and then writes that to the log file
 function LogMessage ($msg) {
     Add-Content $DebugLog "$(Get-TimeStamp) $msg"
-    Write-Host "$(Get-TimeStamp) $msg"
+    Write-Output "$(Get-TimeStamp) $msg"
 }
 
 # test that all required parameters were passed, and that they are in the correct format
@@ -180,19 +180,19 @@ function Test-Parameters {
     if ($AccountKey -eq "__ACCOUNT_KEY__") {
         $err = "AccountKey not set! Suggest using the -acctkey flag followed by your account key (you can find it in the Downloads section of your Huntress portal)."
         LogMessage $err
-        Write-Host $err -ForegroundColor white -BackgroundColor red
+        Write-Output $err -ForegroundColor white -BackgroundColor red
         throw $ScriptFailed + " " + $err
         exit 1
     } elseif ($AccountKey.length -ne 32) {
         $err = "Invalid AccountKey specified (incorrect length)! Suggest double checking the key was copy/pasted in its entirety"
         LogMessage $err
-        Write-Host $err -ForegroundColor white -BackgroundColor red
+        Write-Output $err -ForegroundColor white -BackgroundColor red
         throw $ScriptFailed + " " + $err
         exit 1
     } elseif (($AccountKey -match '[^a-zA-Z0-9]')) {
         $err = "Invalid AccountKey specified (invalid characters found)! Suggest double checking the key was copy/pasted fully"
         LogMessage $err
-        Write-Host $err -ForegroundColor white -BackgroundColor red
+        Write-Output $err -ForegroundColor white -BackgroundColor red
         throw $ScriptFailed + " " + $err
         exit 1
     }
@@ -201,13 +201,13 @@ function Test-Parameters {
     if ($OrganizationKey -eq "__ORGANIZATION_KEY__") {
         $err = "OrganizationKey not specified! This is a user defined identifier set by you (usually your customer's organization name)"
         LogMessage $err
-        Write-Host $err -ForegroundColor white -BackgroundColor red
+        Write-Output $err -ForegroundColor white -BackgroundColor red
         throw $ScriptFailed + " " + $err
         exit 1
     } elseif ($OrganizationKey.length -lt 1) {
         $err = "Invalid OrganizationKey specified (length should be > 0)!"
         LogMessage $err
-        Write-Host $err -ForegroundColor white -BackgroundColor red
+        Write-Output $err -ForegroundColor white -BackgroundColor red
         throw $ScriptFailed + " " + $err
         exit 1
     }
@@ -258,7 +258,7 @@ function verifyInstaller ($file) {
                  "Suggest trying again, contact support@huntress.com if it fails >2 times")
         LogMessage $err
         LogMessage $SupportMessage
-        Write-Host $err -ForegroundColor white -BackgroundColor red
+        Write-Output $err -ForegroundColor white -BackgroundColor red
         throw $ScriptFailed + " " + $err + " " + $SupportMessage
     }
 }
@@ -327,7 +327,7 @@ function Install-Huntress ($OrganizationKey) {
             "Team for help at support@huntresslabs.com")
         LogMessage $err
         LogMessage $msg
-        Write-Host $err + $msg -ForegroundColor white -BackgroundColor red
+        Write-Output $err + $msg -ForegroundColor white -BackgroundColor red
         throw $ScriptFailed + " " + $err + " " + $SupportMessage
     }
 
@@ -347,7 +347,7 @@ function Install-Huntress ($OrganizationKey) {
     } catch {
         $process | Stop-Process -Force
         $err = "ERROR: Installer failed to complete in $timeout seconds. Possible interference from a security product?"
-        Write-Host $err -ForegroundColor white -BackgroundColor red
+        Write-Output $err -ForegroundColor white -BackgroundColor red
         LogMessage $err
         LogMessage $SupportMessage
         throw $ScriptFailed + " " + $err + " " + $SupportMessage
@@ -371,8 +371,8 @@ function Test-Installation {
     $didAgentRegister = $false
     for ($i = 0; $i -le 40; $i++) {
         if (Test-Path "$($HuntressDirectory)\HuntressAgent.log") {
-            $linesFromLog = Get-Content "$($HuntressDirectory)\HuntressAgent.log" | Select -first 4
-            ForEach ($line in $linesFromLog) { 
+            $linesFromLog = Get-Content "$($HuntressDirectory)\HuntressAgent.log" | Select-Object -first 4
+            ForEach ($line in $linesFromLog) {
                 if ($line -like "*Huntress agent registered*") {
                     LogMessage "Agent successfully registered in $($i/4) seconds"
                     $didAgentRegister = $true
@@ -385,10 +385,10 @@ function Test-Installation {
     }
     if ( ! $didAgentRegister) {
         $err = "WARNING: It does not appear the agent has succesfully registered. Check 3rd party AV exclusion lists to ensure Huntress is excluded."
-        Write-Host $err -ForegroundColor white -BackgroundColor red
+        Write-Output $err -ForegroundColor white -BackgroundColor red
         LogMessage ($err + $SupportMessage)
     }
-    
+
     # Ensure the critical files were created.
     foreach ( $file in ($HuntressAgentPath, $HuntressUpdaterPath, $WyUpdaterPath) ) {
         if ( ! (Test-Path $file) ) {
@@ -507,7 +507,7 @@ function isOrphan {
 
     # if the log was found, look through the last 10 lines for the orphaned agent error code
     if ($Path -match 'HuntressAgent.log') {
-        $linesFromLog = Get-Content $Path | Select -last 10
+        $linesFromLog = Get-Content $Path | Select-Object -last 10
         ForEach ($line in $linesFromLog)    { 
             if ($line -like "*bad status code: 401*") {
                 return $true
@@ -527,7 +527,7 @@ function testAdministrator {
 function checkFreeDiskSpace {
     # Using an older disk query to be backwards compatible with PoSh 2, catch WMI errors and check repository
     try {
-        $freeSpace = (Get-WmiObject -query "Select * from Win32_LogicalDisk where DeviceID='c:'" | Select FreeSpace).FreeSpace
+        $freeSpace = (Get-WmiObject -query "Select * from Win32_LogicalDisk where DeviceID='c:'" | Select-Object FreeSpace).FreeSpace
     } catch {
         LogMessage "WMI issues discovered (free space query), attempting to fix the repository"
         winmgt -verifyrepository
@@ -541,7 +541,7 @@ function checkFreeDiskSpace {
     $freeSpaceNice = $freeSpace.ToString('N0')
     if ($freeSpace -lt $estimatedSpaceNeeded) {
         $err = "Low disk space detected, you may have troubles completing this install. Only $($freeSpaceNice) bytes remaining (need about $($estimatedSpaceNeeded.ToString('N0'))."
-        Write-Host $err -ForegroundColor white -BackgroundColor red
+        Write-Output $err -ForegroundColor white -BackgroundColor red
         LogMessage $err
     } else {
         LogMessage "Free disk space: $($freeSpaceNice)"
@@ -566,7 +566,7 @@ function runProcess ($process, $flags, $name){
     } catch {
         Stop-Process $process -Force
         $err = "ERROR: $($name) failed to complete in $timeout seconds."
-        Write-Host $err -ForegroundColor white -BackgroundColor red
+        Write-Output $err -ForegroundColor white -BackgroundColor red
         LogMessage $err
         copyLogAndExit
     }
@@ -602,7 +602,7 @@ function uninstallHuntress {
         }
     } else {
         $err = "Note: unable to find Huntress install folder. Attempting to manually uninstall."
-        Write-Host $err -ForegroundColor white -BackgroundColor red
+        Write-Output $err -ForegroundColor white -BackgroundColor red
         LogMessage $err
     }
 
@@ -618,7 +618,7 @@ function uninstallHuntress {
             if ($i -eq 15) {
                 $err = "Uninstall not complete after $($i) seconds"
                 LogMessage $err
-                Write-Host $err -ForegroundColor white -BackgroundColor red
+                Write-Output $err -ForegroundColor white -BackgroundColor red
             }
         }
     }
@@ -628,7 +628,7 @@ function uninstallHuntress {
         Remove-Item -LiteralPath $agentPath -Force -Recurse -ErrorAction SilentlyContinue
         LogMessage "Manual cleanup of Huntress folder: success"
     } else {
-        LogMessage "Manual cleanup of Huntress folder: folder not found"    
+        LogMessage "Manual cleanup of Huntress folder: folder not found"
     }
 
     # look for the registry keys, if exist then delete
@@ -656,14 +656,14 @@ function repairAgent {
     $DidRepairFinish = $true
 
     # if each service doesn't exist we'll be returning false, else start the service
-    if ($HuntressService -eq $null){
+    if ($null -eq $HuntressService){
         LogMessage "Repair was unable to find the HuntressService, this machine will need Huntress uninstalled and reinstalled in order to maintain security"
         $DidRepairFinish = $false
     } else {
-        Start-Service HuntressAgent    
+        Start-Service HuntressAgent
         LogMessage "Repair started HuntressAgent service"
     }
-    if ($UpdaterService -eq $null){
+    if ($null -eq $UpdaterService){
         LogMessage "Repair was unable to find the UpdaterService, this machine will need Huntress uninstalled and reinstalled in order to continue receiving updates."
         $DidRepairFinish = $false
     } else {
@@ -672,9 +672,9 @@ function repairAgent {
     }
 
     # For Rio/EDR we don't return false as we don't know if it's a fresh install that hasn't received Rio yet, but still attempt to restart service
-    if (($RioService -eq $null) -AND $isHuntressInstalled){
+    if (($null -eq $RioService) -AND $isHuntressInstalled){
         LogMessage "Repair was unable to find the RioService. If this is a fresh install it may take up to 24 hours for Rio to install. Otherwise please contact support to ensure EDR coverage."
-    } elseif ($RioService -eq $null) {
+    } elseif ($null -eq $RioService) {
         LogMessaage "Fresh install detected, it can take up to 24 hours for Rio to install."
     } else {
         Start-Service HuntressRio
@@ -689,13 +689,13 @@ function repairAgent {
 function testNetworkConnectivity {
     # number of URL's that can fail the connectivity before the agent refuses to install (the test fails incorrectly sometimes, so 1 failure is acceptable)
     $connectivityTolerance = 1
-    
+
     $URLs = @("huntress.io", "huntresscdn.com", "update.huntress.io", "eetee.huntress.io", "huntress-installers.s3.amazonaws.com", "huntress-updates.s3.amazonaws.com", "huntress-uploads.s3.us-west-2.amazonaws.com",
               "huntress-user-uploads.s3.amazonaws.com", "huntress-rio.s3.amazonaws.com", "huntress-survey-results.s3.amazonaws.com")
     foreach ($URL in $URLs) {
         if (! (Test-NetConnection $URL -Port 443).TcpTestSucceeded) {
             $err = "WARNING, connectivity to Huntress URL's is being interrupted. You MUST open port 443 for $($URL) in order for the Huntress agent to function."
-            Write-Host $err -ForegroundColor white -BackgroundColor red
+            Write-Output $err -ForegroundColor white -BackgroundColor red
             LogMessage $err
             $connectivityTolerance --
         } else {
@@ -703,10 +703,10 @@ function testNetworkConnectivity {
         }
     }
     if ($connectivityTolerance -lt 0) {
-        Write-Host "Please fix the closed port 443 for the above domains before attempting to install" -ForegroundColor white -BackgroundColor red
+        Write-Output "Please fix the closed port 443 for the above domains before attempting to install" -ForegroundColor white -BackgroundColor red
         $err = "Too many connections failed $($connectivityTolerance), exiting"
         LogMessage $err 
-        Write-Host "$($err), $($SupportMessage)" -ForegroundColor white -BackgroundColor red
+        Write-Output "$($err), $($SupportMessage)" -ForegroundColor white -BackgroundColor red
         return $false
     }
     return $true
@@ -722,7 +722,7 @@ function logInfo {
     LogMessage "Script cursory check, is Huntress installed already: $($isHuntressInstalled)"
     if ($isHuntressInstalled){
         LogMessage "Agent version $(getAgentVersion) found"
-    }    
+    }
 
     # Log OS details
     LogMessage $(systeminfo)
@@ -756,7 +756,7 @@ function logInfo {
     
     # Log machine uptime
     $uptime = ((Get-Date)-(GCIM Win32_OperatingSystem).LastBootUpTime).days
-    if ($uptime > 9) {
+    if ($uptime -gt 9) {
         LogMessage "Warning, high uptime detected  This machine may need a reboot in order to resolve Windows update-based file locks."
     } else {
         LogMessage "Days of uptime: $($uptime)"
@@ -788,8 +788,8 @@ function copyLogAndExit {
     $logLocation = $DebugLog
     $agentPath   = getAgentPath
     Copy-Item -Path $logLocation -Destination $agentPath -Force 
-    Write-Host "$($Debuglog) copied to $(getAgentPath)"
-    Write-Host "Script complete"
+    Write-Output "$($Debuglog) copied to $(getAgentPath)"
+    Write-Output "Script complete"
     exit 0
 }
 
@@ -812,7 +812,7 @@ function main () {
     if ( !($reregister)) {
         if (isOrphan) {
             $err = 'Huntress Agent is orphaned, unable to use the provided flag. Switching to uninstall/reinstall (reregister flag)'
-            Write-Host $err -ForegroundColor white -BackgroundColor red
+            Write-Output $err -ForegroundColor white -BackgroundColor red
             LogMessage "$err"
             $reregister = $true
         }
@@ -877,7 +877,7 @@ function main () {
         if ( Confirm-ServiceExists($HuntressAgentServiceName) ) {
             $err = "The Huntress Agent is already installed. Exiting with no changes. Suggest using -reregister or -reinstall flags"
             LogMessage "$err"
-            Write-Host 'Huntress Agent is already installed. Suggest using the -reregister or -reinstall flags' -ForegroundColor white -BackgroundColor red
+            Write-Output 'Huntress Agent is already installed. Suggest using the -reregister or -reinstall flags' -ForegroundColor white -BackgroundColor red
             copyLogAndExit
         }
     }
