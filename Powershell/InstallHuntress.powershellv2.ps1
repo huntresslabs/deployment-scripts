@@ -782,7 +782,7 @@ function logInfo {
         try {
             $secureChannelStatus = Test-ComputerSecureChannel
         } catch {
-            LogMessage "Warning, unable to Test-ComputerSeccureChannel. If this isn't a DC, then the trust relationship wiht DC may be broken"
+            LogMessage "Warning, unable to Test-ComputerSecureChannel. If this isn't a DC, then the trust relationship with the DC may be broken"
             $secureChannelStatus = $false
         }
         if ( ! $secureChannelStatus) {
@@ -803,10 +803,10 @@ function logInfo {
 # In the past we copied to the users temp folder, difficult to find on machines with lots of profiles. Solved this by always placing the log in the normal Huntress folder.
 function copyLogAndExit {
     Start-Sleep 1
-    $logLocation = $DebugLog
-    $agentPath   = getAgentPath
-    Copy-Item -Path $logLocation -Destination $agentPath -Force
-    Write-Output "$($Debuglog) copied to $(getAgentPath)"
+    $agentPath = getAgentPath
+    $logLocation = Join-Path $agentPath "HuntressPoShInstaller.log"
+    Copy-Item -Path $DebugLog -Destination $agentPath -Force
+    Write-Output "$($DebugLog) copied to $(getAgentPath)"
     Write-Output "Script complete"
     exit 0
 }
