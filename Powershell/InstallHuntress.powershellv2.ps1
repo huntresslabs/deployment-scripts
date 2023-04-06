@@ -805,7 +805,7 @@ function copyLogAndExit {
     Start-Sleep 1
     $agentPath = getAgentPath
     $logLocation = Join-Path $agentPath "HuntressPoShInstaller.log"
-    Copy-Item -Path $DebugLog -Destination $agentPath -Force
+    Copy-Item -Path $DebugLog -Destination $logLocation -Force
     Write-Output "$($DebugLog) copied to $(getAgentPath)"
     Write-Output "Script complete"
     exit 0
