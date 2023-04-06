@@ -754,7 +754,13 @@ function logInfo {
     LogMessage "Administrator access: $(testAdministrator)"
 
     # Log machine uptime
-    $uptime = ((Get-Date)-(GCIM Win32_OperatingSystem).LastBootUpTime).days
+    try
+    {
+        $uptime = ((Get-Date) - (GCIM Win32_OperatingSystem).LastBootUpTime).days
+    } catch {
+        LogMessage "Unable to determine system uptime"
+        $uptime = 0
+    }
     if ($uptime -gt 9) {
         LogMessage "Warning, high uptime detected  This machine may need a reboot in order to resolve Windows update-based file locks."
     } else {
@@ -765,8 +771,21 @@ function logInfo {
     LogMessage "$(ipconfig)"
 
     # Log status of AD joined and the (in)ability to contact a DC
-    if ((gwmi win32_computersystem).PartOfDomain) {
-        if ( ! (Test-ComputerSecureChannel)) {
+    try {
+        $domainJoined = (gwmi win32_computersystem).PartOfDomain
+    } catch {
+        LogMessage "Warning, unable to determine if domain joined"
+        $domainJoined = $false
+    }
+
+    if ( $domainJoined ) {
+        try {
+            $secureChannelStatus = Test-ComputerSecureChannel
+        } catch {
+            LogMessage "Warning, unable to Test-ComputerSecureChannel. If this isn't a DC, then the trust relationship with the DC may be broken"
+            $secureChannelStatus = $false
+        }
+        if ( ! $secureChannelStatus) {
             LogMessage "Warning, AD joined machine without DC connectivity. Some services may be impacted such as Managed AV and in some rare cases Host Isolation."
         } else {
             LogMessage "AD joined and DC connectivity verified!"
@@ -784,10 +803,11 @@ function logInfo {
 # In the past we copied to the users temp folder, difficult to find on machines with lots of profiles. Solved this by always placing the log in the normal Huntress folder.
 function copyLogAndExit {
     Start-Sleep 1
-    $logLocation = $DebugLog
-    $agentPath   = getAgentPath
-    Copy-Item -Path $logLocation -Destination $agentPath -Force
-    Write-Output "$($Debuglog) copied to $(getAgentPath)"
+    $agentPath = getAgentPath
+    $logLocation = Join-Path $agentPath "HuntressPoShInstaller.log"
+    if (!(Test-Path -path $agentPath)) {New-Item $agentPath -Type Directory}
+    Copy-Item -Path $DebugLog -Destination $logLocation -Force
+    Write-Output "$($DebugLog) copied to $agentPath"
     Write-Output "Script complete"
     exit 0
 }
