@@ -2,7 +2,7 @@
 
 This PowerShell script will install the Huntress Agent. The script will automatically download the installer from the Huntress servers and run it. The script does error checking and logging as well. (It will check to see if the agent is already installed and also verfiy the installation completed.)
 
-You have the option to hard code your Huntress account key, organization key, and tags (optional) in the script, or pass as arguments to the script. [Click here for more details regarding the Account Key and Organization Key.](https://support.huntress.io/article/7-using-account-and-organization-keys)
+You have the option to hard code your Huntress account key, organization key, and tags (optional) in the script, or pass as arguments to the script. [Click here for more details regarding the Account Key and Organization Key.](https://support.huntress.io/hc/en-us/articles/4404012734227-Using-Account-Keys-Organization-Keys-and-Agent-Tags)
 
 The script supports the following mutually exclusive command-line switches:
 * `-reregister` - Force the agent to re-register (useful for clean install)
