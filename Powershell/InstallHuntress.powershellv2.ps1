@@ -754,7 +754,13 @@ function logInfo {
     LogMessage "Administrator access: $(testAdministrator)"
 
     # Log machine uptime
-    $uptime = ((Get-Date)-(GCIM Win32_OperatingSystem).LastBootUpTime).days
+    try
+    {
+        $uptime = ((Get-Date) - (GCIM Win32_OperatingSystem).LastBootUpTime).days
+    } catch {
+        LogMessage "Unable to determine system uptime"
+        $uptime = 0
+    }
     if ($uptime -gt 9) {
         LogMessage "Warning, high uptime detected  This machine may need a reboot in order to resolve Windows update-based file locks."
     } else {
@@ -765,8 +771,21 @@ function logInfo {
     LogMessage "$(ipconfig)"
 
     # Log status of AD joined and the (in)ability to contact a DC
-    if ((gwmi win32_computersystem).PartOfDomain) {
-        if ( ! (Test-ComputerSecureChannel)) {
+    try {
+        $domainJoined = (gwmi win32_computersystem).PartOfDomain
+    } catch {
+        LogMessage "Warning, unable to determine if domain joined"
+        $domainJoined = $false
+    }
+
+    if ( $domainJoined ) {
+        try {
+            $secureChannelStatus = Test-ComputerSecureChannel
+        } catch {
+            LogMessage "Warning, unable to Test-ComputerSeccureChannel. If this isn't a DC, then the trust relationship wiht DC may be broken"
+            $secureChannelStatus = $false
+        }
+        if ( ! $secureChannelStatus) {
             LogMessage "Warning, AD joined machine without DC connectivity. Some services may be impacted such as Managed AV and in some rare cases Host Isolation."
         } else {
             LogMessage "AD joined and DC connectivity verified!"
