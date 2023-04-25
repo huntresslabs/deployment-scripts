@@ -349,7 +349,7 @@ function Test-Installation {
 
     # Get the file locations of some of the Huntress executables
     $HuntressDirectory   = getAgentPath
-    $WyUpdaterPath       = Join-Path $HuntressDirectory "wyUpdate.exe"
+    $hUpdaterPath       = Join-Path $HuntressDirectory "hUpdate.exe"
     $HuntressAgentPath   = Join-Path $HuntressDirectory "HuntressAgent.exe"
     $HuntressUpdaterPath = Join-Path $HuntressDirectory "HuntressUpdater.exe"
 
@@ -359,7 +359,7 @@ function Test-Installation {
     $TagsValueName = "Tags"
 
     # Ensure the critical files were created.
-    foreach ( $file in ($HuntressAgentPath, $HuntressUpdaterPath, $WyUpdaterPath) ) {
+    foreach ( $file in ($HuntressAgentPath, $HuntressUpdaterPath, $hUpdaterPath) ) {
         if ( ! (Test-Path $file) ) {
             $err = "ERROR: $file did not exist. Check your AV/security software quarantine"
             LogMessage $err
