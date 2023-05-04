@@ -39,18 +39,17 @@ param (
 )
 
 
-##############################################################################
-## Begin user modified variables
-##############################################################################
-
-# Replace __ACCOUNT_KEY__ with your account secret key (from your Huntress portal's "download agent" section)
+# The account key should be stored in the DattoRMM account variable HUNTRESS_ACCOUNT_KEY
 $AccountKey = "__ACCOUNT_KEY__"
+if ($env:HUNTRESS_ACCOUNT_KEY) {
+    $AccountKey = $env:HUNTRESS_ACCOUNT_KEY
+}
 
-# Replace __ORGANIZATION_KEY__ with a unique identifier for the organization/client (your choice of naming scheme)
-$OrganizationKey = "__ORGANIZATION_KEY__"
-
-# Replace __TAGS__ with one or more tags, separated by commas (this field is optional!)
-$TagsKey = "__TAGS__"
+# Use the CS_PROFILE_NAME environment variable as the OrganizationKey
+# This should always be set by the DattoRMM agent. If not, there is likely
+# an issue with the agent.
+$OrganizationKey = $env:CS_PROFILE_NAME
+if (!$env:CS_PROFILE_NAME) { $OrganizationKey = 'MISSING_CS_PROFILE_NAME' }
 
 # Set to "Continue" to enable verbose logging.
 $DebugPreference = "SilentlyContinue"
