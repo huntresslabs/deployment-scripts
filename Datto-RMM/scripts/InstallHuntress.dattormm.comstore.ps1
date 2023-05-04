@@ -31,7 +31,6 @@
 param (
   [string]$acctkey,
   [string]$orgkey,
-  [string]$tags,
   [switch]$reregister,
   [switch]$reinstall,
   [switch]$uninstall, 
@@ -121,10 +120,6 @@ if ( ! [string]::IsNullOrEmpty($orgkey) ) {
     $OrganizationKey = $orgkey
 }
 
-# Check for tags specified on the command line.
-if ( ! [string]::IsNullOrEmpty($tags) ) {
-    $TagsKey = $tags
-}
 
 # pick the appropriate file to download based on the OS version
 if ($LegacyCommandsRequired -eq $true) {
@@ -333,12 +328,8 @@ function Install-Huntress ($OrganizationKey) {
     verifyInstaller($InstallerPath)
 
     LogMessage "Executing installer..."
-    # if $Tags value exists install using the provided tags, otherwise no tags
-    if (($Tags) -or ($TagsKey -ne "__TAGS__")) {
-        $process = Start-Process $InstallerPath "/ACCT_KEY=`"$AccountKey`" /ORG_KEY=`"$OrganizationKey`" /TAGS=`"$TagsKey`" /S" -PassThru
-    } else {
-        $process = Start-Process $InstallerPath "/ACCT_KEY=`"$AccountKey`" /ORG_KEY=`"$OrganizationKey`" /S" -PassThru
-    }
+   
+    $process = Start-Process $InstallerPath "/ACCT_KEY=`"$AccountKey`" /ORG_KEY=`"$OrganizationKey`" /S" -PassThru
 
     try {
         $process | Wait-Process -Timeout $timeout -ErrorAction Stop
@@ -869,7 +860,6 @@ function main () {
         $masked = $AccountKey.Substring(0,4) + "************************" + $AccountKey.SubString(28,4)
         LogMessage "AccountKey: '$masked'"
         LogMessage "OrganizationKey: '$OrganizationKey'"
-        LogMessage "Tags: $($Tags)"
     }
 
     # reregister > reinstall > uninstall > install (in decreasing order of impact)
