@@ -1,4 +1,4 @@
-# Copyright (c) 2022 Huntress Labs, Inc.
+# Copyright (c) 2023 Huntress Labs, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
@@ -78,7 +78,7 @@ if ($PsVersionTable.PsVersion.Major -lt 3){
 $kernelVersion = [System.Environment]::OSVersion.Version
 
 # These are used by the Huntress support team when troubleshooting.
-$ScriptVersion = "Version 2, 2022 Dec 8, revision 5 N-central specific"
+$ScriptVersion = "Version 2, major revision 7, 2023 May 1, N-central specific"
 $ScriptType = "PowerShell"
 
 # Check for an account key specified on the command line.
