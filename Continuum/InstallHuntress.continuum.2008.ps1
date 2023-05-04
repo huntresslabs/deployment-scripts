@@ -1,4 +1,4 @@
-# Copyright (c) 2022 Huntress Labs, Inc.
+# Copyright (c) 2023 Huntress Labs, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -59,7 +59,7 @@ Set-StrictMode -Version Latest
 
 # Do not modify the following variables.
 # These are used by the Huntress support team when troubleshooting.
-$ScriptVersion = "2022 July 22; revision 2"
+$ScriptVersion = "Version 2, major revision 7, 2023 May 1"
 $ScriptType = "Continuum"
 
 # Check for an account key specified on the command line.
