@@ -300,6 +300,26 @@ function Get-Installer {
 
 # check if the agent downloaded, is a valid install file, if those match up then run the installer
 function Install-Huntress ($OrganizationKey) {
+    # check for elevated permissions
+    LogMessage "Checking for administrator permissions..."
+    if ( ! $(testAdministrator) ) {
+        $err = "ERROR: Administrator permissions required::"
+        $msg = (
+            "You are currently running this PowerShell script " +
+            "from a session that does not have sufficient permissions. " +
+            "Please ensure that you are running from an " +
+            "elevated PowerShell session with a user that is part of " +
+            "the Local Administrators group."
+        )
+        LogMessage $err
+        LogMessage $msg
+        Write-Host $err $msg -ForegroundColor white -BackgroundColor red
+        throw $ScriptFailed + " " + $err + " " + $SupportMessage
+    }
+
+    $msg = "Administrator permissions confirmed! Proceeding..."
+    LogMessage $msg
+
     # check that the installer downloaded and wasn't quarantined
     LogMessage "Checking for installer '$InstallerPath'..."
     if ( ! (Test-Path $InstallerPath) ) {
