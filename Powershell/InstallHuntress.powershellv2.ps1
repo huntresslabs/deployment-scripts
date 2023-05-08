@@ -475,9 +475,9 @@ function isOrphan {
 }
 
 # Check if the script is being run with admin access AB
-function testAdministrator {  
-    $user = [Security.Principal.WindowsIdentity]::GetCurrent();
-    (New-Object Security.Principal.WindowsPrincipal $user).IsInRole([Security.Principal.WindowsBuiltinRole]::Administrator)  
+function testAdministrator {
+    $user = New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent());
+    $user.IsInRole([Security.Principal.WindowsBuiltinRole]::Administrator);
 }
 
 # Ensure the disk has enough space for the install files + agent, then write results to the log AB
