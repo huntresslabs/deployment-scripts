@@ -142,7 +142,7 @@ if [ -z "$organization_key" ]; then
 fi
 
 if ! [[ $account_key =~ $pattern ]]; then
-    logger "Invalid --account_key provided, checking defaultAccountKey..."
+    logger "Checking defaultAccountKey (hardcoded key) because parameter for --account_key was invalid"
     accountKey=$(echo "$defaultAccountKey" | xargs)
     if ! [[ $accountKey =~ $pattern ]]; then
         logger "ERROR: Invalid --account_key. Please check Huntress support documentation."
