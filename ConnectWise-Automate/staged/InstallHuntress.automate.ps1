@@ -60,7 +60,7 @@ Set-StrictMode -Version Latest
 
 # Do not modify the following variables.
 # These are used by the Huntress support team when troubleshooting.
-$ScriptVersion = "2020 February 5; revision 2"
+$ScriptVersion = "Version 2, major revision 7, 2023 May 1"
 $ScriptType = "Automate"
 
 # Check for an account key specified on the command line.
@@ -280,14 +280,14 @@ function Test-Installation {
 
     $HuntressAgentPath = Join-Path $HuntressDirPath "HuntressAgent.exe"
     $HuntressUpdaterPath = Join-Path $HuntressDirPath "HuntressUpdater.exe"
-    $WyUpdaterPath = Join-Path $HuntressDirPath "wyUpdate.exe"
+    $hUpdaterPath = Join-Path $HuntressDirPath "hUpdate.exe"
     $HuntressKeyPath = "HKLM:\SOFTWARE\Huntress Labs\Huntress"
     $AgentIdKeyValueName = "AgentId"
     $OrganizationKeyValueName = "OrganizationKey"
     $TagsValueName = "Tags"
 
     # Ensure the critical files were created.
-    foreach ( $file in ($HuntressAgentPath, $HuntressUpdaterPath, $WyUpdaterPath) ) {
+    foreach ( $file in ($HuntressAgentPath, $HuntressUpdaterPath, $hUpdaterPath) ) {
         if ( ! (Test-Path $file) ) {
             $err = "ERROR: $file did not exist."
             LogMessage $err
