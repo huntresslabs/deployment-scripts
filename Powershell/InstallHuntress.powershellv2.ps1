@@ -578,6 +578,7 @@ function runProcess ($process, $flags, $name){
         }
 
         $err = "ERROR: $($name) running as '$($process) $($flags)' failed to complete in $timeout seconds, full error message: '$($msg).'"
+        Write-Host $err -ForegroundColor white -BackgroundColor red
         LogMessage $err
         copyLogAndExit
     }
