@@ -383,7 +383,7 @@ function Test-Installation {
         Start-Sleep -Milliseconds 250
     }
     if ( ! $didAgentRegister) {
-        $err = "WARNING: It does not appear the agent has succesfully registered. Check 3rd party AV exclusion lists to ensure Huntress is excluded."
+        $err = "WARNING: It does not appear the agent has successfully registered. Check 3rd party AV exclusion lists to ensure Huntress is excluded."
         Write-Output $err -ForegroundColor white -BackgroundColor red
         LogMessage ($err + $SupportMessage)
     }
