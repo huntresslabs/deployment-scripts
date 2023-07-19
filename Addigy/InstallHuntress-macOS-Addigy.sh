@@ -1,7 +1,7 @@
 #!/bin/bash
 #shellcheck disable=SC2181,SC2295,SC2116
 
-# Copyright (c) 2022 Huntress Labs, Inc.
+# Copyright (c) 2023 Huntress Labs, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -56,7 +56,7 @@ defaultOrgKey="__ORGANIZATION_KEY__"
 ## Top-Level policy name as your Organization Name, you can pull the
 ## $POLICY_PATH environment variable from Addigy's Policy pipeline.
 ##
-## For this method, comment line 56 above and uncomment lines 67-68.
+## For this method, comment line 51 above and uncomment lines 62-63 below.
 ##############################################################################
 
 # topLevelPolicy=$(echo ${POLICY_PATH} | awk -F ' \\| ' '{print $1}') 
@@ -71,7 +71,7 @@ install_script="/tmp/HuntressMacInstall.sh"
 invalid_key="Invalid account secret key"
 pattern="[a-f0-9]{32}"
 rmm="Addigy macOS deployment script"
-version="1.1"
+version="1.2 - July 19, 2023"
 
 ## Using logger function to provide helpful logs within RMM tools in addition to log file
 logger() {
