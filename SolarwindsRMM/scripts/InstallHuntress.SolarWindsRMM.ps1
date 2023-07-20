@@ -44,28 +44,32 @@
 #   [switch]$reinstall
 # )
 
-# set defaults since we can't pass command line args
-$reregister = $false
-$reinstall = $false
-
 # Replace __ACCOUNT_KEY__ with your account secret key.
 # $AccountKey = "__ACCOUNT_KEY__"
 
 # Replace __ORGANIZATION_KEY__ with a unique identifier for the organization/client.
 # $OrganizationKey = "__ORGANIZATION_KEY__"
 
+# set defaults since we can't pass command line args
+$reregister = $false
+$reinstall = $false
+
+# set timeout for installation, check for 3rd party AV interference if this timeout is exceeded
+$timeout = 120 # Seconds
+
 # Set to "Continue" to enable verbose logging.
 $DebugPreference = "SilentlyContinue"
 
-##############################################################################
-## The following should not need to be adjusted.
+########################################################################################################
+## End of user-modifiable settings, please don't modify anything further unless instructed to by Huntress
+########################################################################################################
 
 # Find poorly written code faster with the most stringent setting.
 Set-StrictMode -Version Latest
 
 # Do not modify the following variables.
 # These are used by the Huntress support team when troubleshooting.
-$ScriptVersion = "Version 2, major revision 7, 2023 May 1"
+$ScriptVersion = "Version 3, major revision 7, 2023 July 20"
 $ScriptType = "SolarWindsRMM"
 
 # Check for an account key specified on the command line.
@@ -255,7 +259,6 @@ function Install-Huntress ($OrganizationKey) {
     $msg = "Executing installer..."
     LogMessage $msg
 
-    $timeout = 30 # Seconds
     $process = Start-Process $InstallerPath "/ACCT_KEY=`"$AccountKey`" /ORG_KEY=`"$OrganizationKey`" /S" -PassThru
     try {
         $process | Wait-Process -Timeout $timeout -ErrorAction Stop
