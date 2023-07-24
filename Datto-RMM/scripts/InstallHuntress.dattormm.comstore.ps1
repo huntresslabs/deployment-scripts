@@ -550,12 +550,25 @@ function getAgentPath {
 # attempt to run a process and log the results AB 
 function runProcess ($process, $flags, $name){
     try {
-        Start-Process $process $flags | Wait-Process -Timeout $timeout -ErrorAction Stop
+        $proc = Start-Process $process $flags -PassThru
+        Wait-Process -Timeout $timeout -ErrorAction Stop -InputObject $proc
         LogMessage "$($name) finished"
     } catch {
-        Stop-Process $process -Force
-        $err = "ERROR: $($name) failed to complete in $timeout seconds."
-        Write-Output $err -ForegroundColor white -BackgroundColor red
+        $e = $_.Exception
+        $msg = $e.Message
+        # Gather all the exceptions and their children
+        while ($e.InnerException) {
+          $e = $e.InnerException
+          $msg += "`n" + $e.Message
+        }
+
+        # Try to kill hung processs
+        if ($proc) {
+            Stop-Process $proc.id -Force  -ErrorAction SilentlyContinue
+        }
+
+        $err = "ERROR: $($name) running as '$($process) $($flags)' failed to complete in $timeout seconds, full error message: '$($msg).'"
+        Write-Host $err -ForegroundColor white -BackgroundColor red
         LogMessage $err
         copyLogAndExit
     }
@@ -578,13 +591,13 @@ function uninstallHuntress {
     if (Test-Path $agentPath) {
         # run uninstaller.exe, if not found run the Agent's built in uninstaller and the Updater's built in uninstaller
         if (Test-Path $uninstallerPath) {
-            runProcess "$($uninstallerPath)" "/S" "Uninstall.exe" -wait
+            runProcess "$($uninstallerPath)" "/S" "Uninstall.exe"
             $wasUninstallerRun = $true
         } elseif (Test-Path $exeAgentPath) {
-            runProcess "$($exeAgentPath)" "/S" "Huntress Agent uninstaller" -wait
+            runProcess "$($exeAgentPath)" "/S" "Huntress Agent uninstaller"
             $wasUninstallerRun = $true
         } elseif (Test-Path $updaterPath) {
-            runProcess "$($updaterPath)" "/S" "Updater uninstaller" -wait
+            runProcess "$($updaterPath)" "/S" "Updater uninstaller"
             $wasUninstallerRun = $true
         } else {
             LogMessage "Agent path found but no uninstallers found. Attempting to manually uninstall"
