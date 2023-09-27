@@ -214,6 +214,32 @@ function Test-Parameters {
     LogMessage "Parameters verified."
 }
 
+# Force kill a process by process name
+function KillProcessByName {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$ProcessName
+    )
+
+    $processes = Get-Process | Where-Object { $_.ProcessName -eq $ProcessName }
+
+    if ($processes.Count -eq 0) {
+        LogMessage "No processes with the name '$ProcessName' are currently running."
+    }
+    else {
+        foreach ($process in $processes) {
+            try {
+                $processID = $process.Id
+                Stop-Process -Id $processID -Force
+                LogMessage "Killed process '$ProcessName' (ID $processID) successfully."
+            }
+            catch {
+                LogMessage "Failed to kill process '$ProcessName' (ID $processID): $($_.Exception.Message)"
+            }
+        }
+    }
+}
+
 # check to see if the Huntress service exists (agent or updater)
 function Confirm-ServiceExists ($service) {
     if (Get-Service $service -ErrorAction SilentlyContinue) {
@@ -597,6 +623,11 @@ function uninstallHuntress {
     Stop-Service "huntressupdater" -ErrorAction SilentlyContinue
     Stop-Service "huntressagent" -ErrorAction SilentlyContinue
 
+    # Force kill the executables so they're not hangin around
+    KillProcessByName "HuntressAgent.exe"
+    KillProcessByName "HuntressUpdater.exe"
+    KillProcessByName "HuntressRio.exe"
+
     # attempt to use the built in uninstaller, if not found use the uninstallers built into the Agent and Updater
     if (Test-Path $agentPath) {
         # run uninstaller.exe, if not found run the Agent's built in uninstaller and the Updater's built in uninstaller
@@ -818,9 +849,15 @@ function copyLogAndExit {
     Start-Sleep 1
     $agentPath = getAgentPath
     $logLocation = Join-Path $agentPath "HuntressPoShInstaller.log"
-    if (!(Test-Path -path $agentPath)) {New-Item $agentPath -Type Directory}
-    Copy-Item -Path $DebugLog -Destination $logLocation -Force
-    Write-Output "$($DebugLog) copied to $agentPath"
+    
+    # If this is an unistall, we'll leave the log in the C:\temp dir otherwise,
+    # we'll copy the log to the huntress directory
+    if (!$uninstall){
+        if (!(Test-Path -path $agentPath)) {New-Item $agentPath -Type Directory}
+        Copy-Item -Path $DebugLog -Destination $logLocation -Force
+        Write-Output "$($DebugLog) copied to $agentPath"
+    }
+
     Write-Output "Script complete"
     exit 0
 }
