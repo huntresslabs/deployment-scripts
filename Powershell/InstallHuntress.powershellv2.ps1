@@ -222,8 +222,9 @@ function KillProcessByName {
     )
 
     $processes = Get-Process | Where-Object { $_.ProcessName -eq $ProcessName }
+    $processCount = $processes | Measure-Object | Select-Object -ExpandProperty Count
 
-    if ($processes.Count -eq 0) {
+    if ($processCount -eq 0) {
         LogMessage "No processes with the name '$ProcessName' are currently running."
     }
     else {
