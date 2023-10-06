@@ -10,13 +10,13 @@
 			<key>PayloadDisplayName</key>
 			<string>Huntress PPPC</string>
 			<key>PayloadIdentifier</key>
-			<string>1669B5F3-EAA4-4480-B4A9-A3F2B92050DA</string>
+			<string>com.apple.TCC.configuration-profile-policy.6108E81E-A29E-4427-84DC-9BBD95AF8FFC</string>
 			<key>PayloadOrganization</key>
 			<string>Huntress</string>
 			<key>PayloadType</key>
 			<string>com.apple.TCC.configuration-profile-policy</string>
 			<key>PayloadUUID</key>
-			<string>6108E81E-A29E-4427-84DC-9BBD95AF8FFC</string>
+			<string>6854B316-F152-4A17-8775-4913EAE05281</string>
 			<key>PayloadVersion</key>
 			<integer>1</integer>
 			<key>Services</key>
@@ -34,6 +34,8 @@
 						<string>com.huntresslabs.www</string>
 						<key>IdentifierType</key>
 						<string>bundleID</string>
+						<key>StaticCode</key>
+						<false/>
 					</dict>
 				</array>
 				<key>SystemPolicySysAdminFiles</key>
@@ -49,6 +51,30 @@
 						<string>com.huntresslabs.www</string>
 						<key>IdentifierType</key>
 						<string>bundleID</string>
+						<key>StaticCode</key>
+						<false/>
+					</dict>
+					<dict>
+						<key>Allowed</key>
+						<true/>
+						<key>CodeRequirement</key>
+						<string>identifier "com.huntress.app" and anchor apple generic and certificate 1[field.1.2.840.113635.100.6.2.6] /* exists */ and certificate leaf[field.1.2.840.113635.100.6.1.13] /* exists */ and certificate leaf[subject.OU] = "7W6HQ9J9XA"</string>
+						<key>Identifier</key>
+						<string>com.huntress.app</string>
+						<key>IdentifierType</key>
+						<string>bundleID</string>
+						<key>StaticCode</key>
+						<false/>
+					</dict>
+					<dict>
+						<key>Allowed</key>
+						<true/>
+						<key>CodeRequirement</key>
+						<string>identifier "com.huntress.sysext" and anchor apple generic and certificate 1[field.1.2.840.113635.100.6.2.6] /* exists */ and certificate leaf[field.1.2.840.113635.100.6.1.13] /* exists */ and certificate leaf[subject.OU] = "7W6HQ9J9XA"</string>
+						<key>Identifier</key>
+						<string>com.huntress.sysext</string>
+						<key>StaticCode</key>
+						<false/>
 					</dict>
 				</array>
 			</dict>
@@ -67,7 +93,7 @@
 	<key>PayloadType</key>
 	<string>Configuration</string>
 	<key>PayloadUUID</key>
-	<string>8702331E-CA3D-48EB-BC2F-D6A60D579B65</string>
+	<string>7E7802C0-0484-4A82-9BFC-9E84F641B711</string>
 	<key>PayloadVersion</key>
 	<integer>1</integer>
 </dict>
