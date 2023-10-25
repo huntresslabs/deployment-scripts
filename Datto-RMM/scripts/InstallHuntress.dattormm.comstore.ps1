@@ -38,7 +38,11 @@ param (
 )
 
 
-# The account key should be stored in the DattoRMM account variable HUNTRESS_ACCOUNT_KEY
+##############################################################################
+## Begin user modified variables
+##############################################################################
+
+# Replace __ACCOUNT_KEY__ with your account secret key (from your Huntress portal's "download agent" section)
 $AccountKey = "__ACCOUNT_KEY__"
 if ($env:HUNTRESS_ACCOUNT_KEY) {
     $AccountKey = $env:HUNTRESS_ACCOUNT_KEY
@@ -68,7 +72,7 @@ $estimatedSpaceNeeded = 200111222
 ##############################################################################
 
 # These are used by the Huntress support team when troubleshooting.
-$ScriptVersion = "Version 2, major revision 8, 2023 Jul 24, "
+$ScriptVersion = "Version 2, major revision 7, 2023 May 1, "
 $ScriptType = "DattoRMM"
 
 # variables used throughout this script
@@ -120,6 +124,10 @@ if ( ! [string]::IsNullOrEmpty($orgkey) ) {
     $OrganizationKey = $orgkey
 }
 
+# Check for tags specified on the command line.
+if ( ! [string]::IsNullOrEmpty($tags) ) {
+    $TagsKey = $tags
+}
 
 # pick the appropriate file to download based on the OS version
 if ($LegacyCommandsRequired -eq $true) {
@@ -206,6 +214,33 @@ function Test-Parameters {
         exit 1
     }
     LogMessage "Parameters verified."
+}
+
+# Force kill a process by process name
+function KillProcessByName {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$ProcessName
+    )
+
+    $processes = Get-Process | Where-Object { $_.ProcessName -eq $ProcessName }
+    $processCount = $processes | Measure-Object | Select-Object -ExpandProperty Count
+
+    if ($processCount -eq 0) {
+        LogMessage "No processes with the name '$ProcessName' are currently running."
+    }
+    else {
+        foreach ($process in $processes) {
+            try {
+                $processID = $process.Id
+                Stop-Process -Id $processID -Force
+                LogMessage "Killed process '$ProcessName' (ID $processID) successfully."
+            }
+            catch {
+                LogMessage "Failed to kill process '$ProcessName' (ID $processID): $($_.Exception.Message)"
+            }
+        }
+    }
 }
 
 # check to see if the Huntress service exists (agent or updater)
@@ -328,7 +363,7 @@ function Install-Huntress ($OrganizationKey) {
     verifyInstaller($InstallerPath)
 
     LogMessage "Executing installer..."
-   
+
     $process = Start-Process $InstallerPath "/ACCT_KEY=`"$AccountKey`" /ORG_KEY=`"$OrganizationKey`" /S" -PassThru
 
     try {
@@ -373,7 +408,7 @@ function Test-Installation {
         Start-Sleep -Milliseconds 250
     }
     if ( ! $didAgentRegister) {
-        $err = "WARNING: It does not appear the agent has succesfully registered. Check 3rd party AV exclusion lists to ensure Huntress is excluded."
+        $err = "WARNING: It does not appear the agent has successfully registered. Check 3rd party AV exclusion lists to ensure Huntress is excluded."
         Write-Output $err -ForegroundColor white -BackgroundColor red
         LogMessage ($err + $SupportMessage)
     }
@@ -586,6 +621,11 @@ function uninstallHuntress {
     Stop-Service "huntressrio" -ErrorAction SilentlyContinue
     Stop-Service "huntressupdater" -ErrorAction SilentlyContinue
     Stop-Service "huntressagent" -ErrorAction SilentlyContinue
+
+    # Force kill the executables so they're not hangin around
+    KillProcessByName "HuntressAgent.exe"
+    KillProcessByName "HuntressUpdater.exe"
+    KillProcessByName "HuntressRio.exe"
 
     # attempt to use the built in uninstaller, if not found use the uninstallers built into the Agent and Updater
     if (Test-Path $agentPath) {
@@ -808,9 +848,15 @@ function copyLogAndExit {
     Start-Sleep 1
     $agentPath = getAgentPath
     $logLocation = Join-Path $agentPath "HuntressPoShInstaller.log"
-    if (!(Test-Path -path $agentPath)) {New-Item $agentPath -Type Directory}
-    Copy-Item -Path $DebugLog -Destination $logLocation -Force
-    Write-Output "$($DebugLog) copied to $agentPath"
+    
+    # If this is an unistall, we'll leave the log in the C:\temp dir otherwise,
+    # we'll copy the log to the huntress directory
+    if (!$uninstall){
+        if (!(Test-Path -path $agentPath)) {New-Item $agentPath -Type Directory}
+        Copy-Item -Path $DebugLog -Destination $logLocation -Force
+        Write-Output "$($DebugLog) copied to $agentPath"
+    }
+
     Write-Output "Script complete"
     exit 0
 }
