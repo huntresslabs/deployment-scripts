@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>PayloadContent</key>
+	<array>
+		<dict>
+			<key>FilterDataProviderBundleIdentifier</key>
+			<string>com.huntress.sysext</string>
+			<key>FilterDataProviderDesignatedRequirement</key>
+			<string>identifier "com.huntress.sysext" and anchor apple generic and certificate leaf[subject.OU] = "7W6HQ9J9XA" and certificate 1[field.1.2.840.113635.100.6.2.6] and certificate leaf[field.1.2.840.113635.100.6.1.13]</string>
+			<key>FilterGrade</key>
+			<string>firewall</string>
+			<key>FilterSockets</key>
+			<true/>
+			<key>FilterType</key>
+			<string>Plugin</string>
+			<key>PayloadDisplayName</key>
+			<string>Web Content Filter</string>
+			<key>PayloadIdentifier</key>
+			<string>com.apple.webcontent-filter.CA40CCD3-78D3-45AD-83D4-87B83A27BB5C</string>
+			<key>PayloadType</key>
+			<string>com.apple.webcontent-filter</string>
+			<key>PayloadUUID</key>
+			<string>6A41F61C-A9A0-4DA9-A72A-AF57D3ADFF33</string>
+			<key>PayloadVersion</key>
+			<integer>1</integer>
+			<key>PluginBundleID</key>
+			<string>com.huntress.app</string>
+			<key>UserDefinedName</key>
+			<string>Huntress</string>
+		</dict>
+		<dict>
+			<key>AllowedTeamIdentifiers</key>
+			<array>
+				<string>7W6HQ9J9XA</string>
+			</array>
+			<key>PayloadDisplayName</key>
+			<string>Huntress System Extension</string>
+			<key>PayloadIdentifier</key>
+			<string>com.apple.system-extension-policy.50653D8C-681B-496C-A50E-A33E2F45B03E</string>
+			<key>PayloadType</key>
+			<string>com.apple.system-extension-policy</string>
+			<key>PayloadUUID</key>
+			<string>937026A5-86ED-40F7-B6C7-B1F65F4917B6</string>
+			<key>PayloadVersion</key>
+			<integer>1</integer>
+			<key>RemovableSystemExtensions</key>
+			<dict>
+				<key>7W6HQ9J9XA</key>
+				<array>
+					<string>com.huntress.sysext</string>
+				</array>
+			</dict>
+		</dict>
+		<dict>
+			<key>PayloadDisplayName</key>
+			<string>Huntress PPPC</string>
+			<key>PayloadIdentifier</key>
+			<string>com.apple.TCC.configuration-profile-policy.341605DE-C729-4B02-A91F-43D9ECF7D145</string>
+			<key>PayloadType</key>
+			<string>com.apple.TCC.configuration-profile-policy</string>
+			<key>PayloadUUID</key>
+			<string>4F5BB1D2-6DE9-4AB0-B029-C35DAD1F2247</string>
+			<key>PayloadVersion</key>
+			<integer>1</integer>
+			<key>Services</key>
+			<dict>
+				<key>SystemPolicyAllFiles</key>
+				<array>
+					<dict>
+						<key>Allowed</key>
+						<true/>
+						<key>CodeRequirement</key>
+						<string>identifier "com.huntress.app" and anchor apple generic and certificate 1[field.1.2.840.113635.100.6.2.6] /* exists */ and certificate leaf[field.1.2.840.113635.100.6.1.13] /* exists */ and certificate leaf[subject.OU] = "7W6HQ9J9XA"</string>
+						<key>Comment</key>
+						<string>Full Disk Access for the Huntress Agent</string>
+						<key>Identifier</key>
+						<string>com.huntress.app</string>
+						<key>IdentifierType</key>
+						<string>bundleID</string>
+						<key>StaticCode</key>
+						<false/>
+					</dict>
+					<dict>
+						<key>Allowed</key>
+						<true/>
+						<key>CodeRequirement</key>
+						<string>identifier "com.huntress.sysext" and anchor apple generic and certificate 1[field.1.2.840.113635.100.6.2.6] /* exists */ and certificate leaf[field.1.2.840.113635.100.6.1.13] /* exists */ and certificate leaf[subject.OU] = "7W6HQ9J9XA"</string>
+						<key>Comment</key>
+						<string>Full Disk Access for the Huntress Endpoint Security</string>
+						<key>Identifier</key>
+						<string>com.huntress.sysext</string>
+						<key>IdentifierType</key>
+						<string>bundleID</string>
+						<key>StaticCode</key>
+						<false/>
+					</dict>
+				</array>
+				<key>SystemPolicySysAdminFiles</key>
+				<array>
+					<dict>
+						<key>Allowed</key>
+						<true/>
+						<key>CodeRequirement</key>
+						<string>identifier "com.huntress.app" and anchor apple generic and certificate 1[field.1.2.840.113635.100.6.2.6] /* exists */ and certificate leaf[field.1.2.840.113635.100.6.1.13] /* exists */ and certificate leaf[subject.OU] = "7W6HQ9J9XA"</string>
+						<key>Comment</key>
+						<string>Full Disk Access for the Huntress Agent</string>
+						<key>Identifier</key>
+						<string>com.huntress.app</string>
+						<key>IdentifierType</key>
+						<string>bundleID</string>
+						<key>StaticCode</key>
+						<false/>
+					</dict>
+					<dict>
+						<key>Allowed</key>
+						<true/>
+						<key>CodeRequirement</key>
+						<string>identifier "com.huntress.sysext" and anchor apple generic and certificate 1[field.1.2.840.113635.100.6.2.6] /* exists */ and certificate leaf[field.1.2.840.113635.100.6.1.13] /* exists */ and certificate leaf[subject.OU] = "7W6HQ9J9XA"</string>
+						<key>Comment</key>
+						<string>Full Disk Access for the Huntress Endpoint Security</string>
+						<key>Identifier</key>
+						<string>com.huntress.sysext</string>
+						<key>IdentifierType</key>
+						<string>bundleID</string>
+						<key>StaticCode</key>
+						<false/>
+					</dict>
+				</array>
+			</dict>
+		</dict>
+	</array>
+	<key>PayloadDescription</key>
+	<string>Huntress PPPC for FDA and System Extension</string>
+	<key>PayloadDisplayName</key>
+	<string>Huntress Agent with System Extension</string>
+	<key>PayloadIdentifier</key>
+	<string>com.huntress.app</string>
+	<key>PayloadOrganization</key>
+	<string>Huntress</string>
+	<key>PayloadScope</key>
+	<string>System</string>
+	<key>PayloadType</key>
+	<string>Configuration</string>
+	<key>PayloadUUID</key>
+	<string>35767AAE-191F-4C4A-B55A-86D05E23B48C</string>
+	<key>PayloadVersion</key>
+	<integer>1</integer>
+	<key>TargetDeviceType</key>
+	<integer>5</integer>
+</dict>
+</plist>
