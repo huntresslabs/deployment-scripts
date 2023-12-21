@@ -21,4 +21,4 @@ jobs:
           subject: Test Alert from ${{ github.repository }}
           body: 'This is a test alert email sent from the GitHub Actions workflow.'
           to: sketchum@hummingbird.tech
-          from: alerts@myspringpoint.com
+          from: ${{ secrets.ALERTS_EMAIL_USERNAME }}
