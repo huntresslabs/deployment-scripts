@@ -27,8 +27,9 @@ jobs:
       if: ${{ steps.sync.outputs.has_new_commits == 'true' }}
       uses: dawidd6/action-send-mail@v3
       with:
-        server_address: smtp.example.com
-        server_port: 465
+        server_address: smtp.office365.com
+        secure: true
+        server_port: 587
         username: ${{ secrets.EMAIL_USERNAME }}
         password: ${{ secrets.EMAIL_PASSWORD }}
         subject: New Commit in ${{ github.repository }}
