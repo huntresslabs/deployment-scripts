@@ -21,7 +21,7 @@ jobs:
       with:
         upstream_repository: huntresslabs/deployment-scripts
         upstream_branch: master
-        target_branch: master_upstream
+        target_branch: master
         
     - name: Send Email Notification     
       if: ${{ steps.sync.outputs.has_new_commits == 'true' }}
