@@ -1,0 +1,37 @@
+name: Check new upstream commits
+
+on:
+  push:
+  repository_dispatch:
+    types: [check_upstream]
+
+jobs:
+  check_upstream_commits:
+    runs-on: ubuntu-latest
+    name: Check upstream latest commits
+
+    steps:
+    - name: Checkout main
+      uses: actions/checkout@v2
+
+    - name: Fetch upstream changes
+      id: sync
+      uses: ivanmilov/upstream_check_new_commits@v1
+      with:
+        upstream_repository: huntresslabs/deployment-scripts
+        upstream_branch: master
+        target_branch: master_upstream
+        
+    - name: Send Email Notification     
+      if: ${{ steps.sync.outputs.has_new_commits == 'true' }}
+      uses: dawidd6/action-send-mail@v3.9.0
+      with:
+        server_address: smtp.example.com
+        server_port: 465
+        username: ${{ secrets.EMAIL_USERNAME }}
+        password: ${{ secrets.EMAIL_PASSWORD }}
+        subject: New Commit in ${{ github.repository }}
+        body: 'A new commit has been pushed. Check it out at ${{ github.event.compare }}'
+        to: your-organization-email@example.com
+        from: notifier@example.com
+
