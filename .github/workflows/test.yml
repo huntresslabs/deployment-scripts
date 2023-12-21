@@ -1,3 +1,4 @@
+---
 name: Test Email
 
 on:
@@ -9,14 +10,14 @@ jobs:
     name: Send Test Email Notification
 
     steps:
-    - name: Send Test Email Notification
-      uses: dawidd6/action-send-mail@v3.9.0
-      with:
-        server_address: smtp.office365.com
-        server_port: 587
-        username: ${{ secrets.ALERTS_EMAIL_USERNAME }}
-        password: ${{ secrets.ALERTS_EMAIL_PASSWORD }}
-        subject: Test Alert from ${{ github.repository }}
-        body: 'This is a test alert email sent from the GitHub Actions workflow.'
-        to: sketchum@hummingbird.tech
-        from: alerts@myspringpoint.com
+      - name: Send Test Email Notification
+        uses: dawidd6/action-send-mail@v3.9.0
+        with:
+          server_address: smtp.office365.com
+          server_port: 587
+          username: ${{ secrets.ALERTS_EMAIL_USERNAME }}
+          password: ${{ secrets.ALERTS_EMAIL_PASSWORD }}
+          subject: Test Alert from ${{ github.repository }}
+          body: 'This is a test alert email sent from the GitHub Actions workflow.'
+          to: sketchum@hummingbird.tech
+          from: alerts@myspringpoint.com
