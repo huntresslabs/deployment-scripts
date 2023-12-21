@@ -1,29 +1,15 @@
 name: Check new upstream commits
 
 on:
-  push:
-  repository_dispatch:
-    types: [check_upstream]
+  workflow_dispatch: # This allows you to manually trigger the workflow
 
 jobs:
-  check_upstream_commits:
+  send_test_email:
     runs-on: ubuntu-latest
-    name: Check upstream latest commits
+    name: Send Test Email Notification
 
     steps:
-    - name: Checkout main
-      uses: actions/checkout@v2
-
-    - name: Fetch upstream changes
-      id: sync
-      uses: ivanmilov/upstream_check_new_commits@v1
-      with:
-        upstream_repository: huntresslabs/deployment-scripts
-        upstream_branch: master
-        target_branch: master_upstream
-        
     - name: Send Test Email Notification
-      if: github.event_name == 'repository_dispatch' && github.event.action == 'check_upstream'
       uses: dawidd6/action-send-mail@v3.9.0
       with:
         server_address: smtp.office365.com
