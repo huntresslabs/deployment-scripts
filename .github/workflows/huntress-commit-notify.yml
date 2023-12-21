@@ -1,6 +1,7 @@
 name: Check new upstream commits
 
 on:
+  workflow_dispatch: # This allows you to manually trigger the workflow
   push:
   repository_dispatch:
     types: [check_upstream]
@@ -24,7 +25,7 @@ jobs:
         
     - name: Send Email Notification     
       if: ${{ steps.sync.outputs.has_new_commits == 'true' }}
-      uses: dawidd6/action-send-mail@v3.9.0
+      uses: dawidd6/action-send-mail@v3
       with:
         server_address: smtp.example.com
         server_port: 465
@@ -32,6 +33,6 @@ jobs:
         password: ${{ secrets.EMAIL_PASSWORD }}
         subject: New Commit in ${{ github.repository }}
         body: 'A new commit has been pushed. Check it out at ${{ github.event.compare }}'
-        to: alerts@myspringpoint.com
-        from: alerts@myspringpoint.com
+        to: ${{ secrets.EMAIL_USERNAME }}
+        from: ${{ secrets.EMAIL_USERNAME }}
 
