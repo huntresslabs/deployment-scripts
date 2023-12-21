@@ -32,6 +32,6 @@ jobs:
         password: ${{ secrets.EMAIL_PASSWORD }}
         subject: New Commit in ${{ github.repository }}
         body: 'A new commit has been pushed. Check it out at ${{ github.event.compare }}'
-        to: your-organization-email@example.com
-        from: notifier@example.com
+        to: alerts@myspringpoint.com
+        from: alerts@myspringpoint.com
 
