@@ -29,10 +29,11 @@ jobs:
       with:
         server_address: smtp.office365.com
         server_port: 587
-        username: ${{ secrets.EMAIL_USERNAME }}
-        password: ${{ secrets.EMAIL_PASSWORD }}
+        username: ${{ secrets.ALERTS_EMAIL_USERNAME }}
+        password: ${{ secrets.ALERTS_EMAIL_PASSWORD }}
         subject: New Commit in ${{ github.repository }}
         body: 'A new commit has been pushed. Check it out at ${{ github.event.compare }}'
-        to: ${{ secrets.EMAIL_USERNAME }}
-        from: ${{ secrets.EMAIL_USERNAME }}
+        to: ${{ secrets.ALERTS_EMAIL_USERNAME }}
+        from: ${{ secrets.ALERTS_EMAIL_USERNAME }}
+        
 
