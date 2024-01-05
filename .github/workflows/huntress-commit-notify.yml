@@ -21,7 +21,7 @@ jobs:
       with:
         upstream_repository: huntresslabs/deployment-scripts
         upstream_branch: master
-        target_branch: springpoint/huntress-deployment-scripts
+        target_branch: huntress-deployment-scripts
         
     - name: Send Email Notification     
       if: ${{ steps.sync.outputs.has_new_commits == 'true' }}
