@@ -11,7 +11,7 @@ jobs:
 
     steps:
       - name: Send Test Email Notification
-        uses: dawidd6/action-send-mail@v3
+        uses: springpoint/action-send-mail
         with:
           server_address: smtp.office365.com
           secure: true
