@@ -28,7 +28,6 @@ jobs:
       uses: dawidd6/action-send-mail@v3
       with:
         server_address: smtp.office365.com
-        secure: true
         server_port: 587
         username: ${{ secrets.EMAIL_USERNAME }}
         password: ${{ secrets.EMAIL_PASSWORD }}
