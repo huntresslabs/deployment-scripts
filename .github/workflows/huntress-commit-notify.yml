@@ -1,7 +1,6 @@
 name: Check new upstream commits
 
 on:
-  workflow_dispatch: # This allows you to manually trigger the workflow
   push:
   repository_dispatch:
     types: [check_upstream]
