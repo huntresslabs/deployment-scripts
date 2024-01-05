@@ -20,8 +20,8 @@ jobs:
       uses: ivanmilov/upstream_check_new_commits@v1
       with:
         upstream_repository: huntresslabs/deployment-scripts
-        upstream_branch: master
-        target_branch: master
+        upstream_branch: main
+        target_branch: main
         
     - name: Send Email Notification     
       if: ${{ steps.sync.outputs.has_new_commits == 'true' }}
