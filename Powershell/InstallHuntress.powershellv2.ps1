@@ -556,7 +556,7 @@ function checkFreeDiskSpace {
         $freeSpace = (Get-WmiObject -query "Select * from Win32_LogicalDisk where DeviceID='c:'" | Select-Object FreeSpace).FreeSpace
     } catch {
         LogMessage "WMI issues discovered (free space query), attempting to fix the repository"
-        winmgt -verifyrepository
+        winmgmt -verifyrepository
         $drives = get-psdrive
         foreach ($drive in $drives) {
             if ($drive.Name -eq "C") { 
@@ -775,7 +775,7 @@ function logInfo {
     try {  $os = (get-WMiObject -computername $env:computername -Class win32_operatingSystem).caption.Trim()
     } catch {
         LogMessage "WMI issues discovered (computer name query), attempting to fix the repository"
-        winmgt -verifyrepository
+        winmgmt -verifyrepository
         $os = (get-itemproperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion" -Name ProductName).ProductName
     }
     #LogMessage "Host OS: '$os'"
