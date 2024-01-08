@@ -70,7 +70,7 @@ $estimatedSpaceNeeded = 200111222
 ##############################################################################
 
 # These are used by the Huntress support team when troubleshooting.
-$ScriptVersion = "Version 2, major revision 7, 2023 May 1, "
+$ScriptVersion = "Version 2, major revision 7, 2024 January 8"
 $ScriptType = "PowerShell"
 
 # variables used throughout this script
@@ -556,7 +556,7 @@ function checkFreeDiskSpace {
         $freeSpace = (Get-WmiObject -query "Select * from Win32_LogicalDisk where DeviceID='c:'" | Select-Object FreeSpace).FreeSpace
     } catch {
         LogMessage "WMI issues discovered (free space query), attempting to fix the repository"
-        winmgt -verifyrepository
+        winmgmt -verifyrepository
         $drives = get-psdrive
         foreach ($drive in $drives) {
             if ($drive.Name -eq "C") { 
@@ -775,7 +775,7 @@ function logInfo {
     try {  $os = (get-WMiObject -computername $env:computername -Class win32_operatingSystem).caption.Trim()
     } catch {
         LogMessage "WMI issues discovered (computer name query), attempting to fix the repository"
-        winmgt -verifyrepository
+        winmgmt -verifyrepository
         $os = (get-itemproperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion" -Name ProductName).ProductName
     }
     #LogMessage "Host OS: '$os'"
