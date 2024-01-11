@@ -61,7 +61,7 @@
 			<key>PayloadType</key>
 			<string>com.apple.TCC.configuration-profile-policy</string>
 			<key>PayloadUUID</key>
-			<string>4F5BB1D2-6DE9-4AB0-B029-C35DAD1F2247</string>
+			<string>60849FBC-7EE8-4DC3-9DBC-D9B5E6624A13</string>
 			<key>PayloadVersion</key>
 			<integer>1</integer>
 			<key>Services</key>
@@ -72,11 +72,11 @@
 						<key>Allowed</key>
 						<true/>
 						<key>CodeRequirement</key>
-						<string>identifier "com.huntress.app" and anchor apple generic and certificate 1[field.1.2.840.113635.100.6.2.6] /* exists */ and certificate leaf[field.1.2.840.113635.100.6.1.13] /* exists */ and certificate leaf[subject.OU] = "7W6HQ9J9XA"</string>
+						<string>identifier "com.huntress.HuntressAgent" and anchor apple generic and certificate 1[field.1.2.840.113635.100.6.2.6] /* exists */ and certificate leaf[field.1.2.840.113635.100.6.1.13] /* exists */ and certificate leaf[subject.OU] = "7W6HQ9J9XA"</string>
 						<key>Comment</key>
 						<string>Full Disk Access for the Huntress Agent</string>
 						<key>Identifier</key>
-						<string>com.huntress.app</string>
+						<string>com.huntress.HuntressAgent</string>
 						<key>IdentifierType</key>
 						<string>bundleID</string>
 						<key>StaticCode</key>
@@ -103,11 +103,11 @@
 						<key>Allowed</key>
 						<true/>
 						<key>CodeRequirement</key>
-						<string>identifier "com.huntress.app" and anchor apple generic and certificate 1[field.1.2.840.113635.100.6.2.6] /* exists */ and certificate leaf[field.1.2.840.113635.100.6.1.13] /* exists */ and certificate leaf[subject.OU] = "7W6HQ9J9XA"</string>
+						<string>identifier "com.huntress.HuntressAgent" and anchor apple generic and certificate 1[field.1.2.840.113635.100.6.2.6] /* exists */ and certificate leaf[field.1.2.840.113635.100.6.1.13] /* exists */ and certificate leaf[subject.OU] = "7W6HQ9J9XA"</string>
 						<key>Comment</key>
 						<string>Full Disk Access for the Huntress Agent</string>
 						<key>Identifier</key>
-						<string>com.huntress.app</string>
+						<string>com.huntress.HuntressAgent</string>
 						<key>IdentifierType</key>
 						<string>bundleID</string>
 						<key>StaticCode</key>
@@ -144,7 +144,7 @@
 	<key>PayloadType</key>
 	<string>Configuration</string>
 	<key>PayloadUUID</key>
-	<string>35767AAE-191F-4C4A-B55A-86D05E23B48C</string>
+	<string>F84EE79F-D74A-4C84-BA61-1F6C10723762</string>
 	<key>PayloadVersion</key>
 	<integer>1</integer>
 	<key>TargetDeviceType</key>
