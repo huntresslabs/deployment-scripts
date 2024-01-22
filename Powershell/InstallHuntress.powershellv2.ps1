@@ -868,7 +868,7 @@ function copyLogAndExit {
     if (!$uninstall){
         if (!(Test-Path -path $agentPath)) {New-Item $agentPath -Type Directory}
         Copy-Item -Path $DebugLog -Destination $logLocation -Force
-        Write-Output "$($DebugLog) copied to $agentPath"
+        Write-Output "'$($DebugLog)' copied to '$logLocation'."
     }
 
     Write-Output "Script complete"
