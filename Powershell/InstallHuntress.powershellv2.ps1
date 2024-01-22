@@ -290,6 +290,17 @@ function verifyInstaller ($file) {
     }
 }
 
+# Prevent conflicting file from preventing creation of installation directory.
+function prepareAgentPath {
+    $path = getAgentPath
+    if (Test-Path $path -PathType Leaf) {
+        $backup = "$path.bak"
+        $err = "WARNING: '$path' already exists and is not a directory, renaming to '$backup'."
+        Write-Output $err -ForegroundColor white -BackgroundColor red
+        Rename-Item -Path $path -NewName $backup -Force
+    }
+}
+
 # download the Huntress installer
 function Get-Installer {
     $msg = "Downloading installer to '$InstallerPath'..."
@@ -361,6 +372,7 @@ function Install-Huntress ($OrganizationKey) {
     verifyInstaller($InstallerPath)
 
     LogMessage "Executing installer..."
+    prepareAgentPath
     # if $Tags value exists install using the provided tags, otherwise no tags
     if (($Tags) -or ($TagsKey -ne "__TAGS__")) {
         $process = Start-Process $InstallerPath "/ACCT_KEY=`"$AccountKey`" /ORG_KEY=`"$OrganizationKey`" /TAGS=`"$TagsKey`" /S" -PassThru
