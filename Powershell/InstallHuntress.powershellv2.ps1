@@ -318,6 +318,13 @@ function Get-Installer {
         }
     }
 
+    # Delete stale installer before downloading the most recent installer
+    if (Test-Path $InstallerPath -PathType Leaf) {
+        $err = "WARNING: '$InstallerPath' already exists, deleting stale Huntress Installer."
+        LogMessage $err
+        Remove-Item -Path $InstallerPath -Force -ErrorAction SilentlyContinue
+    }
+
     # Attempt to download the correct installer for the given OS, retry if it fails
     $attempts = 6
     $delay = 60
