@@ -318,24 +318,28 @@ function Get-Installer {
         }
     }
 
-    # Attempt to download the correct installer for the given OS, throw error if it fails
-    $WebClient = New-Object System.Net.WebClient
-    try {
-        $WebClient.DownloadFile($DownloadURL, $InstallerPath)
-    } catch {
-        $msg = $_.Exception.Message
-        $err = "ERROR: Failed to download the Huntress Installer. Try accessing $($DownloadURL) from the host where the download failed. Contact support@huntress.io if the problem persists"
-        LogMessage $msg
-        LogMessage "$($err)  Please contact support@huntress.io if the problem persists"
-        throw $ScriptFailed + " " + $err + " " + $msg
+    # Attempt to download the correct installer for the given OS, retry if it fails
+    $attempts = 6
+    $delay = 60
+    for ($attempt = 1; $attempt -le $attempts; $attempt++) {
+        $WebClient = New-Object System.Net.WebClient
+        try {
+            $WebClient.DownloadFile($DownloadURL, $InstallerPath)
+            break
+        } catch {
+            $msg = $_.Exception.Message
+            $err = "WARNING: Failed to download the Huntress Installer ($attempt/$attempts), retrying in $delay seconds."
+            LogMessage $msg
+            LogMessage $err
+            Start-Sleep -Seconds $delay
+        }
     }
 
     # Ensure the file downloaded correctly, if not, throw error
     if ( ! (Test-Path $InstallerPath) ) {
-        $err = "ERROR: Failed to download the Huntress Installer from $DownloadURL. Suggest testing the URL in a browser."
+        $err = "ERROR: Failed to download the Huntress Installer. Try accessing $($DownloadURL) from the host where the download failed. Please contact support@huntress.io if the problem persists."
         LogMessage $err
-        LogMessage $SupportMessage
-        throw $ScriptFailed + " " + $err + " " + $SupportMessage
+        throw $ScriptFailed + " " + $err
     }
 
     $msg = "Installer downloaded to '$InstallerPath'..."
