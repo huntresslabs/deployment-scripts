@@ -70,7 +70,7 @@ $estimatedSpaceNeeded = 200111222
 ##############################################################################
 
 # These are used by the Huntress support team when troubleshooting.
-$ScriptVersion = "Version 2, major revision 7, 2024 January 23"
+$ScriptVersion = "Version 2, major revision 7, 2024 January 24"
 $ScriptType = "PowerShell"
 
 # variables used throughout this script
@@ -290,6 +290,17 @@ function verifyInstaller ($file) {
     }
 }
 
+# Prevent conflicting file from preventing creation of installation directory.
+function prepareAgentPath {
+    $path = getAgentPath
+    if (Test-Path $path -PathType Leaf) {
+        $backup = "$path.bak"
+        $err = "WARNING: '$path' already exists and is not a directory, renaming to '$backup'."
+        Write-Output $err -ForegroundColor white -BackgroundColor red
+        Rename-Item -Path $path -NewName $backup -Force
+    }
+}
+
 # download the Huntress installer
 function Get-Installer {
     $msg = "Downloading installer to '$InstallerPath'..."
@@ -372,6 +383,7 @@ function Install-Huntress ($OrganizationKey) {
     verifyInstaller($InstallerPath)
 
     LogMessage "Executing installer..."
+    prepareAgentPath
     # if $Tags value exists install using the provided tags, otherwise no tags
     if (($Tags) -or ($TagsKey -ne "__TAGS__")) {
         $process = Start-Process $InstallerPath "/ACCT_KEY=`"$AccountKey`" /ORG_KEY=`"$OrganizationKey`" /TAGS=`"$TagsKey`" /S" -PassThru
@@ -867,7 +879,7 @@ function copyLogAndExit {
     if (!$uninstall){
         if (!(Test-Path -path $agentPath)) {New-Item $agentPath -Type Directory}
         Copy-Item -Path $DebugLog -Destination $logLocation -Force
-        Write-Output "$($DebugLog) copied to $agentPath"
+        Write-Output "'$($DebugLog)' copied to '$logLocation'."
     }
 
     Write-Output "Script complete"
