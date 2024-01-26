@@ -39,6 +39,9 @@ param (
 )
 
 $TagsKey = "__TAGS__"
+if ($env:HUNTRESS_TAGS) {
+    $TagsKey = $env:HUNTRESS_TAGS
+}
 
 # The account key should be stored in the DattoRMM account variable HUNTRESS_ACCOUNT_KEY
 $AccountKey = "__ACCOUNT_KEY__"
