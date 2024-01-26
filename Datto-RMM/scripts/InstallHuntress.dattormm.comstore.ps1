@@ -896,6 +896,13 @@ function copyLogAndExit {
 #                                  begin main function                                  #
 #########################################################################################
 function main () {
+    if ($env:reinstallAgent -eq $true) {
+        $reinstall = $true
+    }
+    if ($env:reregisterAgent -eq $true) {
+        $reregister = $true
+    }
+
     # Start the script with logging as much as we can as soon as we can. All your logging are belong to us, Zero Wang.
     logInfo
 
