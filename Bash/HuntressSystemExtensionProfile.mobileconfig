@@ -72,11 +72,11 @@
 						<key>Allowed</key>
 						<true/>
 						<key>CodeRequirement</key>
-						<string>identifier "com.huntress.HuntressAgent" and anchor apple generic and certificate 1[field.1.2.840.113635.100.6.2.6] /* exists */ and certificate leaf[field.1.2.840.113635.100.6.1.13] /* exists */ and certificate leaf[subject.OU] = "7W6HQ9J9XA"</string>
+						<string>identifier "com.huntress.app" and anchor apple generic and certificate 1[field.1.2.840.113635.100.6.2.6] /* exists */ and certificate leaf[field.1.2.840.113635.100.6.1.13] /* exists */ and certificate leaf[subject.OU] = "7W6HQ9J9XA"</string>
 						<key>Comment</key>
 						<string>Full Disk Access for the Huntress Agent</string>
 						<key>Identifier</key>
-						<string>com.huntress.HuntressAgent</string>
+						<string>com.huntress.app</string>
 						<key>IdentifierType</key>
 						<string>bundleID</string>
 						<key>StaticCode</key>
@@ -103,11 +103,11 @@
 						<key>Allowed</key>
 						<true/>
 						<key>CodeRequirement</key>
-						<string>identifier "com.huntress.HuntressAgent" and anchor apple generic and certificate 1[field.1.2.840.113635.100.6.2.6] /* exists */ and certificate leaf[field.1.2.840.113635.100.6.1.13] /* exists */ and certificate leaf[subject.OU] = "7W6HQ9J9XA"</string>
+						<string>identifier "com.huntress.app" and anchor apple generic and certificate 1[field.1.2.840.113635.100.6.2.6] /* exists */ and certificate leaf[field.1.2.840.113635.100.6.1.13] /* exists */ and certificate leaf[subject.OU] = "7W6HQ9J9XA"</string>
 						<key>Comment</key>
 						<string>Full Disk Access for the Huntress Agent</string>
 						<key>Identifier</key>
-						<string>com.huntress.HuntressAgent</string>
+						<string>com.huntress.app</string>
 						<key>IdentifierType</key>
 						<string>bundleID</string>
 						<key>StaticCode</key>
