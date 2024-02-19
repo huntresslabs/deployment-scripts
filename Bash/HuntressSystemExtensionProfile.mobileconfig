@@ -61,7 +61,7 @@
 			<key>PayloadType</key>
 			<string>com.apple.TCC.configuration-profile-policy</string>
 			<key>PayloadUUID</key>
-			<string>4F5BB1D2-6DE9-4AB0-B029-C35DAD1F2247</string>
+			<string>2B1E9229-FFE5-40F9-8B29-A6B286437358</string>
 			<key>PayloadVersion</key>
 			<integer>1</integer>
 			<key>Services</key>
@@ -76,7 +76,7 @@
 						<key>Comment</key>
 						<string>Full Disk Access for the Huntress Agent</string>
 						<key>Identifier</key>
-						<string>com.huntress.app</string>
+						<string>com.huntress.HuntressAgent</string>
 						<key>IdentifierType</key>
 						<string>bundleID</string>
 						<key>StaticCode</key>
@@ -107,7 +107,7 @@
 						<key>Comment</key>
 						<string>Full Disk Access for the Huntress Agent</string>
 						<key>Identifier</key>
-						<string>com.huntress.app</string>
+						<string>com.huntress.HuntressAgent</string>
 						<key>IdentifierType</key>
 						<string>bundleID</string>
 						<key>StaticCode</key>
@@ -144,7 +144,7 @@
 	<key>PayloadType</key>
 	<string>Configuration</string>
 	<key>PayloadUUID</key>
-	<string>35767AAE-191F-4C4A-B55A-86D05E23B48C</string>
+	<string>BB5C1D8A-A9FE-46CA-95DA-94789EA53120</string>
 	<key>PayloadVersion</key>
 	<integer>1</integer>
 	<key>TargetDeviceType</key>
