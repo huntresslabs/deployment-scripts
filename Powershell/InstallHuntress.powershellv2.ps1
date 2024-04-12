@@ -757,16 +757,34 @@ function testNetworkConnectivity {
     # number of URL's that can fail the connectivity before the agent refuses to install (the test fails incorrectly sometimes, so 1 failure is acceptable)
     $connectivityTolerance = 1
 
-    $URLs = @("huntress.io", "huntresscdn.com", "update.huntress.io", "eetee.huntress.io", "huntress-installers.s3.amazonaws.com", "huntress-updates.s3.amazonaws.com", "huntress-uploads.s3.us-west-2.amazonaws.com",
-              "huntress-user-uploads.s3.amazonaws.com", "huntress-rio.s3.amazonaws.com", "huntress-survey-results.s3.amazonaws.com")
+    $URLs = @("https://bugsnag.com",
+	"https://eetee.huntress.io/96bca0cef10f45a8f7cf68c4485f23a4",
+	"https://huntress-installers.s3.us-east-1.amazonaws.com/agent/connectivity/96bca0cef10f45a8f7cf68c4485f23a4.txt",
+	"https://huntress-rio.s3.amazonaws.com/agent/connectivity/96bca0cef10f45a8f7cf68c4485f23a4.txt",
+	"https://huntress-survey-results.s3.amazonaws.com/agent/connectivity/96bca0cef10f45a8f7cf68c4485f23a4.txt",
+	"https://huntress-updates.s3.amazonaws.com/agent/connectivity/96bca0cef10f45a8f7cf68c4485f23a4.txt",
+	"https://huntress-uploads.s3.us-west-2.amazonaws.com/agent/connectivity/96bca0cef10f45a8f7cf68c4485f23a4.txt",
+	"https://huntress-user-uploads.s3.amazonaws.com/agent/connectivity/96bca0cef10f45a8f7cf68c4485f23a4.txt",
+	"https://huntress.io",
+	"https://huntresscdn.com/agent/connectivity/96bca0cef10f45a8f7cf68c4485f23a4.txt",
+	"https://update.huntress.io")
+
     foreach ($URL in $URLs) {
-        if (! (Test-NetConnection $URL -Port 443).TcpTestSucceeded) {
+        try
+        {
+            $Response = Invoke-WebRequest -Uri $URL -TimeoutSec 5 -ErrorAction Stop
+            # This will only execute if the Invoke-WebRequest is successful.
+            $StatusCode = $Response.StatusCode
+        } catch {
+            $StatusCode = $_.Exception.Response.StatusCode.value__
+        }
+
+        if ($StatusCode -ne 200) {
             $err = "WARNING, connectivity to Huntress URL's is being interrupted. You MUST open port 443 for $($URL) in order for the Huntress agent to function."
-            Write-Output $err -ForegroundColor white -BackgroundColor red
-            LogMessage $err
+            Write-Output $err -ForegroundColor white -BackgroundColor red            
             $connectivityTolerance --
         } else {
-            LogMessage "Connection succeeded to $($URL) on port 443!"
+            Write-Output "Connection succeeded to $($URL)"
         }
     }
     if ($connectivityTolerance -lt 0) {
