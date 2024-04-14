@@ -879,7 +879,9 @@ function logInfo {
     }
 
     $areURLsAvailable = testNetworkConnectivity
-    if ( ! $areURLsAvailable) {
+    if ( $areURLsAvailable) {
+        LogMessage "Network Connectivity ferified!"
+    } else {
         copyLogAndExit
     }
 
