@@ -765,9 +765,9 @@ function testNetworkConnectivity {
 	"https://huntress-updates.s3.amazonaws.com/agent/connectivity/96bca0cef10f45a8f7cf68c4485f23a4.txt",
 	"https://huntress-uploads.s3.us-west-2.amazonaws.com/agent/connectivity/96bca0cef10f45a8f7cf68c4485f23a4.txt",
 	"https://huntress-user-uploads.s3.amazonaws.com/agent/connectivity/96bca0cef10f45a8f7cf68c4485f23a4.txt",
-	"https://huntress.io",
+	"https://huntress.io/agent/connectivity/96bca0cef10f45a8f7cf68c4485f23a4.txt",
 	"https://huntresscdn.com/agent/connectivity/96bca0cef10f45a8f7cf68c4485f23a4.txt",
-	"https://update.huntress.io")
+	"https://update.huntress.io/agent/connectivity/96bca0cef10f45a8f7cf68c4485f23a4.txt")
 
     foreach ($URL in $URLs) {
         try
