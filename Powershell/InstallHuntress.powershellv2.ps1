@@ -789,27 +789,26 @@ function testNetworkConnectivity {
 
             $ContentMatch = $StrContent -eq "96bca0cef10f45a8f7cf68c4485f23a4"
         } catch {
-            Write-Output "Error: $($_.Exception.Message)"
+            LogMessage "Error: $($_.Exception.Message)"
         }
 
         if ($StatusCode -ne 200) {
             $err = "WARNING, connectivity to Huntress URL's is being interrupted. You MUST open port 443 for $($URL) in order for the Huntress agent to function."
-            Write-Output $err 
+            LogMessage $err 
             $connectivityTolerance --
         } elseif (!$ContentMatch) {
             $err = "WARNING, successful connection to Huntress URL, however, content did not match expected. Ensure no proxy or content filtering is preventing access!"
-            Write-Output $err 
+            LogMessage $err 
             $connectivityTolerance --
-            Write-Output "Content: $($StrContent)"
+            LogMessage "Content: $($StrContent)"
         } else {
-            Write-Output "Connection succeeded to $($URL)"
+            LogMessage "Connection succeeded to $($URL)"
         }
     }
     if ($connectivityTolerance -lt 0) {
         Write-Output "Please fix the closed port 443 for the above domains before attempting to install" -ForegroundColor white -BackgroundColor red
         $err = "Too many connections failed $($connectivityTolerance), exiting"
-        LogMessage $err
-        Write-Output "$($err), $($SupportMessage)" 
+        LogMessage "$($err), $($SupportMessage)" 
         return $false
     }
     return $true
