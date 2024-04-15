@@ -769,6 +769,7 @@ function testNetworkConnectivity {
 	"https://update.huntress.io/agent/connectivity/96bca0cef10f45a8f7cf68c4485f23a4.txt")
 
     foreach ($URL in $URLs) {
+        $StatusCode = 0
         try
         {
             $Response = Invoke-WebRequest -Uri $URL -TimeoutSec 5 -ErrorAction Stop -ContentType "text/plain"
@@ -789,7 +790,6 @@ function testNetworkConnectivity {
             $ContentMatch = $StrContent -eq "96bca0cef10f45a8f7cf68c4485f23a4"
         } catch {
             Write-Output "Error: $($_.Exception.Message)"
-            $StatusCode = $_.exception.response.statuscode.value__
         }
 
         if ($StatusCode -ne 200) {
