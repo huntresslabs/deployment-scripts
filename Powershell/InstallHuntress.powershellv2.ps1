@@ -757,8 +757,7 @@ function testNetworkConnectivity {
     # number of URL's that can fail the connectivity before the agent refuses to install (the test fails incorrectly sometimes, so 1 failure is acceptable)
     $connectivityTolerance = 1
 
-    $URLs = @("https://bugsnag.com",
-	"https://eetee.huntress.io/96bca0cef10f45a8f7cf68c4485f23a4",
+    $URLs = @("https://eetee.huntress.io/96bca0cef10f45a8f7cf68c4485f23a4",
 	"https://huntress-installers.s3.us-east-1.amazonaws.com/agent/connectivity/96bca0cef10f45a8f7cf68c4485f23a4.txt",
 	"https://huntress-rio.s3.amazonaws.com/agent/connectivity/96bca0cef10f45a8f7cf68c4485f23a4.txt",
 	"https://huntress-survey-results.s3.amazonaws.com/agent/connectivity/96bca0cef10f45a8f7cf68c4485f23a4.txt",
@@ -772,17 +771,36 @@ function testNetworkConnectivity {
     foreach ($URL in $URLs) {
         try
         {
-            $Response = Invoke-WebRequest -Uri $URL -TimeoutSec 5 -ErrorAction Stop
+            $Response = Invoke-WebRequest -Uri $URL -TimeoutSec 5 -ErrorAction Stop -ContentType "text/plain"
             # This will only execute if the Invoke-WebRequest is successful.
             $StatusCode = $Response.StatusCode
+
+            # Convert from bytes, if necessary
+            if ($Response.Content.GetType() -eq [System.Byte[]]) {
+                $StrContent = [System.Text.Encoding]::UTF8.GetString($Response.Content)    
+            }else {
+                $StrContent = $Response.Content.ToString().Trim()
+            }
+
+            # Remove all newlines from the content
+            $StrContent = [string]::join("",($StrContent.Split("`n")))
+            
+
+            $ContentMatch = $StrContent -eq "96bca0cef10f45a8f7cf68c4485f23a4"
         } catch {
-            $StatusCode = $_.Exception.Response.StatusCode.value__
+            Write-Output "Error: $($_.Exception.Message)"
+            $StatusCode = $_.exception.response.statuscode.value__
         }
 
         if ($StatusCode -ne 200) {
             $err = "WARNING, connectivity to Huntress URL's is being interrupted. You MUST open port 443 for $($URL) in order for the Huntress agent to function."
-            Write-Output $err -ForegroundColor white -BackgroundColor red            
+            Write-Output $err 
             $connectivityTolerance --
+        } elseif (!$ContentMatch) {
+            $err = "WARNING, successful connection to Huntress URL, however, content did not match expected. Ensure no proxy or content filtering is preventing access!"
+            Write-Output $err 
+            $connectivityTolerance --
+            Write-Output "Content: $($StrContent)"
         } else {
             Write-Output "Connection succeeded to $($URL)"
         }
@@ -791,7 +809,7 @@ function testNetworkConnectivity {
         Write-Output "Please fix the closed port 443 for the above domains before attempting to install" -ForegroundColor white -BackgroundColor red
         $err = "Too many connections failed $($connectivityTolerance), exiting"
         LogMessage $err
-        Write-Output "$($err), $($SupportMessage)" -ForegroundColor white -BackgroundColor red
+        Write-Output "$($err), $($SupportMessage)" 
         return $false
     }
     return $true
