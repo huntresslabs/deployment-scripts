@@ -757,23 +757,60 @@ function testNetworkConnectivity {
     # number of URL's that can fail the connectivity before the agent refuses to install (the test fails incorrectly sometimes, so 1 failure is acceptable)
     $connectivityTolerance = 1
 
-    $URLs = @("huntress.io", "huntresscdn.com", "update.huntress.io", "eetee.huntress.io", "huntress-installers.s3.amazonaws.com", "huntress-updates.s3.amazonaws.com", "huntress-uploads.s3.us-west-2.amazonaws.com",
-              "huntress-user-uploads.s3.amazonaws.com", "huntress-rio.s3.amazonaws.com", "huntress-survey-results.s3.amazonaws.com")
+    $file_name = "96bca0cef10f45a8f7cf68c4485f23a4.txt"
+
+    $URLs = @(("https://eetee.huntress.io/{0}"-f $file_name),
+	("https://huntress-installers.s3.us-east-1.amazonaws.com/agent/connectivity/{0}" -f $file_name),
+	("https://huntress-rio.s3.amazonaws.com/agent/connectivity/{0}" -f $file_name),
+	("https://huntress-survey-results.s3.amazonaws.com/agent/connectivity/{0}" -f $file_name),
+	("https://huntress-updates.s3.amazonaws.com/agent/connectivity/{0}" -f $file_name),
+	("https://huntress-uploads.s3.us-west-2.amazonaws.com/agent/connectivity/{0}" -f $file_name),
+	("https://huntress-user-uploads.s3.amazonaws.com/agent/connectivity/{0}" -f $file_name),
+	("https://huntress.io/agent/connectivity/{0}" -f $file_name),
+	("https://huntresscdn.com/agent/connectivity/{0}" -f $file_name),
+	("https://update.huntress.io/agent/connectivity/{0}" -f $file_name))
+
     foreach ($URL in $URLs) {
-        if (! (Test-NetConnection $URL -Port 443).TcpTestSucceeded) {
+        $StatusCode = 0
+        try
+        {
+            $Response = Invoke-WebRequest -Uri $URL -TimeoutSec 5 -ErrorAction Stop -ContentType "text/plain"
+            # This will only execute if the Invoke-WebRequest is successful.
+            $StatusCode = $Response.StatusCode
+
+            # Convert from bytes, if necessary
+            if ($Response.Content.GetType() -eq [System.Byte[]]) {
+                $StrContent = [System.Text.Encoding]::UTF8.GetString($Response.Content)    
+            }else {
+                $StrContent = $Response.Content.ToString().Trim()
+            }
+
+            # Remove all newlines from the content
+            $StrContent = [string]::join("",($StrContent.Split("`n")))
+            
+
+            $ContentMatch = $StrContent -eq "96bca0cef10f45a8f7cf68c4485f23a4"
+        } catch {
+            LogMessage "Error: $($_.Exception.Message)"
+        }
+
+        if ($StatusCode -ne 200) {
             $err = "WARNING, connectivity to Huntress URL's is being interrupted. You MUST open port 443 for $($URL) in order for the Huntress agent to function."
-            Write-Output $err -ForegroundColor white -BackgroundColor red
-            LogMessage $err
+            LogMessage $err 
             $connectivityTolerance --
+        } elseif (!$ContentMatch) {
+            $err = "WARNING, successful connection to Huntress URL, however, content did not match expected. Ensure no proxy or content filtering is preventing access!"
+            LogMessage $err 
+            $connectivityTolerance --
+            LogMessage "Content: $($StrContent)"
         } else {
-            LogMessage "Connection succeeded to $($URL) on port 443!"
+            LogMessage "Connection succeeded to $($URL)"
         }
     }
     if ($connectivityTolerance -lt 0) {
         Write-Output "Please fix the closed port 443 for the above domains before attempting to install" -ForegroundColor white -BackgroundColor red
         $err = "Too many connections failed $($connectivityTolerance), exiting"
-        LogMessage $err
-        Write-Output "$($err), $($SupportMessage)" -ForegroundColor white -BackgroundColor red
+        LogMessage "$($err), $($SupportMessage)" 
         return $false
     }
     return $true
@@ -861,7 +898,9 @@ function logInfo {
     }
 
     $areURLsAvailable = testNetworkConnectivity
-    if ( ! $areURLsAvailable) {
+    if ( $areURLsAvailable) {
+        LogMessage "Network Connectivity verified!"
+    } else {
         copyLogAndExit
     }
 
