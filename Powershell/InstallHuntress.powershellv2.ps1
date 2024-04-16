@@ -757,16 +757,18 @@ function testNetworkConnectivity {
     # number of URL's that can fail the connectivity before the agent refuses to install (the test fails incorrectly sometimes, so 1 failure is acceptable)
     $connectivityTolerance = 1
 
-    $URLs = @("https://eetee.huntress.io/96bca0cef10f45a8f7cf68c4485f23a4.txt",
-	"https://huntress-installers.s3.us-east-1.amazonaws.com/agent/connectivity/96bca0cef10f45a8f7cf68c4485f23a4.txt",
-	"https://huntress-rio.s3.amazonaws.com/agent/connectivity/96bca0cef10f45a8f7cf68c4485f23a4.txt",
-	"https://huntress-survey-results.s3.amazonaws.com/agent/connectivity/96bca0cef10f45a8f7cf68c4485f23a4.txt",
-	"https://huntress-updates.s3.amazonaws.com/agent/connectivity/96bca0cef10f45a8f7cf68c4485f23a4.txt",
-	"https://huntress-uploads.s3.us-west-2.amazonaws.com/agent/connectivity/96bca0cef10f45a8f7cf68c4485f23a4.txt",
-	"https://huntress-user-uploads.s3.amazonaws.com/agent/connectivity/96bca0cef10f45a8f7cf68c4485f23a4.txt",
-	"https://huntress.io/agent/connectivity/96bca0cef10f45a8f7cf68c4485f23a4.txt",
-	"https://huntresscdn.com/agent/connectivity/96bca0cef10f45a8f7cf68c4485f23a4.txt",
-	"https://update.huntress.io/agent/connectivity/96bca0cef10f45a8f7cf68c4485f23a4.txt")
+    $file_name = "96bca0cef10f45a8f7cf68c4485f23a4.txt"
+
+    $URLs = @(("https://eetee.huntress.io/{0}"-f $file_name),
+	("https://huntress-installers.s3.us-east-1.amazonaws.com/agent/connectivity/{0}" -f $file_name),
+	("https://huntress-rio.s3.amazonaws.com/agent/connectivity/{0}" -f $file_name),
+	("https://huntress-survey-results.s3.amazonaws.com/agent/connectivity/{0}" -f $file_name),
+	("https://huntress-updates.s3.amazonaws.com/agent/connectivity/{0}" -f $file_name),
+	("https://huntress-uploads.s3.us-west-2.amazonaws.com/agent/connectivity/{0}" -f $file_name),
+	("https://huntress-user-uploads.s3.amazonaws.com/agent/connectivity/{0}" -f $file_name),
+	("https://huntress.io/agent/connectivity/{0}" -f $file_name),
+	("https://huntresscdn.com/agent/connectivity/{0}" -f $file_name),
+	("https://update.huntress.io/agent/connectivity/{0}" -f $file_name))
 
     foreach ($URL in $URLs) {
         $StatusCode = 0
