@@ -85,6 +85,7 @@ $SupportMessage = 'Please send the error message to support@huntress.com'
 $HuntressAgentServiceName = 'HuntressAgent'
 $HuntressUpdaterServiceName = 'HuntressUpdater'
 $HuntressEDRServiceName = 'HuntressRio'
+$huntressKey = Get-ItemProperty -Path 'HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*' | Select-Object DisplayName | Where-Object { $_ -match 'Huntress Agent' }
 
 # attempt to use a more central temporary location for the log file rather than the installing users folder
 if (Test-Path (Join-Path $env:SystemRoot '\temp')) {
@@ -995,7 +996,7 @@ function main () {
             LogMessage "Run with the -reregister flag but the service wasn't found. Attempting to install...."
         }
         PrepReregister
-    } elseif ($reinstall) {
+    } elseif ($reinstall -or (-not $huntressKey) ) {
         LogMessage "Re-install agent: '$reinstall'"
         if ( !(Confirm-ServiceExists($HuntressAgentServiceName)) ) {
             $err = "Script was run w/ reinstall flag but there's nothing to reinstall. Attempting to clean remnants, then install the agent fresh."
@@ -1006,13 +1007,14 @@ function main () {
         StopHuntressServices
     } else {
         LogMessage 'Checking for HuntressAgent service...'
-        if ( Confirm-ServiceExists($HuntressAgentServiceName) ) {
+        if ( Confirm-ServiceExists($HuntressAgentServiceName) -and $huntressKey) {
             $err = 'The Huntress Agent is already installed. Exiting with no changes. Suggest using -reregister or -reinstall flags'
             LogMessage "$err"
             Write-Output 'Huntress Agent is already installed. Suggest using the -reregister or -reinstall flags'
             copyLogAndExit
-        }
+        } 
     }
+
 
     Get-Installer
     Install-Huntress $OrganizationKey
