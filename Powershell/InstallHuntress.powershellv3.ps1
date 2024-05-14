@@ -1015,7 +1015,6 @@ function main () {
         } 
     }
 
-
     Get-Installer
     Install-Huntress $OrganizationKey
     Test-Installation
