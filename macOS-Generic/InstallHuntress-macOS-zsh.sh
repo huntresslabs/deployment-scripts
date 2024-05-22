@@ -1,6 +1,6 @@
-#!/bin/bash
+#!/bin/zsh
 
-# Copyright (c) 2022 Huntress Labs, Inc.
+# Copyright (c) 2024 Huntress Labs, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -32,7 +32,7 @@
 # hard coded below or passed in when the script is run.
 
 # For more details, see our KB article
-# https://support.huntress.io/hc/en-us/articles/4404005189011-Installing-the-Huntress-Agent
+# https://support.huntress.io/hc/en-us/articles/10742964620435-Install-the-Huntress-Agent-for-macOS
 
 
 ##############################################################################
@@ -50,6 +50,12 @@ defaultOrgKey="Mac Agents"
 # Put the name of your RMM below. This helps our support team understand which RMM tools
 # are being used to deploy the Huntress macOS Agent. Simply replace the text in quotes below.
 rmm="Unspecified RMM"
+
+# Option to install the system extension after the Huntress Agent is installed. In order for this to happen
+# without security prompts on the endpoint, permissions need to be applied to the endpoint by an MDM before this script
+# is run. See the following KB article for instructions:
+# https://support.huntress.io/hc/en-us/articles/21286543756947-Instructions-for-the-MDM-Configuration-for-macOS
+install_system_extension=false
 
 ##############################################################################
 ## Do not modify anything below this line
@@ -179,7 +185,12 @@ if grep -Fq "$invalid_key" "$install_script"; then
    exit 1
 fi
 
-install_result="$(/bin/bash "$install_script" -a "$accountKey" -o "$organizationKey" -v)"
+install_cmd="/bin/zsh $install_script -a $accountKey -o $organizationKey -v"
+if [ "$install_system_extension" = true ]; then
+    install_cmd+=" --install_system_extension"
+fi
+
+install_result=$(eval "${install_cmd}")
 logger "=============== Begin Installer Logs ==============="
 
 if [ $? != "0" ]; then
