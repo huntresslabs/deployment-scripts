@@ -1,7 +1,7 @@
 #!/bin/bash
 #shellcheck disable=SC2181,SC2295,SC2116
 
-# Copyright (c) 2023 Huntress Labs, Inc.
+# Copyright (c) 2024 Huntress Labs, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -49,6 +49,12 @@ defaultAccountKey="__ACCOUNT_KEY__"
 # If the organization key is passed as a parameter, it will be used instead of this defaultOrgKey variable.
 # If you have a preferred "placeholder" organization name for Mac agents, you can set that below.
 defaultOrgKey="__ORGANIZATION_KEY__"
+
+# Option to install the system extension after the Huntress Agent is installed. In order for this to happen
+# without security prompts on the endpoint, permissions need to be applied to the endpoint by Addigy before this script
+# is run. See the following KB article for more information:
+# https://support.huntress.io/hc/en-us/articles/21286543756947-Instructions-for-the-MDM-Configuration-for-macOS
+install_system_extension=false
 
 ##############################################################################
 ## In many multitenant environments, the Top-Level Addigy Policy name
@@ -191,7 +197,12 @@ if grep -Fq "$invalid_key" "$install_script"; then
    exit 1
 fi
 
-install_result="$(/bin/bash "$install_script" -a "$accountKey" -o "$organizationKey" -v)"
+install_cmd="/bin/zsh $install_script -a $accountKey -o $organizationKey -v"
+if [ "$install_system_extension" = true ]; then
+    install_cmd+=" --install_system_extension"
+fi
+install_result=$(eval "${install_cmd}")
+
 logger "=============== Begin Installer Logs ==============="
 
 if [ $? != "0" ]; then
