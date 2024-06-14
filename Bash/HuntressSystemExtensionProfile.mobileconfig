@@ -31,6 +31,8 @@
 			<string>Huntress</string>
 		</dict>
 		<dict>
+			<key>AllowUserOverrides</key>
+			<false/>
 			<key>AllowedTeamIdentifiers</key>
 			<array>
 				<string>7W6HQ9J9XA</string>
@@ -42,7 +44,7 @@
 			<key>PayloadType</key>
 			<string>com.apple.system-extension-policy</string>
 			<key>PayloadUUID</key>
-			<string>937026A5-86ED-40F7-B6C7-B1F65F4917B6</string>
+			<string>255503F7-77FC-43B0-8141-5FB51E37EF9D</string>
 			<key>PayloadVersion</key>
 			<integer>1</integer>
 			<key>RemovableSystemExtensions</key>
@@ -132,7 +134,7 @@
 		</dict>
 	</array>
 	<key>PayloadDescription</key>
-	<string>Huntress PPPC for FDA and System Extension</string>
+	<string>Huntress PPPC for FDA and System Extension (published Jun 14 2024)</string>
 	<key>PayloadDisplayName</key>
 	<string>Huntress Agent with System Extension</string>
 	<key>PayloadIdentifier</key>
@@ -144,7 +146,7 @@
 	<key>PayloadType</key>
 	<string>Configuration</string>
 	<key>PayloadUUID</key>
-	<string>15C17CDA-5596-42CA-8AB2-25D3B66CAA61</string>
+	<string>E1575F33-7A50-4F88-9BCF-AD392A1FBDF3</string>
 	<key>PayloadVersion</key>
 	<integer>1</integer>
 	<key>TargetDeviceType</key>
