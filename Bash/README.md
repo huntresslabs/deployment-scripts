@@ -49,13 +49,12 @@ cleaning up...
 20221103-085511 -- =========== INSTALL FINISHED AT 20221103-085511 ===============
 ```
 
-## Huntress Mobileconfigs
+## Huntress Mobileconfig
 
-The `mobileconfig` files in this directory are preconfigured settings for MDMs.
-They are designed to upload/import to your MDM and can then be scoped to a collection of devices.
+The `mobileconfig` file in this directory contains preconfigured settings for MDMs. It is designed to upload/import to your MDM and can then be scoped to a collection of devices.
 
-- `HuntressSystemExtension.mobileconfig`: This payload grants all the permissions required by the Huntress Agent and the Huntress System Extension. It enables FDA (full disk access) for both and provides the System Extension with the neccessary permissions for install and operation. Most users will choose this configuration.
+`HuntressSystemExtension.mobileconfig` grants all the permissions required by the Huntress Agent and the Huntress System Extension. It enables FDA (full disk access) for both and provides the System Extension with the neccessary permissions for install and operation. Most partners will use this set of configurations.
 
-- `Huntress PPPC.mobileconfig`: This payload will grant the Huntress agent FDA (full disk access). **This file does not configure the System Extension** and should be used for deployments that only use the Huntress Agent. Use `HuntressSystemExtension.mobileconfig` instead if you want the full capabilities of Huntress.
+## Legacy Mobileconfigs
 
-- `HuntressLegacyAgentProfile.mobileconfig`: A legacy profile used for versions of the Huntress macOS Agent before version `0.13.72`. Kept around for historical reasons, no customers should use this unless expressly directed to by Huntress Support.
+These are kept around for historical reasons in the `legacy-mobileconfigs` folder. **Do not use these these files unless you are specifically directed to by Huntress Support**
