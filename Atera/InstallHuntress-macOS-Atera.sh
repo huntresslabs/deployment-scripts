@@ -33,7 +33,7 @@
 # hard coded below or passed in when the script is run.
 
 # For more details, see our KB article
-# https://support.huntress.io/hc/en-us/articles/4404005189011-Installing-the-Huntress-Agent
+# https://support.huntress.io/hc/en-us/articles/25013857741331-Critical-Steps-for-Complete-macOS-EDR-Deployment
 
 
 ##############################################################################
@@ -47,6 +47,12 @@ defaultAccountKey="__ACCOUNT_KEY__"
 # If you have a preferred "placeholder" organization name for Mac agents, you can set that below.
 # Otherwise, provide the appropriate Organization Key when running the script in Atera.
 defaultOrgKey="{[huntress_orgkey]}"
+
+# Option to install the system extension after the Huntress Agent is installed. In order for this to happen
+# without security prompts on the endpoint, permissions need to be applied to the endpoint by Addigy before this script
+# is run. See the following KB article for more information:
+# https://support.huntress.io/hc/en-us/articles/21286543756947-Instructions-for-the-MDM-Configuration-for-macOS
+install_system_extension=false
 
 ##############################################################################
 ## Do not modify anything below this line
@@ -157,7 +163,7 @@ then
     exit 1
 fi
 
-# Hide most of the account key in the logs, keeping the front and tail end for troubleshooting 
+# Hide most of the account key in the logs, keeping the front and tail end for troubleshooting
 masked="$(echo "${accountKey:0:4}")"
 masked+="************************"
 masked+="$(echo "${accountKey: (-4)}")"
@@ -177,7 +183,12 @@ if grep -Fq "$invalid_key" "$install_script"; then
    exit 1
 fi
 
-install_result="$(/bin/bash "$install_script" -a "$accountKey" -o "$organizationKey" -v)"
+install_cmd="/bin/zsh $install_script -a $accountKey -o $organizationKey -v"
+if [ "$install_system_extension" = true ]; then
+    install_cmd+=" --install_system_extension"
+fi
+install_result=$(eval "${install_cmd}")
+
 logger "=============== Begin Installer Logs ==============="
 
 if [ $? != "0" ]; then
