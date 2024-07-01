@@ -32,7 +32,7 @@
 # hard coded below or passed in when the script is run.
 
 # For more details, see our KB article
-# https://support.huntress.io/hc/en-us/articles/10742964620435-Install-the-Huntress-Agent-for-macOS
+# https://support.huntress.io/hc/en-us/articles/25013857741331-Critical-Steps-for-Complete-macOS-EDR-Deployment
 
 
 ##############################################################################
@@ -165,7 +165,7 @@ then
     exit 1
 fi
 
-# Hide most of the account key in the logs, keeping the front and tail end for troubleshooting 
+# Hide most of the account key in the logs, keeping the front and tail end for troubleshooting
 masked="$(echo "${accountKey:0:4}")"
 masked+="************************"
 masked+="$(echo "${accountKey: (-4)}")"
@@ -189,8 +189,8 @@ install_cmd="/bin/zsh $install_script -a $accountKey -o $organizationKey -v"
 if [ "$install_system_extension" = true ]; then
     install_cmd+=" --install_system_extension"
 fi
-
 install_result=$(eval "${install_cmd}")
+
 logger "=============== Begin Installer Logs ==============="
 
 if [ $? != "0" ]; then

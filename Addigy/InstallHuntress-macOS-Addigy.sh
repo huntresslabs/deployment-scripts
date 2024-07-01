@@ -33,13 +33,13 @@
 # hard coded below or passed in when the script is run.
 
 # For more details, see our KB article
-# https://support.huntress.io/hc/en-us/articles/4404005189011-Installing-the-Huntress-Agent
+# https://support.huntress.io/hc/en-us/articles/25013857741331-Critical-Steps-for-Complete-macOS-EDR-Deployment
 
 
 #####################################################################################
-## 
+##
 ## Begin user modified variables. Modify per documentation before running in Addigy.
-## 
+##
 #####################################################################################
 
 
@@ -65,7 +65,7 @@ install_system_extension=false
 ## For this method, comment line 51 above and uncomment lines 62-63 below.
 ##############################################################################
 
-# topLevelPolicy=$(echo ${POLICY_PATH} | awk -F ' \\| ' '{print $1}') 
+# topLevelPolicy=$(echo ${POLICY_PATH} | awk -F ' \\| ' '{print $1}')
 # defaultOrgKey="$topLevelPolicy"
 
 ##############################################################################
@@ -177,7 +177,7 @@ then
     exit 1
 fi
 
-# Hide most of the account key in the logs, keeping the front and tail end for troubleshooting 
+# Hide most of the account key in the logs, keeping the front and tail end for troubleshooting
 masked="$(echo "${accountKey:0:4}")"
 masked+="************************"
 masked+="$(echo "${accountKey: (-4)}")"

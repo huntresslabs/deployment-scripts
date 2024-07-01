@@ -9,3 +9,5 @@ The policy will pass the use specified [Account Key and Organization Key](https:
 ```
 Start-Process $installer "/ACCT_KEY=`"$acctkey`" /ORG_KEY=`"$orgkey`" /S" -Wait
 ```
+
+macOS deployments require additional considerations and configuration before installing. [Please refer to this document for more information](https://support.huntress.io/hc/en-us/documents/25013857741331-Critical-Steps-for-Complete-macOS-EDR-Deployment) before planning your macOS deployment.
