@@ -1,4 +1,4 @@
-#!/bin/zsh
+#!/usr/bin/env zsh
 
 # Copyright (c) 2024 Huntress Labs, Inc.
 # All rights reserved.
