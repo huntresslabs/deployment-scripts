@@ -101,6 +101,7 @@ fi
 if [ -n "$topLevelPolicy" ]; then
     logger "Policy Path: ${POLICY_PATH}"
     logger "Policy Path (base64): $(echo ${POLICY_PATH} | base64)"
+    logger "Top Level Policy: $topLevelPolicy"
 fi
 
 ##
