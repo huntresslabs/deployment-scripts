@@ -97,7 +97,7 @@ if [ -f "$install_script" ]; then
     rm -f "$install_script"
 fi
 
-# Log policy path if Addigy policies are being used to help in troubleshooting
+# Log policy path if Addigy policies are being. Useful for troubleshooting
 if [ -n "$topLevelPolicy" ]; then
     logger "Policy Path: ${POLICY_PATH}"
     logger "Policy Path (base64): $(echo ${POLICY_PATH} | base64)"
