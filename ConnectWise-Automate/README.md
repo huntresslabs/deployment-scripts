@@ -6,4 +6,4 @@ Each client will download the most recent installer directly from the Huntress s
 
 [Please see the following document for usage details](https://support.huntress.io/hc/en-us/articles/4404012708627-Install-via-ConnectWise-Automate-Labtech-RMM)
 
-macOS deployments require additional considerations and configuration before installing. [Please refer to this document for more information](https://support.huntress.io/hc/en-us/documents/25013857741331-Critical-Steps-for-Complete-macOS-EDR-Deployment) before planning your macOS deployment.
+macOS deployments require additional considerations and configuration before installing. [Please refer to this document for more information](https://support.huntress.io/hc/en-us/articles/25013857741331-Critical-Steps-for-Complete-macOS-EDR-Deployment) before planning your macOS deployment.
