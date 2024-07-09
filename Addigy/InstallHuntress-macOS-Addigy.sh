@@ -97,6 +97,13 @@ if [ -f "$install_script" ]; then
     rm -f "$install_script"
 fi
 
+# Log policy path if Addigy policies are being. Useful for troubleshooting
+if [ -n "$topLevelPolicy" ]; then
+    logger "Policy Path: ${POLICY_PATH}"
+    logger "Policy Path (base64): $(echo ${POLICY_PATH} | base64)"
+    logger "Top Level Policy: $topLevelPolicy"
+fi
+
 ##
 ## This section handles the assigning `=` character for options.
 ## Since most RMMs treat spaces as delimiters in Mac Scripting,
