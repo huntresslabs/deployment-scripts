@@ -204,13 +204,12 @@ if grep -Fq "$invalid_key" "$install_script"; then
    exit 1
 fi
 
+logger "=============== Begin Installer Logs ==============="
 if [ "$install_system_extension" = true ]; then
     install_result="$(/bin/bash "$install_script" -a "$accountKey" -o "$organizationKey" -v --install_system_extension)"
 else
     install_result="$(/bin/bash "$install_script" -a "$accountKey" -o "$organizationKey" -v)"
 fi
-
-logger "=============== Begin Installer Logs ==============="
 
 if [ $? != "0" ]; then
     logger "Installer Error: $install_result"
