@@ -185,11 +185,11 @@ if grep -Fq "$invalid_key" "$install_script"; then
    exit 1
 fi
 
-install_cmd="/bin/zsh $install_script -a $accountKey -o $organizationKey -v"
 if [ "$install_system_extension" = true ]; then
-    install_cmd+=" --install_system_extension"
+    install_result="$(/bin/bash "$install_script" -a "$accountKey" -o "$organizationKey" -v --install_system_extension)"
+else
+    install_result="$(/bin/bash "$install_script" -a "$accountKey" -o "$organizationKey" -v)"
 fi
-install_result=$(eval "${install_cmd}")
 
 logger "=============== Begin Installer Logs ==============="
 
