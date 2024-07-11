@@ -1,6 +1,8 @@
-#!/bin/zsh
+#!/bin/bash
+#shellcheck disable=SC2181,SC2295,SC2116
+#
 
-# Copyright (c) 2024 Huntress Labs, Inc.
+# Copyright (c) 2022 Huntress Labs, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -33,29 +35,22 @@
 
 # For more details, see our KB article
 # https://support.huntress.io/hc/en-us/articles/10780146108563
-# https://support.huntress.io/hc/en-us/articles/25013857741331-Critical-Steps-for-Complete-macOS-EDR-Deployment
+
 
 ##############################################################################
 ## Begin user modified variables
 ##############################################################################
 
 
-# Replace __ACCOUNT_KEY__ with your account secret key (from your Huntress portal's "download agent" section)
-defaultAccountKey="__ACCOUNT_KEY__"
+# By default, Datto will pull from your HUNTRESS_ACCOUNT_KEY global variable. 
+# Otherwise, you may specify your key inside the quotes below.
+defaultAccountKey="$HUNTRESS_ACCOUNT_KEY"
 
-# If you have a preferred "placeholder" organization name for Mac agents, you can set that below.
-# Otherwise, provide the appropriate Organization Key when running the script in your RMM.
-defaultOrgKey="Mac Agents"
+# If the organization key is passed as a parameter, it will be used instead of this DEFAULT_ORG_KEY variable.
+# Otherwise, Datto provides the CS_PROFILE_NAME as an environment variable that we will use as the 
+# Organization Name in Huntress. If you want to have customer names match Datto, leave the line below as-is.
+defaultOrgKey="$CS_PROFILE_NAME"
 
-# Put the name of your RMM below. This helps our support team understand which RMM tools
-# are being used to deploy the Huntress macOS Agent. Simply replace the text in quotes below.
-rmm="Unspecified RMM"
-
-# Option to install the system extension after the Huntress Agent is installed. In order for this to happen
-# without security prompts on the endpoint, permissions need to be applied to the endpoint by an MDM before this script
-# is run. See the following KB article for instructions:
-# https://support.huntress.io/hc/en-us/articles/21286543756947-Instructions-for-the-MDM-Configuration-for-macOS
-install_system_extension=false
 
 ##############################################################################
 ## Do not modify anything below this line
@@ -135,19 +130,19 @@ done
 shift $((OPTIND-1)) # remove parsed options and args from $@ list
 
 logger "=========== INSTALL START AT $dd ==============="
-logger "=========== $rmm Deployment Script | Version: $version ==============="
+logger "=========== $rmm | Version: $version ==============="
 
 # VALIDATE OPTIONS PASSED TO SCRIPT
 if [ -z "$organization_key" ]; then
     organizationKey=$(echo "$defaultOrgKey" | xargs)
-    logger "--organization_key parameter not present, using defaultOrgKey instead: $defaultOrgKey"
+    logger "--organization_key parameter not present, using defaultKey instead: $defaultOrgKey"
   else
     organizationKey=$(echo "$organization_key" | xargs)
     logger "--organization_key parameter present, set to: $organizationKey"
 fi
 
-if ! [[ "$account_key" =~ $pattern ]]; then
-    logger "Invalid --account_key provided, checking defaultAccountKey..."
+if ! [[ $account_key =~ $pattern ]]; then
+    logger "Checking defaultAccountKey (hardcoded key) because parameter for --account_key was invalid"
     accountKey=$(echo "$defaultAccountKey" | xargs)
     if ! [[ $accountKey =~ $pattern ]]; then
         logger "ERROR: Invalid --account_key. Please check Huntress support documentation."
@@ -166,7 +161,7 @@ then
     exit 1
 fi
 
-# Hide most of the account key in the logs, keeping the front and tail end for troubleshooting
+# Hide most of the account key in the logs, keeping the front and tail end for troubleshooting 
 masked="$(echo "${accountKey:0:4}")"
 masked+="************************"
 masked+="$(echo "${accountKey: (-4)}")"
@@ -186,12 +181,7 @@ if grep -Fq "$invalid_key" "$install_script"; then
    exit 1
 fi
 
-install_cmd="/bin/zsh $install_script -a $accountKey -o $organizationKey -v"
-if [ "$install_system_extension" = true ]; then
-    install_cmd+=" --install_system_extension"
-fi
-install_result=$(eval "${install_cmd}")
-
+install_result="$(/bin/bash "$install_script" -a "$accountKey" -o "$organizationKey" -v)"
 logger "=============== Begin Installer Logs ==============="
 
 if [ $? != "0" ]; then
