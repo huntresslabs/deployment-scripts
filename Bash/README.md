@@ -58,3 +58,9 @@ The `mobileconfig` file in this directory contains preconfigured settings for MD
 ## Legacy Mobileconfigs
 
 These are kept around for historical reasons in the `legacy-mobileconfigs` folder. **Do not use these these files unless you are specifically directed to by Huntress Support**
+
+## Microsoft Defender for Endpoint
+
+**These configs are not for the Huntress Agent.**   
+These profiles allow for proper provisioning of Microsoft Defender for Endpoint on a macOS host, per Microsoft documentation.
+
