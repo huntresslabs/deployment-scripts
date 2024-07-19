@@ -237,7 +237,7 @@
     <key>PayloadDescription</key>
     <string></string>
     <key>PayloadDisplayName</key>
-    <string>Defender onboarding settings</string>
+    <string>Defender onboarding settings - version 2</string>
     <key>PayloadEnabled</key>
     <true/>
     <key>PayloadIdentifier</key>
