@@ -14,7 +14,9 @@
         <key>PayloadType</key>
         <string>com.apple.servicemanagement</string>
         <key>PayloadUUID</key>
-        <string>A9BF8FA9-CEA3-42A2-B8C1-E1998B84CBB0</string>
+        <string>AF4BB8C6-CA48-4E33-9F2E-7769C2DDD22A</string>
+        <key>PayloadVersion</key>
+        <integer>1</integer>
         <key>Rules</key>
         <array>
           <dict>
@@ -28,6 +30,12 @@
             <string>LabelPrefix</string>
             <key>RuleValue</key>
             <string>com.microsoft.dlp</string>
+          </dict>
+          <dict>
+            <key>RuleType</key>
+            <string>LabelPrefix</string>
+            <key>RuleValue</key>
+            <string>com.microsoft.autoupdate2</string>
           </dict>
         </array>
       </dict>
@@ -138,13 +146,21 @@
         <key>PayloadType</key>
         <string>com.apple.system-extension-policy</string>
         <key>PayloadUUID</key>
-        <string>605B85D6-5CE9-49C9-A10F-6B12B4D0B84E</string>
+        <string>39FE7525-DFE9-4AC6-B152-E093375C62C2</string>
         <key>PayloadVersion</key>
         <integer>1</integer>
+        <key>RemovableSystemExtensions</key>
+        <dict>
+            <key>UBF8T346G9</key>
+            <array>
+                <string>com.microsoft.wdav.epsext</string>
+                <string>com.microsoft.wdav.netext</string>
+            </array>
+        </dict>
       </dict>
       <dict>
         <key>PayloadDescription</key>
-        <string/>
+        <string></string>
         <key>PayloadDisplayName</key>
         <string>Privacy Preferences Policy Control</string>
         <key>PayloadEnabled</key>
@@ -219,9 +235,9 @@
       </dict>
     </array>
     <key>PayloadDescription</key>
-    <string/>
+    <string></string>
     <key>PayloadDisplayName</key>
-    <string>Defender onboarding settings</string>
+    <string>Defender onboarding settings - version 2</string>
     <key>PayloadEnabled</key>
     <true/>
     <key>PayloadIdentifier</key>
@@ -235,7 +251,7 @@
     <key>PayloadType</key>
     <string>Configuration</string>
     <key>PayloadUUID</key>
-    <string>CFAD2020-407F-11EF-9579-4A3093669CD7</string>
+    <string>EFA8B8E8-A94A-4F3B-A9E8-540A7186BCA3</string>
     <key>PayloadVersion</key>
     <integer>1</integer>
   </dict>
