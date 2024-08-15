@@ -171,7 +171,7 @@ masked+="$(echo "${accountKey: (-4)}")"
 if [ -z "$accountKey" ] || [ -z "$organizationKey" ]
 then
     logger "Error: --account_key and --organization_key are both required" >> $log_file
-    logger "$masked and $organizationKey were provided"
+    logger "Account key: $masked and Org Key: $organizationKey were provided"
     echo
     usage
     exit 1
