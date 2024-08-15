@@ -143,8 +143,7 @@ logger "=========== $rmm Deployment Script | Version: $version ==============="
 
 # validate options passed to script, remove all invalid characters except spaces are converted to dash
 if [ -z "$organization_key" ]; then
-    organizationKey=$(echo "$defaultOrgKey" | tr -dc '[:alnum:]- ' | tr ' ' '-')
-    organizationKey=$(echo "$organizationKey" | xargs)
+    organizationKey=$(echo "$defaultOrgKey" | tr -dc '[:alnum:]- ' | tr ' ' '-' | xargs)
     logger "--organization_key parameter not present, using defaultOrgKey instead: $defaultOrgKey, formatted to $organizationKey "
   else
     organizationKey=$(echo "$organization_key" | tr -dc '[:alnum:]- ' | tr ' ' '-')
