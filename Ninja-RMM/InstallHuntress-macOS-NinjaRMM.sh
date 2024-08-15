@@ -59,6 +59,8 @@ install_system_extension=false
 ##############################################################################
 ## Do not modify anything below this line
 ##############################################################################
+scriptVersion="August 15, 2024"
+
 dd=$(date "+%Y%m%d-%H%M%S")
 log_file="/tmp/HuntressInstaller.log"
 install_script="/tmp/HuntressMacInstall.sh"
@@ -72,6 +74,8 @@ logger() {
     echo "$dd -- $*";
     echo "$dd -- $*" >> $log_file;
 }
+
+logger "Huntress install script last updated $scriptVersion"
 
 # Check for root
 if [ $EUID -ne 0 ]; then
@@ -136,25 +140,33 @@ shift $((OPTIND-1)) # remove parsed options and args from $@ list
 logger "=========== INSTALL START AT $dd ==============="
 logger "=========== $rmm | Version: $version ==============="
 
-# VALIDATE OPTIONS PASSED TO SCRIPT
+# validate options passed to script, remove all invalid characters except spaces are converted to dash
 if [ -z "$organization_key" ]; then
-    organizationKey=$(echo "$defaultOrgKey" | xargs)
-    logger "--organization_key parameter not present, using defaultKey instead: $defaultOrgKey"
+    organizationKey=$(echo "$defaultOrgKey" | tr -dc '[:alnum:]- ' | tr ' ' '-' | xargs)
+    logger "--organization_key parameter not present, using defaultOrgKey instead: $defaultOrgKey, formatted to $organizationKey "
   else
-    organizationKey=$(echo "$organization_key" | xargs)
-    logger "--organization_key parameter present, set to: $organizationKey"
+    organizationKey=$(echo "$organization_key" | tr -dc '[:alnum:]- ' | tr ' ' '-' | xargs)
+    logger "--organization_key parameter present, set to: $organization_key, formatted to $organizationKey "
 fi
 
 if ! [[ $account_key =~ $pattern ]]; then
     logger "Invalid --account_key provided, checking defaultAccountKey..."
     accountKey=$(echo "$defaultAccountKey" | xargs)
     if ! [[ $accountKey =~ $pattern ]]; then
-        logger "ERROR: Invalid --account_key. Please check Huntress support documentation."
+        logger "ERROR: Invalid --account_key, $accountKey was provided. Please check Huntress support documentation."
         exit 1
     fi
     else
         accountKey=$(echo "$account_key" | xargs)
 fi
+
+# Hide most of the account key in the logs, keeping the front and tail end for troubleshooting
+masked="$(echo "${accountKey:0:4}")"
+masked+="************************"
+masked+="$(echo "${accountKey: (-4)}")"
+
+logger "Provided Huntress key: $masked"
+logger "Provided Organization Key: $organizationKey"
 
 # OPTIONS REQUIRED
 if [ -z "$accountKey" ] || [ -z "$organizationKey" ]
@@ -165,13 +177,7 @@ then
     exit 1
 fi
 
-# Hide most of the account key in the logs, keeping the front and tail end for troubleshooting
-masked="$(echo "${accountKey:0:4}")"
-masked+="************************"
-masked+="$(echo "${accountKey: (-4)}")"
 
-logger "Provided Huntress key: $masked"
-logger "Provided Organization Key: $organizationKey"
 
 result=$(curl -w "%{http_code}" -L "https://huntress.io/script/darwin/$accountKey" -o "$install_script")
 
@@ -200,3 +206,4 @@ fi
 logger "$install_result"
 logger "=========== INSTALL FINISHED AT $dd ==============="
 exit
+
