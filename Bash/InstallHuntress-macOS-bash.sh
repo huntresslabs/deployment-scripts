@@ -103,12 +103,14 @@ Usage: $0 [options...] --account_key=<account_key> --organization_key=<organizat
 
 -a, --account_key      <account_key>      The account key to use for this agent install
 -o, --organization_key <organization_key> The org key to use for this agent install
+-t, --tags             <tags>             A comma-separated list of agent tags
+-i, --install_system_extension            If passed, automatically install the system extension
 -h, --help                                Print this message
 
 EOF
 }
 
-while getopts a:o:h:-: OPT; do
+while getopts a:o:h:t:-:i OPT; do
   if [ "$OPT" = "-" ]; then
     OPT="${OPTARG%%=*}"       # extract long option name
     OPTARG="${OPTARG#$OPT}"   # extract long option argument (may be empty)
@@ -123,6 +125,12 @@ while getopts a:o:h:-: OPT; do
         ;;
     o | organization_key)
         organization_key="$OPTARG"
+        ;;
+    t | tags)
+        tags="$OPTARG"
+        ;;
+    i | install_system_extension)
+        install_system_extension=true
         ;;
     h | help)
         usage
@@ -162,6 +170,14 @@ if ! [[ "$account_key" =~ $pattern ]]; then
         accountKey=$(echo "$account_key" | xargs)
 fi
 
+if [ -n "$tags" ]; then
+  logger "using tags: $tags"
+fi
+
+if [ "$install_system_extension" = true ]; then
+  logger "automatically installing system extension"
+fi
+
 # Hide most of the account key in the logs, keeping the front and tail end for troubleshooting
 masked="$(echo "${accountKey:0:4}")"
 masked+="************************"
@@ -194,9 +210,9 @@ if grep -Fq "$invalid_key" "$install_script"; then
 fi
 
 if [ "$install_system_extension" = true ]; then
-    install_result="$(/bin/bash "$install_script" -a "$accountKey" -o "$organizationKey" -v --install_system_extension)"
+    install_result="$(/bin/bash "$install_script" -a "$accountKey" -o "$organizationKey" -t "$tags" -v --install_system_extension)"
 else
-    install_result="$(/bin/bash "$install_script" -a "$accountKey" -o "$organizationKey" -v)"
+    install_result="$(/bin/bash "$install_script" -a "$accountKey" -o "$organizationKey" -t "$tags" -v)"
 fi
 
 logger "=============== Begin Installer Logs ==============="
