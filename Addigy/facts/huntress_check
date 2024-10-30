@@ -20,5 +20,37 @@ fi;
 if [ -d "/Library/Application Support/Huntress" ]; then
     echo "Yes - Installed"
 else
-    echo "No - "
+    echo "No - Not Installed"
 fi
+
+# Check if agent has FDA
+# TBD - it'd be good to leverage Wizard in the future
+
+# Check system extension status
+output=$(/Applications/Huntress.app/Contents/MacOS/Huntress extensionctl status)
+
+# Check if extension installed
+if [[ $output == *"Extension Status: installed"* ]]; then
+  echo "Yes - Extension Installed";
+else
+  echo "No - Extension Not Installed";
+fi
+
+if [[ $output == *"Full Disk Access for Extension: enabled"* ]]; then
+  echo "Yes - Full Disk Access granted for Extension";
+else
+  echo "No - Full Disk Access not granted for Extension"
+fi;
+
+if [[ $output == *"EDR: enabled"* ]]; then
+  echo "Yes - EDR Enabled"
+else
+  echo "No - EDR is not Enabled"
+fi;
+
+if [[ $output == *"Preauthorization Status: granted"* ]]; then
+  echo "Yes - Preauthorization granted"
+else
+  echo "No - Preauthorization not granted"
+fi
+
