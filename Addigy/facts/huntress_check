@@ -1,8 +1,24 @@
-#!/bin/sh
-if pgrep -x "HuntressAgent" >/dev/null; then
-    echo "Yes - Running"
-elif [ -d "/Library/Application Support/Huntress" ]; then
+#!/bin/bash
+declare -a HuntressDaemons=("HuntressAgent" "HuntressUpdater" "Huntress")
+
+# Check if the daemons are running as expected
+daemons_running=true
+for i in "${HuntressDaemons[@]}"; do 
+  pgrep -x "$i" >/dev/null
+  daemon_status=$?
+  if [ "$daemon_status" != "0" ]; then
+    echo "No - Service $i is not running"
+    daemons_running=false
+  fi
+done;
+
+if $daemons_running; then 
+  echo "Yes - All Huntress services running" 
+fi;
+
+# Application Support Directory present
+if [ -d "/Library/Application Support/Huntress" ]; then
     echo "Yes - Installed"
 else
-    echo "No"
+    echo "No - "
 fi
