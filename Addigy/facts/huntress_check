@@ -1,0 +1,8 @@
+#!/bin/sh
+if pgrep -x "HuntressAgent" >/dev/null; then
+    echo "Yes - Running"
+elif [ -d "/Library/Application Support/Huntress" ]; then
+    echo "Yes - Installed"
+else
+    echo "No"
+fi
