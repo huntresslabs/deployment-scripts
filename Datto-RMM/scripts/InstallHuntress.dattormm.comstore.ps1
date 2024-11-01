@@ -79,7 +79,7 @@ $estimatedSpaceNeeded = 200111222
 
 # These are used by the Huntress support team when troubleshooting.
 $ScriptVersion = "Version 2, major revision 7, 2024 January 24"
-$ScriptType = "PowerShell"
+$ScriptType = "Datto"
 
 # variables used throughout this script
 $X64 = 64
