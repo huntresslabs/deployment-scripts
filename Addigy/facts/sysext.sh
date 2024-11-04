@@ -1,10 +1,5 @@
-# Check system extension status
 output=$(/Applications/Huntress.app/Contents/MacOS/Huntress extensionctl status)
 
-# If this is not working as expected, you may need to prepend sudo. Delete the above and uncomment the following line
-#output=$(sudo /Applications/Huntress.app/Contents/MacOS/Huntress extensionctl status)
-
-# Check if extension installed
 if [[ $output != *"Extension Status: installed"* ]]; then
   echo "No - Extension Not Installed";
   exit
