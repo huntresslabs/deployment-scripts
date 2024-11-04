@@ -1,4 +1,4 @@
-fda_enabled="kTCCServiceSystemPolicyAllFiles"
+#!/bin/zsh
 
 out=$(sqlite3 -line "/Library/Application Support/com.apple.TCC/TCC.db" "SELECT * FROM access where client == 'com.huntress.app';" | grep service | awk '{print $3}')
 if [[ $out != "kTCCServiceSystemPolicyAllFiles" ]]; then

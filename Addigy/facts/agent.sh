@@ -1,3 +1,4 @@
+#!/bin/zsh
 declare -a HuntressDaemons=("HuntressAgent" "HuntressUpdater" "Huntress")
 
 for i in "${HuntressDaemons[@]}"; do 

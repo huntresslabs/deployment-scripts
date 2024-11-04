@@ -1,3 +1,4 @@
+#!/bin/zsh
 output=$(/Applications/Huntress.app/Contents/MacOS/Huntress extensionctl status)
 
 if [[ $output != *"Extension Status: installed"* ]]; then
