@@ -55,6 +55,8 @@ The `mobileconfig` file in this directory contains preconfigured settings for MD
 
 `HuntressSystemExtension.mobileconfig` grants all the permissions required by the Huntress Agent and the Huntress System Extension. It enables FDA (full disk access) for both and provides the System Extension with the neccessary permissions for install and operation. Most partners will use this set of configurations.
 
+The mobileconfig file is suffixed with a version number (as of Nov 2024), which will be updated when changes are made to it.
+
 ## Legacy Mobileconfigs
 
 These are kept around for historical reasons in the `legacy-mobileconfigs` folder. **Do not use these these files unless you are specifically directed to by Huntress Support**
