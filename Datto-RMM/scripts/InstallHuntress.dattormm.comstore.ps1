@@ -750,7 +750,7 @@ function repairAgent {
     if (($null -eq $RioService) -AND $isHuntressInstalled){
         LogMessage "Repair was unable to find the RioService. If this is a fresh install it may take up to 24 hours for Rio to install. Otherwise please contact support to ensure EDR coverage."
     } elseif ($null -eq $RioService) {
-        LogMessaage "Fresh install detected, it can take up to 24 hours for Rio to install."
+        LogMessage "Fresh install detected, it can take up to 24 hours for Rio to install."
     } else {
         Start-Service HuntressRio
         LogMessage "Repair started HuntressRio service"
