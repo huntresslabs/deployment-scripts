@@ -134,7 +134,7 @@
 	<key>PayloadDescription</key>
 	<string>Huntress PPPC for FDA and System Extension</string>
 	<key>PayloadDisplayName</key>
-	<string>Huntress Agent with System Extension</string>
+	<string>Huntress Agent with System Extension v2</string>
 	<key>PayloadIdentifier</key>
 	<string>com.huntress.app</string>
 	<key>PayloadOrganization</key>
