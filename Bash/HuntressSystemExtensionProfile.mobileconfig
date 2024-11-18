@@ -130,11 +130,32 @@
 				</array>
 			</dict>
 		</dict>
+		<dict>
+			<key>PayloadDisplayName</key>
+			<string>Service Management - Managed Login Items</string>
+			<key>PayloadIdentifier</key>
+			<string>com.apple.servicemanagement.05CCB7E7-7D0C-4E68-9F69-C388E7C289E9</string>
+			<key>PayloadType</key>
+			<string>com.apple.servicemanagement</string>
+			<key>PayloadUUID</key>
+			<string>05CCB7E7-7D0C-4E68-9F69-C388E7C289E9</string>
+			<key>PayloadVersion</key>
+			<integer>1</integer>
+			<key>Rules</key>
+			<array>
+				<dict>
+					<key>RuleType</key>
+					<string>TeamIdentifier</string>
+					<key>RuleValue</key>
+					<string>7W6HQ9J9XA</string>
+				</dict>
+			</array>
+		</dict>
 	</array>
 	<key>PayloadDescription</key>
 	<string>Huntress PPPC for FDA and System Extension</string>
 	<key>PayloadDisplayName</key>
-	<string>Huntress Agent with System Extension v2</string>
+	<string>Huntress Agent with System Extension v3</string>
 	<key>PayloadIdentifier</key>
 	<string>com.huntress.app</string>
 	<key>PayloadOrganization</key>
