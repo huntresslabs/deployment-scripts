@@ -188,19 +188,16 @@ function Test-Parameters {
     if ($AccountKey -eq "__ACCOUNT_KEY__") {
         $err = "AccountKey not set! Suggest using the -acctkey flag followed by your account key (you can find it in the Downloads section of your Huntress portal)."
         LogMessage $err
-        Write-Output $err -ForegroundColor white -BackgroundColor red
         throw $ScriptFailed + " " + $err
         exit 1
     } elseif ($AccountKey.length -ne 32) {
         $err = "Invalid AccountKey specified (incorrect length)! Suggest double checking the key was copy/pasted in its entirety"
         LogMessage $err
-        Write-Output $err -ForegroundColor white -BackgroundColor red
         throw $ScriptFailed + " " + $err
         exit 1
     } elseif (($AccountKey -match '[^a-zA-Z0-9]')) {
         $err = "Invalid AccountKey specified (invalid characters found)! Suggest double checking the key was copy/pasted fully"
         LogMessage $err
-        Write-Output $err -ForegroundColor white -BackgroundColor red
         throw $ScriptFailed + " " + $err
         exit 1
     }
@@ -209,13 +206,11 @@ function Test-Parameters {
     if ($OrganizationKey -eq "__ORGANIZATION_KEY__") {
         $err = "OrganizationKey not specified! This is a user defined identifier set by you (usually your customer's organization name)"
         LogMessage $err
-        Write-Output $err -ForegroundColor white -BackgroundColor red
         throw $ScriptFailed + " " + $err
         exit 1
     } elseif ($OrganizationKey.length -lt 1) {
         $err = "Invalid OrganizationKey specified (length should be > 0)!"
         LogMessage $err
-        Write-Output $err -ForegroundColor white -BackgroundColor red
         throw $ScriptFailed + " " + $err
         exit 1
     }
@@ -293,7 +288,6 @@ function verifyInstaller ($file) {
                  "Suggest trying again, contact support@huntress.com if it fails >2 times")
         LogMessage $err
         LogMessage $SupportMessage
-        Write-Output $err -ForegroundColor white -BackgroundColor red
         throw $ScriptFailed + " " + $err + " " + $SupportMessage
     }
 }
@@ -304,7 +298,7 @@ function prepareAgentPath {
     if (Test-Path $path -PathType Leaf) {
         $backup = "$path.bak"
         $err = "WARNING: '$path' already exists and is not a directory, renaming to '$backup'."
-        Write-Output $err -ForegroundColor white -BackgroundColor red
+        LogMessage $err
         Rename-Item -Path $path -NewName $backup -Force
     }
 }
@@ -383,7 +377,6 @@ function Install-Huntress ($OrganizationKey) {
             "your logs. If the issue continues to occur, please send the log to the Huntress " +
             "Team for help at support@huntresslabs.com")
         LogMessage $msg
-        Write-Output $msg -ForegroundColor white -BackgroundColor red
         throw $ScriptFailed + " " + $err + " " + $SupportMessage
     }
 
@@ -404,7 +397,6 @@ function Install-Huntress ($OrganizationKey) {
     } catch {
         $process | Stop-Process -Force
         $err = "ERROR: Installer failed to complete in $timeout seconds. Possible interference from a security product?"
-        Write-Output $err -ForegroundColor white -BackgroundColor red
         LogMessage $err
         LogMessage $SupportMessage
         throw $ScriptFailed + " " + $err + " " + $SupportMessage
@@ -442,7 +434,6 @@ function Test-Installation {
     }
     if ( ! $didAgentRegister) {
         $err = "WARNING: It does not appear the agent has successfully registered. Check 3rd party AV exclusion lists to ensure Huntress is excluded."
-        Write-Output $err -ForegroundColor white -BackgroundColor red
         LogMessage ($err + $SupportMessage)
     }
 
@@ -598,7 +589,6 @@ function checkFreeDiskSpace {
     $freeSpaceNice = $freeSpace.ToString('N0')
     if ($freeSpace -lt $estimatedSpaceNeeded) {
         $err = "Low disk space detected, you may have troubles completing this install. Only $($freeSpaceNice) bytes remaining (need about $($estimatedSpaceNeeded.ToString('N0'))."
-        Write-Output $err -ForegroundColor white -BackgroundColor red
         LogMessage $err
     } else {
         LogMessage "Free disk space: $($freeSpaceNice)"
@@ -636,7 +626,6 @@ function runProcess ($process, $flags, $name){
         }
 
         $err = "ERROR: $($name) running as '$($process) $($flags)' failed to complete in $timeout seconds, full error message: '$($msg).'"
-        Write-Host $err -ForegroundColor white -BackgroundColor red
         LogMessage $err
         copyLogAndExit
     }
@@ -677,7 +666,6 @@ function uninstallHuntress {
         }
     } else {
         $err = "Note: unable to find Huntress install folder. Attempting to manually uninstall."
-        Write-Output $err -ForegroundColor white -BackgroundColor red
         LogMessage $err
     }
 
@@ -693,7 +681,6 @@ function uninstallHuntress {
             if ($i -eq 15) {
                 $err = "Uninstall not complete after $($i) seconds"
                 LogMessage $err
-                Write-Output $err -ForegroundColor white -BackgroundColor red
             }
         }
     }
@@ -770,7 +757,6 @@ function testNetworkConnectivity {
     foreach ($URL in $URLs) {
         if (! (Test-NetConnection $URL -Port 443).TcpTestSucceeded) {
             $err = "WARNING, connectivity to Huntress URL's is being interrupted. You MUST open port 443 for $($URL) in order for the Huntress agent to function."
-            Write-Output $err -ForegroundColor white -BackgroundColor red
             LogMessage $err
             $connectivityTolerance --
         } else {
@@ -778,10 +764,9 @@ function testNetworkConnectivity {
         }
     }
     if ($connectivityTolerance -lt 0) {
-        Write-Output "Please fix the closed port 443 for the above domains before attempting to install" -ForegroundColor white -BackgroundColor red
+        LogMessage "Please fix the closed port 443 for the above domains before attempting to install"
         $err = "Too many connections failed $($connectivityTolerance), exiting"
         LogMessage $err
-        Write-Output "$($err), $($SupportMessage)" -ForegroundColor white -BackgroundColor red
         return $false
     }
     return $true
@@ -926,7 +911,6 @@ function main () {
     if ( !($reregister)) {
         if (isOrphan) {
             $err = 'Huntress Agent is orphaned, unable to use the provided flag. Switching to uninstall/reinstall (reregister flag)'
-            Write-Output $err -ForegroundColor white -BackgroundColor red
             LogMessage "$err"
             $reregister = $true
         }
@@ -991,7 +975,7 @@ function main () {
         if ( Confirm-ServiceExists($HuntressAgentServiceName) ) {
             $err = "The Huntress Agent is already installed. Exiting with no changes. Suggest using -reregister or -reinstall flags"
             LogMessage "$err"
-            Write-Output 'Huntress Agent is already installed. Suggest using the -reregister or -reinstall flags' -ForegroundColor white -BackgroundColor red
+            LogMessage 'Huntress Agent is already installed. Suggest using the -reregister or -reinstall flags'
             copyLogAndExit
         }
     }
