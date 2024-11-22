@@ -1,7 +1,6 @@
-#!/bin/bash
-#shellcheck disable=SC2181,SC2295,SC2116
+#!/usr/bin/env zsh
 
-# Copyright (c) 2022 Huntress Labs, Inc.
+# Copyright (c) 2024 Huntress Labs, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -49,27 +48,182 @@ defaultAccountKey="__ACCOUNT_KEY__"
 defaultOrgKey="{[huntress_orgkey]}"
 
 # Option to install the system extension after the Huntress Agent is installed. In order for this to happen
-# without security prompts on the endpoint, permissions need to be applied to the endpoint by Addigy before this script
-# is run. See the following KB article for more information:
+# without security prompts on the endpoint, permissions need to be applied to the endpoint by an MDM before this script
+# is run. See the following KB article for instructions:
 # https://support.huntress.io/hc/en-us/articles/21286543756947-Instructions-for-the-MDM-Configuration-for-macOS
 install_system_extension=false
 
 ##############################################################################
 ## Do not modify anything below this line
 ##############################################################################
-dd=$(date "+%Y%m%d-%H%M%S")
+
+scriptVersion="November 22, 2024"
+
+dd=$(date "+%Y-%m-%d %H:%M:%S")
 log_file="/tmp/HuntressInstaller.log"
 install_script="/tmp/HuntressMacInstall.sh"
 invalid_key="Invalid account secret key"
 pattern="[a-f0-9]{32}"
 rmm="Atera macOS deployment script"
-version="1.0"
+version="1.1"
 
-## Using logger function to provide helpful logs within RMM tools in addition to log file
+# print help message
+usage() {
+    cat <<EOF
+Usage: $0 [options...] --account_key=<account_key> --organization_key=<organization_key>
+
+-a, --account_key      <account_key>        The account key to use for this agent install
+-o, --organization_key <organization_key>   The org key to use for this agent install
+-t, --tags             <tags>               A comma-separated list of agent tags
+-i, --install_system_extension              If passed, automatically install the system extension
+-r, --reregister                            Attempt a clean slate install of Huntress (must also pass account and org keys)
+-h, --help                                  Print this message
+
+EOF
+}
+
+# Using logger function to provide helpful logs within RMM tools in addition to log file
 logger() {
     echo "$dd -- $*";
     echo "$dd -- $*" >> $log_file;
 }
+
+# This is for machines where the Huntress install is corrupted, damaged, or missing assets. 
+# This will try to fully remove Huntress before attempting a reinstall
+reregister() {
+    logger "Starting uninstall, please be aware this can take up to a minute"
+
+    countProcesses=$(ps aux | grep "HuntressAgent" -c)
+    if [ $countProcesses -le 1 ]; then
+        logger "Huntress process not running, System Extension may hang for a minute on uninstall"
+    fi
+    
+    # skip trying to stop the services and file deletes if no assets are found to avoid clogging log with errors
+    installCheck=$(checkForAssets)
+    if [ $installCheck == 1 ]; then
+        uninstall_system_extension
+    
+        cd "/Library/Application Support/Huntress/HuntressAgent"
+        logger "Stopping services"
+        /Applications/Huntress.app/Contents/MacOS/HuntressUpdater stop
+        /Applications/Huntress.app/Contents/MacOS/HuntressAgent stop
+        /Applications/Huntress.app/Contents/MacOS/Huntress daemonctl stop
+
+        logger "Running updater uninstall..."
+        /Applications/Huntress.app/Contents/MacOS/HuntressUpdater uninstall
+
+        logger "Running agent uninstall..."
+        /Applications/Huntress.app/Contents/MacOS/HuntressAgent uninstall
+
+        logger "Uninstalling GRPC daemon..."
+        /Applications/Huntress.app/Contents/MacOS/Huntress daemonctl uninstall
+
+        logger "Removing app directory..."
+        rm -rf /Applications/Huntress.app
+
+        logger "Removing support directory..."
+        rm -rf "/Library/Application Support/Huntress"
+    else 
+        logger "Huntress assets not found on disk, no services to stop and no assets to delete. Script continuing..."
+    fi
+
+    pkgCheck=$(checkForPkg)     
+    if [ $pkgCheck == 1 ]; then
+        logger "Forgetting package id..."
+        pkgutil --forget com.huntresslabs.pkg.agent 2>/dev/null
+    else 
+        logger "Huntress pkg not found. Script continuing..."
+    fi
+
+    # wait timer for all components to finish uninstall before proceeding with install
+    sleep 3
+    logger "Uninstall complete, beginning reinstall"
+}
+
+# Uninstall the Huntress system extension
+uninstall_system_extension() {
+    logger "Uninstalling system extension"
+    tmp_plist=/tmp/com.apple.system-extensions.admin.plist
+    tmp_plist_prev=/tmp/com.apple.system-extensions.admin.prev.plist
+
+    logger "Toggling system authorization settings..."
+    security authorizationdb read com.apple.system-extensions.admin > $tmp_plist 
+    cp $tmp_plist $tmp_plist_prev
+
+    /usr/libexec/PlistBuddy -c "Set rule:0 is-root" $tmp_plist
+    security authorizationdb write com.apple.system-extensions.admin < $tmp_plist
+
+    logger "Uninstalling system extension..."
+    /Applications/Huntress.app/Contents/MacOS/Huntress extensionctl uninstall || echo "Uninstalling extension failed: error code $!"
+
+    logger "Restoring system authorization settings..."
+    security authorizationdb write com.apple.system-extensions.admin < $tmp_plist_prev 
+    rm $tmp_plist $tmp_plist_prev
+
+    logger "Finished uninstalling system extension"
+}
+
+# return 1 if an existing Huntress install is detected, otherwise return 0
+isHuntressInstalled() {
+    installCheck=$(checkForAssets)
+    pkgCheck=$(checkForPkg) 
+    if [ $installCheck == 1 ]; then 
+        echo 1
+    elif [ $pkgCheck == 1 ]; then
+        echo 1
+    else 
+        echo 0
+    fi
+}
+
+# return 1 if Huntress assets are detected on disk, otherwise return 0
+checkForAssets() {
+    if [ -d "/Library/Application Support/Huntress" ] || [ -d "/Applications/Huntress.app" ]; then 
+        echo 1
+    else
+        echo 0
+    fi
+}
+
+#return 1 if Huntress pkg is registered, otherwise return 0
+checkForPkg() {
+    pkgCheck=$(pkgutil --pkgs | grep "Huntress" -i)
+    if [[ -n $pkgCheck ]]; then 
+        echo 1
+    else
+        echo 0
+    fi
+}
+
+# logging details about the machine for troubleshooting purposes
+getMachineInfo() {
+    # uptime, free disk space, and OS version
+    logger "================================================================="
+    logger "============= Extra logging for troubleshooting ================="
+    logger $"Uptime: $(uptime)"
+    dfLines=$(df -H)
+    for df in dfLines; do
+        logger "$(df)"
+    done
+    logger "$(sw_vers)"
+
+    # get network connectivity data
+    logger "============================================================"
+    logger "============= Testing network connectivity ================="
+    for hostn in "update.huntress.io" "huntress.io" "eetee.huntress.io" "huntress-installers.s3.amazonaws.com" "huntress-updates.s3.amazonaws.com" "huntress-uploads.s3.us-west-2.amazonaws.com" "huntress-user-uploads.s3.amazonaws.com" "huntress-rio.s3.amazonaws.com" "huntress-survey-results.s3.amazonaws.com"; do 
+        logger $(nc -z -v $hostn 443 2>&1)
+    done
+}
+
+
+
+
+# ====================================================================================
+# =================================== Begin 'main' ===================================
+# ====================================================================================
+
+# Logging machine and script info for troubleshooting
+getMachineInfo
 
 # Check for root
 if [ $EUID -ne 0 ]; then
@@ -79,29 +233,13 @@ fi
 
 # Clean up any old installer scripts.
 if [ -f "$install_script" ]; then
-    logger "Installer file present in /tmp; deleting."
+    logger "Installer script present in /tmp; deleting to ensure newest version is being used."
     rm -f "$install_script"
 fi
 
-##
-## This section handles the assigning `=` character for options.
-## Since most RMMs treat spaces as delimiters in Mac Scripting,
-## we have to use `=` to assign the option value, but must remove
-## it because, well, bash. https://stackoverflow.com/a/28466267/519360
-##
-
-usage() {
-    cat <<EOF
-Usage: $0 [options...] --account_key=<account_key> --organization_key=<organization_key>
-
--a, --account_key      <account_key>      The account key to use for this agent install
--o, --organization_key <organization_key> The org key to use for this agent install
--h, --help                                Print this message
-
-EOF
-}
-
-while getopts a:o:h:-: OPT; do
+## This section handles the assigning `=` character for options. Since most RMMs treat spaces as delimiters in Mac Scripting,
+## we have to use `=` to assign the option value, but must remove it because, well, bash. https://stackoverflow.com/a/28466267/519360
+while getopts a:o:h:t:-:i:r OPT; do
   if [ "$OPT" = "-" ]; then
     OPT="${OPTARG%%=*}"       # extract long option name
     OPTARG="${OPTARG#$OPT}"   # extract long option argument (may be empty)
@@ -117,6 +255,15 @@ while getopts a:o:h:-: OPT; do
     o | organization_key)
         organization_key="$OPTARG"
         ;;
+    t | tags)
+        tags="$OPTARG"
+        ;;
+    i | install_system_extension)
+        install_system_extension=true
+        ;;
+    r | reregister)
+        reregister=true
+        ;;
     h | help)
         usage
         ;;
@@ -131,36 +278,55 @@ while getopts a:o:h:-: OPT; do
 done
 shift $((OPTIND-1)) # remove parsed options and args from $@ list
 
-logger "=========== INSTALL START AT $dd ==============="
-logger "=========== $rmm | Version: $version ==============="
+logger "============= INSTALL START AT $dd      ================="
+logger "============= $rmm  | Version: $version ================="
+logger "============= Script last updated $scriptVersion ============="
 
-# VALIDATE OPTIONS PASSED TO SCRIPT
+# if the reregister flag is passed perform a full wipe and fresh install
+if [ $reregister ]; then
+    logger "Reregister flag passed, attempting a clean install:"
+    if [ assetCheck == 1 ]; then
+        logger "Current contents of Huntress.app folder: $(ls '/Applications/Huntress.app/Contents/MacOS')"
+        logger "Current contents of Application Support folder: $(ls '/Library/Application Support/Huntress/HuntressAgent')"
+    fi
+    reregister
+fi
+
+# if Huntress is detected on the machine, exit the script with error
+# reregister flag above should fully remove Huntress (for installing on top of an existing install)
+assetCheck=$(isHuntressInstalled)
+if [ $assetCheck == 1 ]; then
+    logger "Cannot proceed while Huntress is installed, suggest using the reregister flag"
+    exit 2
+fi
+
+# validate options passed to script, remove all invalid characters except spaces are converted to dash
 if [ -z "$organization_key" ]; then
-    organizationKey=$(echo "$defaultOrgKey" | xargs)
-    logger "--organization_key parameter not present, using defaultOrgKey instead: $defaultOrgKey"
+    organizationKey=$(echo "$defaultOrgKey" | tr -dc '[:alnum:]- ' | tr ' ' '-' | xargs)
+    logger "--organization_key parameter not present, using defaultOrgKey instead: $defaultOrgKey, formatted to $organizationKey "
   else
-    organizationKey=$(echo "$organization_key" | xargs)
-    logger "--organization_key parameter present, set to: $organizationKey"
+    organizationKey=$(echo "$organization_key" | tr -dc '[:alnum:]- ' | tr ' ' '-' | xargs)
+    logger "--organization_key parameter present, set to: $organization_key, formatted to $organizationKey "
 fi
 
 if ! [[ "$account_key" =~ $pattern ]]; then
     logger "Invalid --account_key provided, checking defaultAccountKey..."
     accountKey=$(echo "$defaultAccountKey" | xargs)
     if ! [[ $accountKey =~ $pattern ]]; then
-        logger "ERROR: Invalid --account_key. Please check Huntress support documentation."
+        # account key is invalid if script gets to this branch, so write the key unmasked for troubleshooting
+        logger "ERROR: Invalid --account_key, $accountKey was provided. Please check Huntress support documentation."
         exit 1
     fi
     else
         accountKey=$(echo "$account_key" | xargs)
 fi
 
-# OPTIONS REQUIRED
-if [ -z "$accountKey" ] || [ -z "$organizationKey" ]
-then
-    logger "Error: --account_key and --organization_key are both required" >> $log_file
-    echo
-    usage
-    exit 1
+if [ -n "$tags" ]; then
+  logger "using tags: $tags"
+fi
+
+if [ "$install_system_extension" = true ]; then
+  logger "automatically installing system extension"
 fi
 
 # Hide most of the account key in the logs, keeping the front and tail end for troubleshooting
@@ -168,8 +334,21 @@ masked="$(echo "${accountKey:0:4}")"
 masked+="************************"
 masked+="$(echo "${accountKey: (-4)}")"
 
+# OPTIONS REQUIRED (account key could be invalid in this branch, so mask it)
+if [ -z "$accountKey" ] || [ -z "$organizationKey" ]
+then
+    logger "Error: --account_key and --organization_key are both required" >> $log_file
+    logger "Account key: $masked and Org Key: $organizationKey were provided"
+    echo
+    usage
+    exit 1
+fi
+
 logger "Provided Huntress key: $masked"
 logger "Provided Organization Key: $organizationKey"
+
+logger "==========================================================="
+logger "============= Downloading agent installer ================="
 
 result=$(curl -w "%{http_code}" -L "https://huntress.io/script/darwin/$accountKey" -o "$install_script")
 
@@ -183,23 +362,32 @@ if grep -Fq "$invalid_key" "$install_script"; then
    exit 1
 fi
 
-logger "=============== Begin Installer Logs ==============="
 if [ "$install_system_extension" = true ]; then
-    install_result="$(/bin/bash "$install_script" -a "$accountKey" -o "$organizationKey" -v --install_system_extension)"
+    install_result="$(/bin/bash "$install_script" -a "$accountKey" -o "$organizationKey" -t "$tags" -v --install_system_extension)"
 else
-    install_result="$(/bin/bash "$install_script" -a "$accountKey" -o "$organizationKey" -v)"
+    install_result="$(/bin/bash "$install_script" -a "$accountKey" -o "$organizationKey" -t "$tags" -v)"
 fi
+
+logger "========================================================"
+logger "================= Begin Installer Logs ================="
 
 if [ $? != "0" ]; then
     logger "Installer Error: $install_result"
     exit 1
 fi
-
-if [ $? != "0" ]; then
-    logger "Installer Error: $install_result"
-    exit 1
-fi
-
 logger "$install_result"
-logger "=========== INSTALL FINISHED AT $dd ==============="
+
+registrationStatus=$(sudo cat "/Library/Application Support/Huntress/HuntressAgent/HuntressAgent.log" | head -n 2 | grep "Huntress agent registered" -i)
+if [[ -n $registrationStatus ]]; then
+    echo "Agent successfully registered:"
+    echo $registrationStatus
+else
+    logger "The agent wasn't able to register. Please check these articles and reach out to support if you get stuck"
+    logger "https://support.huntress.io/hc/en-us/articles/4411751045267-Network-Connectivity-and-Troubleshooting-Errors-Caused-by-Firewalls"
+    logger "https://support.huntress.io/hc/en-us/articles/4404005178771-Allow-List-Huntress-in-Third-Party-Security-Software-AV-NGAV-DR"
+fi
+
+logger "======================================================="
+logger "============= INSTALL FINISHED AT $dd ================="
 exit
+
