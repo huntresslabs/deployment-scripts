@@ -699,13 +699,11 @@ function uninstallHuntress {
     }
 
     # if Huntress services still exist, then delete
-    $services = @($(Get-WmiObject -Class Win32_Service -Filter "Name='HuntressRio'"),
-                  $(Get-WmiObject -Class Win32_Service -Filter "Name='HuntressAgent'"), 
-                  $(Get-WmiObject -Class Win32_Service -Filter "Name='HuntressUpdater'"))
+    $services = @("HuntressRio", "HuntressAgent", "HuntressUpdater")
     foreach ($service in $services) {
         if ( $service ) {
             LogMessage "Service $($service.Name) detected post uninstall, attempting to remove"
-            $service.delete() 2>$null
+            sc.exe DELETE $service
         }
     }
 }
