@@ -1,4 +1,4 @@
-# Copyright (c) 2024 Huntress Labs, Inc.
+# Copyright (c) 2025 Huntress Labs, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
@@ -70,7 +70,7 @@ $estimatedSpaceNeeded = 200111222
 ##############################################################################
 
 # These are used by the Huntress support team when troubleshooting.
-$ScriptVersion = "Version 2, major revision 7, 2024 Dec 26"
+$ScriptVersion = "Version 2, major revision 7, 2025 Jan 9"
 $ScriptType = "PowerShell"
 
 # variables used throughout this script
@@ -699,11 +699,11 @@ function uninstallHuntress {
     }
 
     # if Huntress services still exist, then delete
-    $services = @("HuntressRio", "HuntressAgent", "HuntressUpdater")
+    $services = @("HuntressRio", "HuntressAgent", "HuntressUpdater", "Huntmon")
     foreach ($service in $services) {
         if ( $service ) {
             LogMessage "Service $($service.Name) detected post uninstall, attempting to remove"
-            sc.exe DELETE $service
+            c:\Windows\System32\sc.exe DELETE $service
         }
     }
 }
@@ -828,7 +828,7 @@ function logInfo {
     if ($isHuntressInstalled){
         LogMessage "Agent version $(getAgentVersion) found"
         $checkTP = (Get-Service "HuntressAgent").ServiceHandle
-        if ( $checkTP -eq $NULL) {
+        if ( $NULL -eq $checkTP ) {
             LogMessage "Warning: Tamper Protection detected, you may need to disable TP or run this as SYSTEM to repair, upgrade, or reinstall this agent. `n"
         } else {
             LogMessage "Pass: Tamper Protection not detected, or this script is running as SYSTEM `n"
@@ -1022,7 +1022,7 @@ function main () {
         LogMessage "Checking for HuntressAgent install..."
         $agentPath = getAgentPath
         if ( (Test-Path $agentPath) -eq $true) {
-            LogMessage "The Huntress Agent is already installed in $($agentPath). Exiting with no changes. Suggest using -reregister or -reinstall flags"
+            LogMessage "The Huntress Agent is already installed in $agentPath. Exiting with no changes. Suggest using -reregister or -reinstall flags"
             copyLogAndExit
         }
     }
