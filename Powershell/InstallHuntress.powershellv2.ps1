@@ -1,4 +1,4 @@
-# Copyright (c) 2023 Huntress Labs, Inc.
+# Copyright (c) 2025 Huntress Labs, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
@@ -70,7 +70,7 @@ $estimatedSpaceNeeded = 200111222
 ##############################################################################
 
 # These are used by the Huntress support team when troubleshooting.
-$ScriptVersion = "Version 2, major revision 7, 2024 April 16"
+$ScriptVersion = "Version 2, major revision 7, 2025 Jan 9"
 $ScriptType = "PowerShell"
 
 # variables used throughout this script
@@ -456,8 +456,12 @@ function Test-Installation {
             # if Huntress was installed before this script started and Rio is missing then we log that, but continue with this script
             if ($svc -eq $HuntressEDRServiceName) {
                 if ($isHuntressInstalled) {
-                    LogMessage "ERROR: The $svc service is not installed. You may need to wait 20 minutes, reboot, or reinstall the agent (if this machine is indeed Huntress EDR compatible)"
-                    LogMessage "See more about compatibility here: https://support.huntress.io/hc/en-us/articles/4410699983891-Supported-Operating-Systems-System-Requirements-Compatibility"
+                    if ($svc -eq "HuntressRio") {
+                        LogMessage "Warning: Huntress Process Insights (aka Rio) is installed automatically by the Huntress portal. It can take up to 24 hours to show up"
+                        LogMessage "See more about compatibility here: https://support.huntress.io/hc/en-us/articles/4410699983891-Supported-Operating-Systems-System-Requirements-Compatibility"
+                    } else {
+                        LogMessage "ERROR: The $svc service is not installed. You may need to reboot or reinstall the agent - if these fail send HuntressAgent.log and HuntressPoShInstaller.log to Huntress support"
+                    }
                 } else {
                     LogMessage "New install detected. It may take 24 hours for Huntress EDR (Rio) to install!"
                 }
@@ -550,6 +554,7 @@ function isOrphan {
         $linesFromLog = Get-Content $Path | Select-Object -last 10
         ForEach ($line in $linesFromLog)    { 
             if ($line -like "*bad status code: 401*") {
+                LogMessage "Agent appears to be orphaned: $($line)"
                 return $true
             }
         } 
@@ -692,6 +697,15 @@ function uninstallHuntress {
     } else {
         LogMessage "No registry keys found, uninstallation complete"
     }
+
+    # if Huntress services still exist, then delete
+    $services = @("HuntressRio", "HuntressAgent", "HuntressUpdater", "Huntmon")
+    foreach ($service in $services) {
+        if ( $service ) {
+            LogMessage "Service $($service.Name) detected post uninstall, attempting to remove"
+            c:\Windows\System32\sc.exe DELETE $service
+        }
+    }
 }
 
 # grab the currently installed agent version AB
@@ -747,15 +761,15 @@ function testNetworkConnectivity {
     $file_name = "96bca0cef10f45a8f7cf68c4485f23a4.txt"
 
     $URLs = @(("https://eetee.huntress.io/{0}"-f $file_name),
-	("https://huntress-installers.s3.us-east-1.amazonaws.com/agent/connectivity/{0}" -f $file_name),
-	("https://huntress-rio.s3.amazonaws.com/agent/connectivity/{0}" -f $file_name),
-	("https://huntress-survey-results.s3.amazonaws.com/agent/connectivity/{0}" -f $file_name),
-	("https://huntress-updates.s3.amazonaws.com/agent/connectivity/{0}" -f $file_name),
-	("https://huntress-uploads.s3.us-west-2.amazonaws.com/agent/connectivity/{0}" -f $file_name),
-	("https://huntress-user-uploads.s3.amazonaws.com/agent/connectivity/{0}" -f $file_name),
-	("https://huntress.io/agent/connectivity/{0}" -f $file_name),
-	("https://huntresscdn.com/agent/connectivity/{0}" -f $file_name),
-	("https://update.huntress.io/agent/connectivity/{0}" -f $file_name))
+    ("https://huntress-installers.s3.us-east-1.amazonaws.com/agent/connectivity/{0}" -f $file_name),
+    ("https://huntress-rio.s3.amazonaws.com/agent/connectivity/{0}" -f $file_name),
+    ("https://huntress-survey-results.s3.amazonaws.com/agent/connectivity/{0}" -f $file_name),
+    ("https://huntress-updates.s3.amazonaws.com/agent/connectivity/{0}" -f $file_name),
+    ("https://huntress-uploads.s3.us-west-2.amazonaws.com/agent/connectivity/{0}" -f $file_name),
+    ("https://huntress-user-uploads.s3.amazonaws.com/agent/connectivity/{0}" -f $file_name),
+    ("https://huntress.io/agent/connectivity/{0}" -f $file_name),
+    ("https://huntresscdn.com/agent/connectivity/{0}" -f $file_name),
+    ("https://update.huntress.io/agent/connectivity/{0}" -f $file_name))
 
     foreach ($URL in $URLs) {
         $StatusCode = 0
@@ -809,10 +823,16 @@ function logInfo {
     LogMessage "Script type: '$ScriptType'"
     LogMessage "Script version: '$ScriptVersion'"
 
-    # if Huntress was already installed, pull version info
+    # if Huntress was already installed, pull version info and TP status
     LogMessage "Script cursory check, is Huntress installed already: $($isHuntressInstalled)"
     if ($isHuntressInstalled){
         LogMessage "Agent version $(getAgentVersion) found"
+        $checkTP = (Get-Service "HuntressAgent").ServiceHandle
+        if ( $NULL -eq $checkTP ) {
+            LogMessage "Warning: Tamper Protection detected, you may need to disable TP or run this as SYSTEM to repair, upgrade, or reinstall this agent. `n"
+        } else {
+            LogMessage "Pass: Tamper Protection not detected, or this script is running as SYSTEM `n"
+        }
     }
 
     # Log OS details
@@ -843,7 +863,14 @@ function logInfo {
     checkFreeDiskSpace
     LogMessage "Installer location: '$InstallerPath'"
     LogMessage "Installer log: '$DebugLog'"
+
     LogMessage "Administrator access: $(testAdministrator)"
+    $userContext = whoami
+    if ($userContext -eq "nt authority\system") {
+        LogMessage "Pass: Run under the SYSTEM user."
+    } else {
+        LogMessage "Warning: Not run under the SYSTEM user, you may have issues with Huntress Tamper Protection"
+    }
 
     # Log machine uptime
     try
@@ -929,7 +956,8 @@ function main () {
 
     # if the agent is orphaned, switch to the full uninstall/reinstall (reregister flag)
     if ( !($reregister)) {
-        if (isOrphan) {
+        $orphanStatus = isOrphan
+        if ( $orphanStatus -eq $true ) {
             $err = 'Huntress Agent is orphaned, unable to use the provided flag. Switching to uninstall/reinstall (reregister flag)'
             LogMessage "$err"
             $reregister = $true
@@ -991,11 +1019,10 @@ function main () {
         }
         StopHuntressServices
     } else {
-        LogMessage "Checking for HuntressAgent service..."
-        if ( Confirm-ServiceExists($HuntressAgentServiceName) ) {
-            $err = "The Huntress Agent is already installed. Exiting with no changes. Suggest using -reregister or -reinstall flags"
-            LogMessage "$err"
-            LogMessage 'Huntress Agent is already installed. Suggest using the -reregister or -reinstall flags'
+        LogMessage "Checking for HuntressAgent install..."
+        $agentPath = getAgentPath
+        if ( (Test-Path $agentPath) -eq $true) {
+            LogMessage "The Huntress Agent is already installed in $agentPath. Exiting with no changes. Suggest using -reregister or -reinstall flags"
             copyLogAndExit
         }
     }
