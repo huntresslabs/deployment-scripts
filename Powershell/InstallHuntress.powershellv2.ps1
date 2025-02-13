@@ -70,7 +70,7 @@ $estimatedSpaceNeeded = 200111222
 ##############################################################################
 
 # These are used by the Huntress support team when troubleshooting.
-$ScriptVersion = "Version 2, major revision 7, 2025 Jan 9"
+$ScriptVersion = "Version 2, major revision 7, 2025 Feb 13"
 $ScriptType = "PowerShell"
 
 # variables used throughout this script
@@ -758,8 +758,10 @@ function testNetworkConnectivity {
     # number of URL's that can fail the connectivity before the agent refuses to install (the test fails incorrectly sometimes, so 1 failure is acceptable)
     $connectivityTolerance = 1
 
-    $file_name = "96bca0cef10f45a8f7cf68c4485f23a4.txt"
+    # Avoid "IE first start" errors by disabling the first run customize option
+    Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Internet Explorer\Main" -Name "DisableFirstRunCustomize" -Value 2
 
+    $file_name = "96bca0cef10f45a8f7cf68c4485f23a4.txt"
     $URLs = @(("https://eetee.huntress.io/{0}"-f $file_name),
     ("https://huntress-installers.s3.us-east-1.amazonaws.com/agent/connectivity/{0}" -f $file_name),
     ("https://huntress-rio.s3.amazonaws.com/agent/connectivity/{0}" -f $file_name),
@@ -775,7 +777,7 @@ function testNetworkConnectivity {
         $StatusCode = 0
         try
         {
-            $Response = Invoke-WebRequest -Uri $URL -TimeoutSec 5 -ErrorAction Stop -ContentType "text/plain"
+            $Response = Invoke-WebRequest -Uri $URL -TimeoutSec 5 -ErrorAction Stop -ContentType "text/plain" -UseBasicParsing
             # This will only execute if the Invoke-WebRequest is successful.
             $StatusCode = $Response.StatusCode
 
