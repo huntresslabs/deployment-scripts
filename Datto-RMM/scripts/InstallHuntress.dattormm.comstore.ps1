@@ -464,12 +464,8 @@ function Test-Installation {
             # if Huntress was installed before this script started and Rio is missing then we log that, but continue with this script
             if ($svc -eq $HuntressEDRServiceName) {
                 if ($isHuntressInstalled) {
-                    if ($svc -eq "HuntressRio") {
-                        LogMessage "Warning: Huntress Process Insights (aka Rio) is installed automatically by the Huntress portal. It can take up to 24 hours to show up"
-                        LogMessage "See more about compatibility here: https://support.huntress.io/hc/en-us/articles/4410699983891-Supported-Operating-Systems-System-Requirements-Compatibility"
-                    } else {
-                        LogMessage "ERROR: The $svc service is not installed. You may need to reboot or reinstall the agent - if these fail send HuntressAgent.log and HuntressPoShInstaller.log to Huntress support"
-                    }
+                    LogMessage "Warning: Huntress Process Insights (aka Rio) is installed automatically by the Huntress portal. It can take up to 24 hours to show up"
+                    LogMessage "See more about compatibility here: https://support.huntress.io/hc/en-us/articles/4410699983891-Supported-Operating-Systems-System-Requirements-Compatibility"
                 } else {
                     LogMessage "New install detected. It may take 24 hours for Huntress EDR (Rio) to install!"
                 }
