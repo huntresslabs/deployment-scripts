@@ -707,6 +707,7 @@ function uninstallHuntress {
     foreach ($service in $services) {
         if ( $service ) {
             LogMessage "Service $($service.Name) detected post uninstall, attempting to remove"
+            c:\Windows\System32\sc.exe STOP $service
             c:\Windows\System32\sc.exe DELETE $service
         }
     }
