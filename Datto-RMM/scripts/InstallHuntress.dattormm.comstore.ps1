@@ -1,4 +1,4 @@
-# Copyright (c) 2023 Huntress Labs, Inc.
+# Copyright (c) 2025 Huntress Labs, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
@@ -9,8 +9,8 @@
 #      without specific prior written permission.
 #
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL HUNTRESS LABS BE LIABLE FOR ANY DIRECT, 
-# INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS 
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL HUNTRESS LABS BE LIABLE FOR ANY DIRECT,
+# INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS
 # OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
@@ -25,7 +25,7 @@
 # powershell -executionpolicy bypass -f ./InstallHuntress.powershellv2.ps1 [-acctkey <account_key>] [-orgkey <organization_key>] [-tags <tags>] [-reregister] [-reinstall] [-uninstall] [-repair]
 #
 # example:
-# powershell -executionpolicy bypass -f ./InstallHuntress.powershellv2.ps1 -acctkey "0b8a694b2eb7b642069" -orgkey "Buzzword Company Name" -tags "production,US West" 
+# powershell -executionpolicy bypass -f ./InstallHuntress.powershellv2.ps1 -acctkey "0b8a694b2eb7b642069" -orgkey "Buzzword Company Name" -tags "production,US West"
 
 # Optional command line params, this has to be the first line in the script.
 param (
@@ -34,7 +34,7 @@ param (
   [string]$tags,
   [switch]$reregister,
   [switch]$reinstall,
-  [switch]$uninstall, 
+  [switch]$uninstall,
   [switch]$repair
 )
 
@@ -78,7 +78,7 @@ $estimatedSpaceNeeded = 200111222
 ##############################################################################
 
 # These are used by the Huntress support team when troubleshooting.
-$ScriptVersion = "Version 2, major revision 7, 2024 January 24"
+$ScriptVersion = "Version 2, major revision 7, 2025 Feb 13"
 $ScriptType = "PowerShell"
 
 # variables used throughout this script
@@ -368,7 +368,7 @@ function Get-Installer {
 
 # check if the agent downloaded, is a valid install file, if those match up then run the installer
 function Install-Huntress ($OrganizationKey) {
-    # check that the installer downloaded and wasn't quarantined 
+    # check that the installer downloaded and wasn't quarantined
     LogMessage "Checking for installer '$InstallerPath'..."
     if ( ! (Test-Path $InstallerPath) ) {
         $err = "ERROR: The installer was unexpectedly removed from $InstallerPath"
@@ -448,7 +448,7 @@ function Test-Installation {
         LogMessage "'$file' is present."
     }
 
-    # Check for Legacy OS, any kernel below 6.2 cannot run Huntress EDR (so we skip that check) 
+    # Check for Legacy OS, any kernel below 6.2 cannot run Huntress EDR (so we skip that check)
     if ( ($KernelVersion.major -eq 6 -and $KernelVersion.minor -lt 2) -or ($KernelVersion.major -lt 6) ) {
         $services = @($HuntressAgentServiceName, $HuntressUpdaterServiceName)
         $err = "WARNING: Legacy OS detected, Huntress EDR will not be installed"
@@ -464,7 +464,7 @@ function Test-Installation {
             # if Huntress was installed before this script started and Rio is missing then we log that, but continue with this script
             if ($svc -eq $HuntressEDRServiceName) {
                 if ($isHuntressInstalled) {
-                    LogMessage "ERROR: The $svc service is not installed. You may need to wait 20 minutes, reboot, or reinstall the agent (if this machine is indeed Huntress EDR compatible)"
+                    LogMessage "Warning: Huntress Process Insights (aka Rio) is installed automatically by the Huntress portal. It can take up to 24 hours to show up"
                     LogMessage "See more about compatibility here: https://support.huntress.io/hc/en-us/articles/4410699983891-Supported-Operating-Systems-System-Requirements-Compatibility"
                 } else {
                     LogMessage "New install detected. It may take 24 hours for Huntress EDR (Rio) to install!"
@@ -556,19 +556,20 @@ function isOrphan {
     # if the log was found, look through the last 10 lines for the orphaned agent error code
     if ($Path -match 'HuntressAgent.log') {
         $linesFromLog = Get-Content $Path | Select-Object -last 10
-        ForEach ($line in $linesFromLog)    { 
+        ForEach ($line in $linesFromLog)    {
             if ($line -like "*bad status code: 401*") {
+                LogMessage "Agent appears to be orphaned: $($line)"
                 return $true
             }
-        } 
+        }
     }
     return $false
 }
 
 # Check if the script is being run with admin access AB
-function testAdministrator {  
+function testAdministrator {
     $user = [Security.Principal.WindowsIdentity]::GetCurrent();
-    (New-Object Security.Principal.WindowsPrincipal $user).IsInRole([Security.Principal.WindowsBuiltinRole]::Administrator)  
+    (New-Object Security.Principal.WindowsPrincipal $user).IsInRole([Security.Principal.WindowsBuiltinRole]::Administrator)
 }
 
 # Ensure the disk has enough space for the install files + agent, then write results to the log AB
@@ -581,7 +582,7 @@ function checkFreeDiskSpace {
         winmgmt -verifyrepository
         $drives = get-psdrive
         foreach ($drive in $drives) {
-            if ($drive.Name -eq "C") { 
+            if ($drive.Name -eq "C") {
                 $freeSpace = $drive.Free
             }
         }
@@ -599,13 +600,13 @@ function checkFreeDiskSpace {
 function getAgentPath {
     # Ensure we resolve the correct Huntress directory regardless of operating system or process architecture.
     if ($WindowsArchitecture -eq $X64) {
-        return (Join-Path $Env:ProgramW6432 "Huntress")  
+        return (Join-Path $Env:ProgramW6432 "Huntress")
     } else {
         return (Join-Path $Env:ProgramFiles "Huntress")
-    }    
+    }
 }
 
-# attempt to run a process and log the results AB 
+# attempt to run a process and log the results AB
 function runProcess ($process, $flags, $name){
     try {
         $proc = Start-Process $process $flags -PassThru
@@ -631,7 +632,7 @@ function runProcess ($process, $flags, $name){
     }
 }
 
-# Fully uninstall the agent AB 
+# Fully uninstall the agent AB
 function uninstallHuntress {
     $agentPath         = getAgentPath
     $updaterPath       = Join-Path $agentPath "HuntressUpdater.exe"
@@ -700,6 +701,16 @@ function uninstallHuntress {
     } else {
         LogMessage "No registry keys found, uninstallation complete"
     }
+
+    # if Huntress services still exist, then delete
+    $services = @("HuntressRio", "HuntressAgent", "HuntressUpdater", "Huntmon")
+    foreach ($service in $services) {
+        if ( $service ) {
+            LogMessage "Service $($service.Name) detected post uninstall, attempting to remove"
+            c:\Windows\System32\sc.exe STOP $service
+            c:\Windows\System32\sc.exe DELETE $service
+        }
+    }
 }
 
 # grab the currently installed agent version AB
@@ -752,21 +763,62 @@ function testNetworkConnectivity {
     # number of URL's that can fail the connectivity before the agent refuses to install (the test fails incorrectly sometimes, so 1 failure is acceptable)
     $connectivityTolerance = 1
 
-    $URLs = @("huntress.io", "huntresscdn.com", "update.huntress.io", "eetee.huntress.io", "huntress-installers.s3.amazonaws.com", "huntress-updates.s3.amazonaws.com", "huntress-uploads.s3.us-west-2.amazonaws.com",
-              "huntress-user-uploads.s3.amazonaws.com", "huntress-rio.s3.amazonaws.com", "huntress-survey-results.s3.amazonaws.com")
+    # Avoid "IE first start" errors by disabling the first run customize option
+    Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Internet Explorer\Main" -Name "DisableFirstRunCustomize" -Value 2
+
+    $file_name = "96bca0cef10f45a8f7cf68c4485f23a4.txt"
+    $URLs = @(("https://eetee.huntress.io/{0}"-f $file_name),
+    ("https://huntress-installers.s3.us-east-1.amazonaws.com/agent/connectivity/{0}" -f $file_name),
+    ("https://huntress-rio.s3.amazonaws.com/agent/connectivity/{0}" -f $file_name),
+    ("https://huntress-survey-results.s3.amazonaws.com/agent/connectivity/{0}" -f $file_name),
+    ("https://huntress-updates.s3.amazonaws.com/agent/connectivity/{0}" -f $file_name),
+    ("https://huntress-uploads.s3.us-west-2.amazonaws.com/agent/connectivity/{0}" -f $file_name),
+    ("https://huntress-user-uploads.s3.amazonaws.com/agent/connectivity/{0}" -f $file_name),
+    ("https://huntress.io/agent/connectivity/{0}" -f $file_name),
+    ("https://huntresscdn.com/agent/connectivity/{0}" -f $file_name),
+    ("https://update.huntress.io/agent/connectivity/{0}" -f $file_name))
+
     foreach ($URL in $URLs) {
-        if (! (Test-NetConnection $URL -Port 443).TcpTestSucceeded) {
+        $StatusCode = 0
+        try
+        {
+            $Response = Invoke-WebRequest -Uri $URL -TimeoutSec 5 -ErrorAction Stop -ContentType "text/plain" -UseBasicParsing
+            # This will only execute if the Invoke-WebRequest is successful.
+            $StatusCode = $Response.StatusCode
+
+            # Convert from bytes, if necessary
+            if ($Response.Content.GetType() -eq [System.Byte[]]) {
+                $StrContent = [System.Text.Encoding]::UTF8.GetString($Response.Content)
+            }else {
+                $StrContent = $Response.Content.ToString().Trim()
+            }
+
+            # Remove all newlines from the content
+            $StrContent = [string]::join("",($StrContent.Split("`n")))
+
+
+            $ContentMatch = $StrContent -eq "96bca0cef10f45a8f7cf68c4485f23a4"
+        } catch {
+            LogMessage "Error: $($_.Exception.Message)"
+        }
+
+        if ($StatusCode -ne 200) {
             $err = "WARNING, connectivity to Huntress URL's is being interrupted. You MUST open port 443 for $($URL) in order for the Huntress agent to function."
             LogMessage $err
             $connectivityTolerance --
+        } elseif (!$ContentMatch) {
+            $err = "WARNING, successful connection to Huntress URL, however, content did not match expected. Ensure no proxy or content filtering is preventing access!"
+            LogMessage $err
+            $connectivityTolerance --
+            LogMessage "Content: $($StrContent)"
         } else {
-            LogMessage "Connection succeeded to $($URL) on port 443!"
+            LogMessage "Connection succeeded to $($URL)"
         }
     }
     if ($connectivityTolerance -lt 0) {
         LogMessage "Please fix the closed port 443 for the above domains before attempting to install"
         $err = "Too many connections failed $($connectivityTolerance), exiting"
-        LogMessage $err
+        LogMessage "$($err), $($SupportMessage)"
         return $false
     }
     return $true
@@ -778,10 +830,16 @@ function logInfo {
     LogMessage "Script type: '$ScriptType'"
     LogMessage "Script version: '$ScriptVersion'"
 
-    # if Huntress was already installed, pull version info
+    # if Huntress was already installed, pull version info and TP status
     LogMessage "Script cursory check, is Huntress installed already: $($isHuntressInstalled)"
     if ($isHuntressInstalled){
         LogMessage "Agent version $(getAgentVersion) found"
+        $checkTP = (Get-Service "HuntressAgent").ServiceHandle
+        if ( $NULL -eq $checkTP ) {
+            LogMessage "Warning: Tamper Protection detected, you may need to disable TP or run this as SYSTEM to repair, upgrade, or reinstall this agent. `n"
+        } else {
+            LogMessage "Pass: Tamper Protection not detected, or this script is running as SYSTEM `n"
+        }
     }
 
     # Log OS details
@@ -812,7 +870,14 @@ function logInfo {
     checkFreeDiskSpace
     LogMessage "Installer location: '$InstallerPath'"
     LogMessage "Installer log: '$DebugLog'"
+
     LogMessage "Administrator access: $(testAdministrator)"
+    $userContext = whoami
+    if ($userContext -eq "nt authority\system") {
+        LogMessage "Pass: Run under the SYSTEM user."
+    } else {
+        LogMessage "Warning: Not run under the SYSTEM user, you may have issues with Huntress Tamper Protection"
+    }
 
     # Log machine uptime
     try
@@ -854,7 +919,9 @@ function logInfo {
     }
 
     $areURLsAvailable = testNetworkConnectivity
-    if ( ! $areURLsAvailable) {
+    if ( $areURLsAvailable) {
+        LogMessage "Network Connectivity verified!"
+    } else {
         copyLogAndExit
     }
 
@@ -866,7 +933,7 @@ function copyLogAndExit {
     Start-Sleep 1
     $agentPath = getAgentPath
     $logLocation = Join-Path $agentPath "HuntressPoShInstaller.log"
-    
+
     # If this is an unistall, we'll leave the log in the C:\temp dir otherwise,
     # we'll copy the log to the huntress directory
     if (!$uninstall){
@@ -909,7 +976,8 @@ function main () {
 
     # if the agent is orphaned, switch to the full uninstall/reinstall (reregister flag)
     if ( !($reregister)) {
-        if (isOrphan) {
+        $orphanStatus = isOrphan
+        if ( $orphanStatus -eq $true ) {
             $err = 'Huntress Agent is orphaned, unable to use the provided flag. Switching to uninstall/reinstall (reregister flag)'
             LogMessage "$err"
             $reregister = $true
@@ -944,7 +1012,7 @@ function main () {
     # check that all the parameters that were passed are valid
     Test-Parameters
 
-    # Hide most of the account key in the logs, keeping the front and tail end for troubleshooting 
+    # Hide most of the account key in the logs, keeping the front and tail end for troubleshooting
     if ($AccountKey -ne "__Account_Key__") {
         $masked = $AccountKey.Substring(0,4) + "************************" + $AccountKey.SubString(28,4)
         LogMessage "AccountKey: '$masked'"
@@ -954,7 +1022,7 @@ function main () {
 
     # reregister > reinstall > uninstall > install (in decreasing order of impact)
     # reregister = reinstall + delete registry keys
-    # reinstall  = install + stop Huntress service 
+    # reinstall  = install + stop Huntress service
     if ($reregister) {
         LogMessage "Re-register agent: '$reregister'"
         if ( !(Confirm-ServiceExists($HuntressAgentServiceName))) {
@@ -971,11 +1039,10 @@ function main () {
         }
         StopHuntressServices
     } else {
-        LogMessage "Checking for HuntressAgent service..."
-        if ( Confirm-ServiceExists($HuntressAgentServiceName) ) {
-            $err = "The Huntress Agent is already installed. Exiting with no changes. Suggest using -reregister or -reinstall flags"
-            LogMessage "$err"
-            LogMessage 'Huntress Agent is already installed. Suggest using the -reregister or -reinstall flags'
+        LogMessage "Checking for HuntressAgent install..."
+        $agentPath = getAgentPath
+        if ( (Test-Path $agentPath) -eq $true) {
+            LogMessage "The Huntress Agent is already installed in $agentPath. Exiting with no changes. Suggest using -reregister or -reinstall flags"
             copyLogAndExit
         }
     }
