@@ -51,7 +51,7 @@ defaultOrgKey="Mac Agents"
 # are being used to deploy the Huntress macOS Agent. Simply replace the text in quotes below.
 rmm="Unspecified RMM"
 
-# Option to not install the system extension after the Huntress Agent is installed. In order for this to happen
+# Option to not install the system extension. In order for this to happen
 # without security prompts on the endpoint, permissions need to be applied to the endpoint by an MDM before this script
 # is run. See the following KB article for instructions:
 # https://support.huntress.io/hc/en-us/articles/21286543756947-Instructions-for-the-MDM-Configuration-for-macOS
@@ -61,14 +61,14 @@ install_system_extension=true
 ## Do not modify anything below this line
 ##############################################################################
 
-scriptVersion="August 15, 2024"
+scriptVersion="March 25, 2025"
 
 dd=$(date "+%Y%m%d-%H%M%S")
 log_file="/tmp/HuntressInstaller.log"
 install_script="/tmp/HuntressMacInstall.sh"
 invalid_key="Invalid account secret key"
 pattern="[a-f0-9]{32}"
-version="1.0"
+version="1.1 - March 25, 2025"
 
 ## Using logger function to provide helpful logs within RMM tools in addition to log file
 logger() {

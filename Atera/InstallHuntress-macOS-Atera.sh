@@ -48,11 +48,11 @@ defaultAccountKey="__ACCOUNT_KEY__"
 # Otherwise, provide the appropriate Organization Key when running the script in Atera.
 defaultOrgKey="{[huntress_orgkey]}"
 
-# Option to install the system extension after the Huntress Agent is installed. In order for this to happen
+# Option to not install the system extension. In order for this to happen
 # without security prompts on the endpoint, permissions need to be applied to the endpoint by Addigy before this script
 # is run. See the following KB article for more information:
 # https://support.huntress.io/hc/en-us/articles/21286543756947-Instructions-for-the-MDM-Configuration-for-macOS
-install_system_extension=false
+install_system_extension=true
 
 ##############################################################################
 ## Do not modify anything below this line
@@ -63,7 +63,7 @@ install_script="/tmp/HuntressMacInstall.sh"
 invalid_key="Invalid account secret key"
 pattern="[a-f0-9]{32}"
 rmm="Atera macOS deployment script"
-version="1.0"
+version="1.1 - March 25, 2025"
 
 ## Using logger function to provide helpful logs within RMM tools in addition to log file
 logger() {
