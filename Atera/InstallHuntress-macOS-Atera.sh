@@ -52,7 +52,7 @@ defaultOrgKey="{[huntress_orgkey]}"
 # without security prompts on the endpoint, permissions need to be applied to the endpoint by Addigy before this script
 # is run. See the following KB article for more information:
 # https://support.huntress.io/hc/en-us/articles/21286543756947-Instructions-for-the-MDM-Configuration-for-macOS
-install_system_extension=false
+install_system_extension=true
 
 ##############################################################################
 ## Do not modify anything below this line
