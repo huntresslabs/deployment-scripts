@@ -48,7 +48,7 @@ defaultAccountKey="__ACCOUNT_KEY__"
 # Otherwise, provide the appropriate Organization Key when running the script in Atera.
 defaultOrgKey="{[huntress_orgkey]}"
 
-# Option to not install the system extension. In order for this to happen
+# Option to install the system extension after the Huntress Agent is installed. In order for this to happen
 # without security prompts on the endpoint, permissions need to be applied to the endpoint by Addigy before this script
 # is run. See the following KB article for more information:
 # https://support.huntress.io/hc/en-us/articles/21286543756947-Instructions-for-the-MDM-Configuration-for-macOS

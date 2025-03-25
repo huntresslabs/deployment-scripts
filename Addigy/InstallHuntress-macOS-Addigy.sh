@@ -50,7 +50,7 @@ defaultAccountKey="__ACCOUNT_KEY__"
 # If you have a preferred "placeholder" organization name for Mac agents, you can set that below.
 defaultOrgKey="__ORGANIZATION_KEY__"
 
-# Option to not install the system extension. In order for this to happen
+# Option to install the system extension after the Huntress Agent is installed. In order for this to happen
 # without security prompts on the endpoint, permissions need to be applied to the endpoint by Addigy before this script
 # is run. See the following KB article for more information:
 # https://support.huntress.io/hc/en-us/articles/21286543756947-Instructions-for-the-MDM-Configuration-for-macOS
@@ -77,7 +77,7 @@ install_script="/tmp/HuntressMacInstall.sh"
 invalid_key="Invalid account secret key"
 pattern="[a-f0-9]{32}"
 rmm="Addigy macOS deployment script"
-version="1.3 -  - March 25, 2025"
+version="1.3 - March 25, 2025"
 
 ## Using logger function to provide helpful logs within RMM tools in addition to log file
 logger() {

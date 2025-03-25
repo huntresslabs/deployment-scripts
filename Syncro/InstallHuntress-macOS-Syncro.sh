@@ -51,7 +51,7 @@ defaultAccountKey="$HuntressAccountKey"
 # leave the line below as-is.
 defaultOrgKey="$HuntressOrganizationKey"
 
-# Option to not install the system extension. In order for this to happen
+# Option to install the system extension after the Huntress Agent is installed. In order for this to happen
 # without security prompts on the endpoint, permissions need to be applied to the endpoint by an MDM before this script
 # is run. See the following KB article for instructions:
 # https://support.huntress.io/hc/en-us/articles/21286543756947-Instructions-for-the-MDM-Configuration-for-macOS
