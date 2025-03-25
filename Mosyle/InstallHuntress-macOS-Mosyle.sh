@@ -54,7 +54,7 @@ defaultOrgKey="__ORGANIZATION_KEY__"
 # without security prompts on the endpoint, permissions need to be applied to the endpoint by Mosyle before this script
 # is run. See the following KB article for more information:
 # https://support.huntress.io/hc/en-us/articles/21286543756947-Instructions-for-the-MDM-Configuration-for-macOS
-install_system_extension=false
+install_system_extension=true
 
 
 ##############################################################################
@@ -66,7 +66,7 @@ install_script="/tmp/HuntressMacInstall.sh"
 invalid_key="Invalid account secret key"
 pattern="[a-f0-9]{32}"
 rmm="Mosyle macOS deployment script"
-version="1.0 - November 18, 2024"
+version="1.1 - March 25, 2025"
 
 ## Using logger function to provide helpful logs within RMM tools in addition to log file
 logger() {
