@@ -1,6 +1,6 @@
 Various deployment scripts for Huntress
 
-See https://huntress.zendesk.com/hc/en-us/documents/4404005189011-Installing-the-Huntress-Agent for details.
+See https://support.huntress.io/hc/en-us/articles/4404005189011-Install-the-Huntress-Agent for details.
 
 ## macOS
 
