@@ -263,7 +263,7 @@ function Confirm-ServiceRunning ($service) {
     if ($status.ToLower() -eq 'running') {
         return $true
     }
-    
+
     return $false
 }
 

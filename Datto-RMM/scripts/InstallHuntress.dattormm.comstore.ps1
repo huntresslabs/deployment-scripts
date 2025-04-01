@@ -62,7 +62,7 @@ if ($env:HUNTRESS_TAGS) {
 }
 
 # The account key should be stored in the DattoRMM account variable HUNTRESS_ACCOUNT_KEY. It may also be stored
-# on a per job basis in the HUNTRESS_ACCOUNT_KEY_JOB 
+# on a per job basis in the HUNTRESS_ACCOUNT_KEY_JOB
 $AccountKey = "__ACCOUNT_KEY__"
 if ($env:HUNTRESS_ACCOUNT_KEY) {
     LogMessage "Using global account key."
@@ -279,7 +279,7 @@ function Confirm-ServiceRunning ($service) {
     if ($status.ToLower() -eq 'running') {
         return $true
     }
-    
+
     return $false
 }
 
