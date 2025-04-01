@@ -858,7 +858,7 @@ function logInfo {
     }
 
     if (Confirm-ServiceRunning $HuntressEDRServiceName){
-        $checkTP = (Confirm-ServiceRunning $HuntressAgentServiceName).ServiceHandle
+        $checkTP = (Confirm-ServiceRunning $HuntressAgentServiceName)
         if ( $null -eq $checkTP ) {
             LogMessage "Warning: Tamper Protection may be enabled; you may need to disable TP or run this as SYSTEM to repair, upgrade, or reinstall this agent. `n"
         } else {
