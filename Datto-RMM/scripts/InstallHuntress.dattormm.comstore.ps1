@@ -38,16 +38,42 @@ param (
   [switch]$repair
 )
 
+# attempt to use a more central temporary location for the log file rather than the installing users folder
+if (Test-Path (Join-Path $env:SystemRoot "\temp")) {
+    $DebugLog = Join-Path $env:SystemRoot "\temp\HuntressPoShInstaller.log"
+} else {
+    $DebugLog = Join-Path $Env:TMP HuntressPoShInstaller.log
+}
+
+# time stamps for logging purposes
+function Get-TimeStamp {
+    return "[{0:yyyy/MM/dd} {0:HH:mm:ss}]" -f (Get-Date)
+}
+
+# adds time stamp to a message and then writes that to the log file
+function LogMessage ($msg) {
+    Add-Content $DebugLog "$(Get-TimeStamp) $msg"
+    Write-Output "$(Get-TimeStamp) $msg"
+}
+
 $TagsKey = "__TAGS__"
 if ($env:HUNTRESS_TAGS) {
     $TagsKey = $env:HUNTRESS_TAGS
 }
 
-# The account key should be stored in the DattoRMM account variable HUNTRESS_ACCOUNT_KEY
+# The account key should be stored in the DattoRMM account variable HUNTRESS_ACCOUNT_KEY. It may also be stored
+# on a per job basis in the HUNTRESS_ACCOUNT_KEY_JOB 
 $AccountKey = "__ACCOUNT_KEY__"
 if ($env:HUNTRESS_ACCOUNT_KEY) {
+    LogMessage "Using global account key."
     $AccountKey = $env:HUNTRESS_ACCOUNT_KEY
 }
+
+if ($env:HUNTRESS_ACCOUNT_KEY_JOB) {
+    LogMessage "Overriding global account key."
+    $AccountKey = $env:HUNTRESS_ACCOUNT_KEY_JOB
+}
+
 # Use the CS_PROFILE_NAME environment variable as the OrganizationKey
 # This should always be set by the DattoRMM agent. If not, there is likely
 # an issue with the agent.
@@ -93,13 +119,6 @@ $SupportMessage             = "Please send the error message to support@huntress
 $HuntressAgentServiceName   = "HuntressAgent"
 $HuntressUpdaterServiceName = "HuntressUpdater"
 $HuntressEDRServiceName     = "HuntressRio"
-
-# attempt to use a more central temporary location for the log file rather than the installing users folder
-if (Test-Path (Join-Path $env:SystemRoot "\temp")) {
-    $DebugLog = Join-Path $env:SystemRoot "\temp\HuntressPoShInstaller.log"
-} else {
-    $DebugLog = Join-Path $Env:TMP HuntressPoShInstaller.log
-}
 
 # Find poorly written code faster with the most stringent setting.
 Set-StrictMode -Version Latest
@@ -161,17 +180,6 @@ if ($env:ProgramW6432) {
 $isHuntressInstalled = $false
 if ((test-path "c:\program files\Huntress\HuntressAgent.exe") -OR (test-path "c:\program files (x86)\Huntress\HuntressAgent.exe")){
     $isHuntressInstalled = $true
-}
-
-# time stamps for logging purposes
-function Get-TimeStamp {
-    return "[{0:yyyy/MM/dd} {0:HH:mm:ss}]" -f (Get-Date)
-}
-
-# adds time stamp to a message and then writes that to the log file
-function LogMessage ($msg) {
-    Add-Content $DebugLog "$(Get-TimeStamp) $msg"
-    Write-Output "$(Get-TimeStamp) $msg"
 }
 
 # test that all required parameters were passed, and that they are in the correct format
@@ -246,6 +254,10 @@ function KillProcessByName {
 
 # check to see if the Huntress service exists (agent or updater)
 function Confirm-ServiceExists ($service) {
+    if ([string]::IsNullOrEmpty($service)) {
+        return $false
+    }
+
     if (Get-Service $service -ErrorAction SilentlyContinue) {
         return $true
     }
@@ -254,11 +266,20 @@ function Confirm-ServiceExists ($service) {
 
 # check to see if the Huntress service is running (agent or updater)
 function Confirm-ServiceRunning ($service) {
-    $arrService = Get-Service $service
+    if ([string]::IsNullOrEmpty($service)) {
+        return $false
+    }
+
+    $arrService = Get-Service $service -ErrorAction SilentlyContinue
+    if ($null -eq $arrService) {
+        return $false
+    }
+
     $status = $arrService.Status.ToString()
     if ($status.ToLower() -eq 'running') {
         return $true
     }
+    
     return $false
 }
 
@@ -834,9 +855,12 @@ function logInfo {
     LogMessage "Script cursory check, is Huntress installed already: $($isHuntressInstalled)"
     if ($isHuntressInstalled){
         LogMessage "Agent version $(getAgentVersion) found"
-        $checkTP = (Get-Service "HuntressAgent").ServiceHandle
-        if ( $NULL -eq $checkTP ) {
-            LogMessage "Warning: Tamper Protection detected, you may need to disable TP or run this as SYSTEM to repair, upgrade, or reinstall this agent. `n"
+    }
+
+    if (Confirm-ServiceRunning $HuntressEDRServiceName){
+        $checkTP = (Confirm-ServiceRunning $HuntressAgentServiceName).ServiceHandle
+        if ( $null -eq $checkTP ) {
+            LogMessage "Warning: Tamper Protection may be enabled; you may need to disable TP or run this as SYSTEM to repair, upgrade, or reinstall this agent. `n"
         } else {
             LogMessage "Pass: Tamper Protection not detected, or this script is running as SYSTEM `n"
         }
