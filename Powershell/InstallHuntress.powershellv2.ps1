@@ -70,7 +70,7 @@ $estimatedSpaceNeeded = 200111222
 ##############################################################################
 
 # These are used by the Huntress support team when troubleshooting.
-$ScriptVersion = "Version 2, major revision 7, 2025 Feb 13"
+$ScriptVersion = "Version 2, major revision 8, 2025 Apr 1"
 $ScriptType = "PowerShell"
 
 # variables used throughout this script
