@@ -70,7 +70,7 @@ $estimatedSpaceNeeded = 200111222
 ##############################################################################
 
 # These are used by the Huntress support team when troubleshooting.
-$ScriptVersion = "Version 2, major revision 7, 2025 Feb 13"
+$ScriptVersion = "Version 2, major revision 8, 2025 Apr 1"
 $ScriptType = "PowerShell"
 
 # variables used throughout this script
@@ -238,6 +238,10 @@ function KillProcessByName {
 
 # check to see if the Huntress service exists (agent or updater)
 function Confirm-ServiceExists ($service) {
+    if ([string]::IsNullOrEmpty($service)) {
+        return $false
+    }
+
     if (Get-Service $service -ErrorAction SilentlyContinue) {
         return $true
     }
@@ -246,11 +250,20 @@ function Confirm-ServiceExists ($service) {
 
 # check to see if the Huntress service is running (agent or updater)
 function Confirm-ServiceRunning ($service) {
-    $arrService = Get-Service $service
+    if ([string]::IsNullOrEmpty($service)) {
+        return $false
+    }
+
+    $arrService = Get-Service $service -ErrorAction SilentlyContinue
+    if ($null -eq $arrService) {
+        return $false
+    }
+
     $status = $arrService.Status.ToString()
     if ($status.ToLower() -eq 'running') {
         return $true
     }
+
     return $false
 }
 
@@ -698,7 +711,7 @@ function uninstallHuntress {
     $services = @("HuntressRio", "HuntressAgent", "HuntressUpdater", "Huntmon")
     foreach ($service in $services) {
         if ( $service ) {
-            LogMessage "Service $($service.Name) detected post uninstall, attempting to remove"
+            LogMessage "Service $($service) detected post uninstall, attempting to remove"
             c:\Windows\System32\sc.exe STOP $service
             c:\Windows\System32\sc.exe DELETE $service
         }
@@ -826,9 +839,12 @@ function logInfo {
     LogMessage "Script cursory check, is Huntress installed already: $($isHuntressInstalled)"
     if ($isHuntressInstalled){
         LogMessage "Agent version $(getAgentVersion) found"
-        $checkTP = (Get-Service "HuntressAgent").ServiceHandle
-        if ( $NULL -eq $checkTP ) {
-            LogMessage "Warning: Tamper Protection detected, you may need to disable TP or run this as SYSTEM to repair, upgrade, or reinstall this agent. `n"
+    }
+
+    if (Confirm-ServiceRunning $HuntressEDRServiceName){
+        $checkTP = (Confirm-ServiceRunning $HuntressAgentServiceName)
+        if ( $null -eq $checkTP ) {
+            LogMessage "Warning: Tamper Protection may be enabled; you may need to disable TP or run this as SYSTEM to repair, upgrade, or reinstall this agent. `n"
         } else {
             LogMessage "Pass: Tamper Protection not detected, or this script is running as SYSTEM `n"
         }
