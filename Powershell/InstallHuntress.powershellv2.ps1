@@ -70,7 +70,7 @@ $estimatedSpaceNeeded = 200111222
 ##############################################################################
 
 # These are used by the Huntress support team when troubleshooting.
-$ScriptVersion = "Version 2, major revision 8, 2025 Apr 1"
+$ScriptVersion = "Version 2, major revision 8, 2025 Apr 10"
 $ScriptType = "PowerShell"
 
 # variables used throughout this script
@@ -464,6 +464,11 @@ function Test-Installation {
 
     # Ensure the services are installed and running.
     foreach ($svc in $services) {
+        # repairing previously broken Huntress install which may have set it's services to disabled (services are not removed on uninstall)
+        if ( $(Get-Service $svc).StartType -ne "automatic") {
+            LogMessage "Disabled service $svc detected, attempting to set startup type to automatic."
+            c:\Windows\System32\sc.exe config $svc start=auto
+        }
         # check if the service is installed
         if ( ! (Confirm-ServiceExists($svc))) {
             # if Huntress was installed before this script started and Rio is missing then we log that, but continue with this script
@@ -490,7 +495,7 @@ function Test-Installation {
                     throw "$($ScriptFailed) ERROR: restart of service $($svc) failed. $($SupportMessage)"
                 }
             } else {
-            LogMessage "'$svc' is running."
+                LogMessage "'$svc' is running."
             }
         }
     }
