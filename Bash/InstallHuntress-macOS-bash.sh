@@ -182,7 +182,7 @@ done
 
 # Check for existing Huntress install, if already installed exit with error. Bypass if using the reinstall flag.
 if [ $reinstall = false ]; then
-    if [ -d "/Applications/Huntress.app/contents/macos" ]; then
+    if [ -d "/Applications/Huntress.app/Contents/Macos" ]; then
         logger "Huntress assets found, checking for running processes"
         numServicesStopped=0
         for HuntressProcess in "HuntressAgent" "HuntressUpdater"; do
