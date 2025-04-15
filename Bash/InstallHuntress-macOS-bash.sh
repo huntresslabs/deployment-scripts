@@ -1,6 +1,6 @@
 #!/usr/bin/env zsh
 
-# Copyright (c) 2024 Huntress Labs, Inc.
+# Copyright (c) 2025 Huntress Labs, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -39,7 +39,6 @@
 ## Begin user modified variables
 ##############################################################################
 
-
 # Replace __ACCOUNT_KEY__ with your account secret key (from your Huntress portal's "download agent" section)
 defaultAccountKey="__ACCOUNT_KEY__"
 
@@ -61,27 +60,50 @@ install_system_extension=true
 ## Do not modify anything below this line
 ##############################################################################
 
-scriptVersion="March 25, 2025"
 
-dd=$(date "+%Y%m%d-%H%M%S")
+scriptVersion="April 14, 2025"
+
+version="1.1 - $scriptVersion"
+dd=$(date "+%Y-%m-%d  %H:%M:%S")
 log_file="/tmp/HuntressInstaller.log"
+log_file_location="/Users/Shared/"
 install_script="/tmp/HuntressMacInstall.sh"
 invalid_key="Invalid account secret key"
 pattern="[a-f0-9]{32}"
-version="1.1 - March 25, 2025"
 
-## Using logger function to provide helpful logs within RMM tools in addition to log file
+# Using logger function to provide helpful logs within RMM tools in addition to log file
 logger() {
     echo "$dd -- $*";
     echo "$dd -- $*" >> $log_file;
 }
 
+# Copies the log from a temp location to /users/shared/  and exits with the given code 
+# Using this folder as /tmp/ is wiped on reboot, Huntress folders are protected by TP, and because any user should have access to this folder
+copyLogAndExit() {
+    local exitCode="$1"
+    if [ -d $log_file_location ]; then
+        logger "Copying log file to /Users/Shared/"
+        cp "$log_file" $log_file_location"HuntressInstaller.log"    
+    fi
+    if [ $exitCode -ne "0" ]; then
+        logger "Exit with error, please send "$log_file_location"HuntressInstaller.log to support."
+    fi
+    exit "$exitCode"
+}
+
+# Log system info for troubleshooting
+logger "macOS version: $(sw_vers --ProductVersion)"
+logger "Free disk space: "$(df -Pk . | sed 1d | grep -v used | awk '{ print $4 "\t" }')
+logger $(top -l 1 | head -n 7 | tail -n 1)
+logger $(top -l 1 | head -n 3 | tail -n 1)
+logger "System uptime: "$(uptime)
+logger "User id (should be 0): "$(id -u)
 logger "Huntress install script last updated $scriptVersion"
 
 # Check for root
 if [ $EUID -ne 0 ]; then
     logger "This script must be run as root, exiting..."
-    exit 1
+    copyLogAndExit "1"
 fi
 
 # Clean up any old installer scripts.
@@ -103,48 +125,83 @@ Usage: $0 [options...] --account_key=<account_key> --organization_key=<organizat
 
 -a, --account_key      <account_key>      The account key to use for this agent install
 -o, --organization_key <organization_key> The org key to use for this agent install
--t, --tags             <tags>             A comma-separated list of agent tags
+-t, --tags             <tags>             A comma-separated list of agent tags to use for this agent install
 -i, --install_system_extension            If passed, automatically install the system extension
 -h, --help                                Print this message
 
 EOF
 }
 
-while getopts a:o:h:t:-:i OPT; do
-  if [ "$OPT" = "-" ]; then
-    OPT="${OPTARG%%=*}"       # extract long option name
-    OPTARG="${OPTARG#$OPT}"   # extract long option argument (may be empty)
-    OPTARG="${OPTARG#=}"      # if long option argument, remove assigning `=`
-  else
-    # the user used a short option, but we still want to strip the assigning `=`
-    OPTARG="${OPTARG#=}"      # if long option argument, remove assigning `=`
-  fi
-  case "$OPT" in
-    a | account_key)
-        account_key="$OPTARG"
-        ;;
-    o | organization_key)
-        organization_key="$OPTARG"
-        ;;
-    t | tags)
-        tags="$OPTARG"
-        ;;
-    i | install_system_extension)
-        install_system_extension=true
-        ;;
-    h | help)
-        usage
-        ;;
-    ??*)
-        logger "Illegal option --$OPT"
-        exit 2
-        ;;  # bad long option
-    \? )
-        exit 2
-        ;;  # bad short option (error reported via getopts)
-  esac
+reinstall=false
+while getopts "a:o:t:ihr-:" OPT; do
+    if [ "$OPT" = "-" ]; then
+        OPT="${OPTARG%%=*}"       # extract long option name
+        OPTARG="${OPTARG#$OPT}"   # extract long option argument (may be empty)
+        OPTARG="${OPTARG#=}"      # if long option argument, remove assigning `=`
+    else
+        # the user used a short option, but we still want to strip the assigning `=`
+        OPTARG="${OPTARG#=}"      # if long option argument, remove assigning `=`
+    fi
+    case "$OPT" in
+        a | account_key)
+            account_key="$OPTARG"
+            ;;
+        o | organization_key)
+            organization_key="$OPTARG"
+            ;;
+        t | tags)
+            tags="$OPTARG"
+            ;;
+        i | install_system_extension)
+            logger "Running with System Extension immediate install option"
+            install_system_extension=true
+            ;;
+        r | reinstall)
+            logger "Running with the -reinstall flag"
+            reinstall=true
+            ;;
+        h | help)
+            usage
+            copyLogAndExit "0"
+            ;;
+        ??*)
+            logger "Illegal option --$OPT"
+                copyLogAndExit "2"
+            ;;  # bad long option
+        \? )
+                copyLogAndExit "2"
+            ;;  # bad short option (error reported via getopts)
+    esac
 done
 shift $((OPTIND-1)) # remove parsed options and args from $@ list
+
+# try/catch, if the connectivity tester fails to execute we'll log that as an error.
+for hostn in "update.huntress.io" "huntress.io" "eetee.huntress.io" "huntress-installers.s3.amazonaws.com" "huntress-updates.s3.amazonaws.com" "huntress-uploads.s3.us-west-2.amazonaws.com" "huntress-user-uploads.s3.amazonaws.com" "huntress-rio.s3.amazonaws.com" "huntress-survey-results.s3.amazonaws.com"; do 
+    logger "$(nc -z -v $hostn 443 2>&1)" || (logger "error occured during network connectivity test")
+done
+
+# Check for existing Huntress install, if already installed exit with error. Bypass if using the reinstall flag.
+if [ $reinstall = false ]; then
+    if [ -d "/Applications/Huntress.app/contents/macos" ]; then
+        logger "Huntress assets found, checking for running processes"
+        numServicesStopped=0
+        for HuntressProcess in "HuntressAgent" "HuntressUpdater"; do
+            if [ $(pgrep $HuntressProcess > /dev/null) ]; then
+                logger "Warning: process $HuntressProcess is stopped"
+                numServicesStopped++
+            else
+                logger "Process $HuntressProcess is running"
+            fi
+        done
+        if [ $numServicesStopped -gt 0 ]; then
+            logger "Installation appears damaged, suggest running with the -reinstall flag"
+        else
+            logger "Installation found and processes are running. If you suspect this agent is damaged try running this script with the -reinstall flag"
+        fi
+        copyLogAndExit "1"
+    fi
+fi
+
 
 logger "=========== INSTALL START AT $dd ==============="
 logger "=========== $rmm Deployment Script | Version: $version ==============="
@@ -190,7 +247,7 @@ then
     logger "Account key: $masked and Org Key: $organizationKey were provided"
     echo
     usage
-    exit 1
+    copyLogAndExit "1"
 fi
 
 
@@ -201,12 +258,12 @@ result=$(curl -w "%{http_code}" -L "https://huntress.io/script/darwin/$accountKe
 
 if [ $? != "0" ]; then
    logger "ERROR: Download failed with error: $result"
-   exit 1
+   copyLogAndExit "1"
 fi
 
 if grep -Fq "$invalid_key" "$install_script"; then
    logger "ERROR: --account_key is invalid. You entered: $accountKey"
-   exit 1
+   copyLogAndExit "1"
 fi
 
 if [ "$install_system_extension" = true ]; then
@@ -219,9 +276,10 @@ logger "=============== Begin Installer Logs ==============="
 
 if [ $? != "0" ]; then
     logger "Installer Error: $install_result"
-    exit 1
+    copyLogAndExit "1"
 fi
 
 logger "$install_result"
 logger "=========== INSTALL FINISHED AT $dd ==============="
-exit
+
+copyLogAndExit "0"
