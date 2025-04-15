@@ -83,7 +83,7 @@ copyLogAndExit() {
     local exitCode="$1"
     if [ -d $log_file_location ]; then
         logger "Copying log file to /Users/Shared/"
-        cp "$log_file" $log_file_location"HuntressInstaller.log"    
+        cp "$log_file" "${log_file_location}/HuntressInstaller.log"    
     fi
     if [ $exitCode -ne "0" ]; then
         logger "Exit with error, please send "$log_file_location"HuntressInstaller.log to support."
