@@ -61,7 +61,7 @@ install_system_extension=true
 ##############################################################################
 
 
-scriptVersion="April 14, 2025"
+scriptVersion="April 15, 2025"
 
 version="1.1 - $scriptVersion"
 dd=$(date "+%Y-%m-%d  %H:%M:%S")
@@ -79,8 +79,9 @@ logger() {
 
 # Copies the log from a temp location to /users/shared/  and exits with the given code 
 # Using this folder as /tmp/ is wiped on reboot, Huntress folders are protected by TP, and because any user should have access to this folder
-copyLogAndExit() {
-    local exitCode="$1"
+copyLog() {
+    # capture exit command for script finish-up
+    local exitCode="$?"
     if [ -d $log_file_location ]; then
         logger "Copying log file to /Users/Shared/"
         cp "$log_file" "${log_file_location}/HuntressInstaller.log"    
@@ -90,6 +91,7 @@ copyLogAndExit() {
     fi
     exit "$exitCode"
 }
+trap copyLog EXIT
 
 # Log system info for troubleshooting
 logger "macOS version: $(sw_vers --ProductVersion)"
@@ -103,7 +105,7 @@ logger "Huntress install script last updated $scriptVersion"
 # Check for root
 if [ $EUID -ne 0 ]; then
     logger "This script must be run as root, exiting..."
-    copyLogAndExit "1"
+    exit 1
 fi
 
 # Clean up any old installer scripts.
@@ -162,14 +164,14 @@ while getopts "a:o:t:ihr-:" OPT; do
             ;;
         h | help)
             usage
-            copyLogAndExit "0"
+            exit 0
             ;;
         ??*)
             logger "Illegal option --$OPT"
-                copyLogAndExit "2"
+                exit 2
             ;;  # bad long option
         \? )
-                copyLogAndExit "2"
+                exit 2
             ;;  # bad short option (error reported via getopts)
     esac
 done
@@ -198,7 +200,7 @@ if [ $reinstall = false ]; then
         else
             logger "Installation found and processes are running. If you suspect this agent is damaged try running this script with the -reinstall flag"
         fi
-        copyLogAndExit "1"
+        exit 1
     fi
 fi
 
@@ -247,7 +249,7 @@ then
     logger "Account key: $masked and Org Key: $organizationKey were provided"
     echo
     usage
-    copyLogAndExit "1"
+    exit 1
 fi
 
 
@@ -258,12 +260,12 @@ result=$(curl -w "%{http_code}" -L "https://huntress.io/script/darwin/$accountKe
 
 if [ $? != "0" ]; then
    logger "ERROR: Download failed with error: $result"
-   copyLogAndExit "1"
+   exit 1
 fi
 
 if grep -Fq "$invalid_key" "$install_script"; then
    logger "ERROR: --account_key is invalid. You entered: $accountKey"
-   copyLogAndExit "1"
+   exit 1
 fi
 
 if [ "$install_system_extension" = true ]; then
@@ -276,10 +278,10 @@ logger "=============== Begin Installer Logs ==============="
 
 if [ $? != "0" ]; then
     logger "Installer Error: $install_result"
-    copyLogAndExit "1"
+    exit 1
 fi
 
 logger "$install_result"
 logger "=========== INSTALL FINISHED AT $dd ==============="
 
-copyLogAndExit "0"
+exit 0
