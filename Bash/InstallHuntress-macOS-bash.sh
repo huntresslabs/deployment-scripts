@@ -186,7 +186,7 @@ if [ $reinstall = false ]; then
         logger "Huntress assets found, checking for running processes"
         numServicesStopped=0
         for HuntressProcess in "HuntressAgent" "HuntressUpdater"; do
-            if [ $(pgrep $HuntressProcess > /dev/null) ]; then
+            if [ $(pgrep "$HuntressProcess" > /dev/null) ]; then
                 logger "Warning: process $HuntressProcess is stopped"
                 numServicesStopped++
             else
