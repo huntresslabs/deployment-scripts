@@ -86,7 +86,7 @@ copyLogAndExit() {
         cp "$log_file" "${log_file_location}/HuntressInstaller.log"    
     fi
     if [ $exitCode -ne "0" ]; then
-        logger "Exit with error, please send "$log_file_location"HuntressInstaller.log to support."
+        logger "Exit with error, please send ${log_file_location}HuntressInstaller.log to support."
     fi
     exit "$exitCode"
 }
