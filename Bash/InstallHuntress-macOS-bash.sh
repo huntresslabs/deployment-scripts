@@ -96,7 +96,7 @@ logger "macOS version: $(sw_vers --ProductVersion)"
 logger "Free disk space: "$(df -Pk . | sed 1d | grep -v used | awk '{ print $4 "\t" }')
 logger $(top -l 1 | head -n 7 | tail -n 1)
 logger $(top -l 1 | head -n 3 | tail -n 1)
-logger "System uptime: "$(uptime)
+logger "System uptime: $(uptime)"
 logger "User id (should be 0): "$(id -u)
 logger "Huntress install script last updated $scriptVersion"
 
