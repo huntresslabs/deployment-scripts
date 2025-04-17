@@ -965,7 +965,7 @@ function copyLogAndExit {
 #########################################################################################
 function main () {
     # Start the script with logging as much as we can as soon as we can. All your logging are belong to us, Zero Wang.
-    logInfo 
+    logInfo
     LogMessage "Script flags:  Reregister=$reregister  Reinstall=$reinstall  Uninstall=$uninstall  Repair=$repair"
 
     # if run with the uninstall flag, exit so we don't reinstall the agent after
