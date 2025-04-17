@@ -70,7 +70,7 @@ $estimatedSpaceNeeded = 200111222
 ##############################################################################
 
 # These are used by the Huntress support team when troubleshooting.
-$ScriptVersion = "Version 2, major revision 8, 2025 Apr 10"
+$ScriptVersion = "Version 2, major revision 8, 2025 Apr 17"
 $ScriptType = "PowerShell"
 
 # variables used throughout this script
@@ -454,23 +454,23 @@ function Test-Installation {
     }
 
     # Check for Legacy OS, any kernel below 6.2 cannot run Huntress EDR (so we skip that check)
+    $services = @($HuntressAgentServiceName, $HuntressUpdaterServiceName, $HuntressEDRServiceName)
     if ( ($KernelVersion.major -eq 6 -and $KernelVersion.minor -lt 2) -or ($KernelVersion.major -lt 6) ) {
+        LogMessage "WARNING: Legacy OS detected, Huntress EDR will not be installed"
         $services = @($HuntressAgentServiceName, $HuntressUpdaterServiceName)
-        $err = "WARNING: Legacy OS detected, Huntress EDR will not be installed"
-        LogMessage $err
     } else {
-        $services = @($HuntressAgentServiceName, $HuntressUpdaterServiceName, $HuntressEDRServiceName)
+        LogMessage "Huntress EDR will be installed automatically in < 24 hours."
     }
 
     # Ensure the services are installed and running.
     foreach ($svc in $services) {
-        # repairing previously broken Huntress install which may have set it's services to disabled (services are not removed on uninstall)
-        if ( $(Get-Service $svc).StartType -ne "automatic") {
-            LogMessage "Disabled service $svc detected, attempting to set startup type to automatic."
-            c:\Windows\System32\sc.exe config $svc start=auto
-        }
         # check if the service is installed
         if ( ! (Confirm-ServiceExists($svc))) {
+            # repairing previously broken Huntress install which may have set it's services to disabled (services are not removed on uninstall)
+            if ( $(Get-Service $svc).StartType -ne "automatic") {
+                LogMessage "Disabled service $svc detected, attempting to set startup type to automatic."
+                c:\Windows\System32\sc.exe config $svc start=auto
+            }
             # if Huntress was installed before this script started and Rio is missing then we log that, but continue with this script
             if ($svc -eq $HuntressEDRServiceName) {
                 if ($isHuntressInstalled) {
@@ -965,7 +965,7 @@ function copyLogAndExit {
 #########################################################################################
 function main () {
     # Start the script with logging as much as we can as soon as we can. All your logging are belong to us, Zero Wang.
-    logInfo
+    logInfo "Script flags:  Reregister=$reregister  Reinstall=$reinstall  Uninstall=$uninstall  Repair=$repair"
 
     # if run with the uninstall flag, exit so we don't reinstall the agent after
     if ($uninstall) {
@@ -990,13 +990,10 @@ function main () {
         $repair = $true
     }
 
-    # if run with the repair flag, check if installed (install if not), if ver < 0.13.16 apply the fix
+    # Originally created to fix a bug, now acts as a -reregister flag if no Hunress is found
     if ($repair) {
         if (Test-Path(getAgentPath)){
             if (!(repairAgent)){
-
-            } else {
-                LogMessage "Repair complete!"
             }
             copyLogAndExit
         } else {
