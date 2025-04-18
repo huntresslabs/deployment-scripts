@@ -22,7 +22,7 @@
 # For more details, see our KB article  https://support.huntress.io/hc/en-us/articles/4404004936339-Deploying-Huntress-with-PowerShell
 
 # Usage (remove brackets [] and substitute <variable> for your value):
-# powershell -executionpolicy bypass -f ./InstallHuntress.powershellv2.ps1 [-acctkey <account_key>] [-orgkey <organization_key>] [-tags <tags>] [-reregister] [-reinstall] [-uninstall] [-repair]
+# powershell -executionpolicy bypass -f ./InstallHuntress.powershellv2.ps1 [-acctkey <account_key>] [-orgkey <organization_key>] [-tags <tags>] [-reregister] [-reinstall] [-uninstall]
 #
 # example:
 # powershell -executionpolicy bypass -f ./InstallHuntress.powershellv2.ps1 -acctkey "0b8a694b2eb7b642069" -orgkey "Buzzword Company Name" -tags "production,US West"
@@ -34,8 +34,7 @@ param (
   [string]$tags,
   [switch]$reregister,
   [switch]$reinstall,
-  [switch]$uninstall,
-  [switch]$repair
+  [switch]$uninstall
 )
 
 
@@ -433,7 +432,7 @@ function Test-Installation {
         if (Test-Path "$($HuntressDirectory)\HuntressAgent.log") {
             $linesFromLog = Get-Content "$($HuntressDirectory)\HuntressAgent.log" | Select-Object -first 4
             ForEach ($line in $linesFromLog) {
-                if ($line -like "*Huntress agent registered*") {
+                if ($line -like "*registered agent*") {
                     LogMessage "Agent successfully registered in $($i/4) seconds"
                     $didAgentRegister = $true
                     Start-Sleep -Milliseconds 250
@@ -446,6 +445,12 @@ function Test-Installation {
     if ( ! $didAgentRegister) {
         $err = "WARNING: It does not appear the agent has successfully registered. Check 3rd party AV exclusion lists to ensure Huntress is excluded."
         LogMessage ($err + $SupportMessage)
+        if (Test-Path "$($HuntressDirectory)\HuntressAgent.log") {
+            $linesFromLog = Get-Content "$($HuntressDirectory)\HuntressAgent.log" | Select-Object -first 4
+            ForEach ($line in $linesFromLog) {
+                LogMessage $line
+            }
+        }
     }
 
     # Ensure the critical files were created.
@@ -470,6 +475,11 @@ function Test-Installation {
     foreach ($svc in $services) {
         # check if the service is installed
         if ( ! (Confirm-ServiceExists($svc))) {
+            # repairing previously broken Huntress install which may have set it's services to disabled (services are not removed on uninstall)
+            if ( $(Get-Service $svc).StartType -ne "automatic") {
+                LogMessage "Disabled service $svc detected, attempting to set startup type to automatic."
+                c:\Windows\System32\sc.exe config $svc start=auto
+            }
             # if Huntress was installed before this script started and Rio is missing then we log that, but continue with this script
             if ($svc -eq $HuntressEDRServiceName) {
                 if ($isHuntressInstalled) {
@@ -958,12 +968,13 @@ function copyLogAndExit {
     exit 0
 }
 
-# Sometimes previous installs can be stuck with services in the Disabled state, this function attempts to set the state to Automatic.
-# Services in the Disabled state cannot be manually started, and TP will stop partners from fixing this themselves.
+# Sometimes previous installs can be stuck with services in the Disabled state, this function attempts to set the state to Automatic. 
+# Services in the Disabled state cannot be manually started, and TP will stop partners from fixing this themselves. AB
 function fixServices {
+    echo "Attempting to fix services"
     # Ensure the services are installed before repairing the state
     foreach ($svc in $services) {
-        if ( ! (Confirm-ServiceExists($svc))) {
+        if (  (Confirm-ServiceExists($svc))) {
             # repairing service state
             if ( $(Get-Service $svc).StartType -ne "automatic") {
                 LogMessage "Disabled service $svc detected, attempting to set startup type to automatic."
@@ -980,7 +991,7 @@ function fixServices {
 function main () {
     # Start the script with logging as much as we can as soon as we can. All your logging are belong to us, Zero Wang.
     logInfo
-    LogMessage "Script flags:  Reregister=$reregister  Reinstall=$reinstall  Uninstall=$uninstall  Repair=$repair"
+    LogMessage "Script flags:  Reregister=$reregister  Reinstall=$reinstall  Uninstall=$uninstall "
 
     # if run with the uninstall flag, exit so we don't reinstall the agent after
     if ($uninstall) {
@@ -999,22 +1010,16 @@ function main () {
         }
     }
 
-    # if run with no flags and no account key, assume repair
-    if (!$repair -and !$reregister -and !$uninstall -and !$reinstall -and ($AccountKey -eq "__ACCOUNT_KEY__")) {
-        LogMessage "No flags or account key found! Defaulting to the -repair flag."
-        $repair = $true
+    # if run with no flags and no account key print usage and exit
+    if (!$reregister -and !$uninstall -and !$reinstall -and ($AccountKey -eq "__ACCOUNT_KEY__")) {
+        LogMessage "No flags or account key found! Exiting."
+        LogMessage "Usage (remove brackets [] and substitute <variable> for your value):"
+        LogMessage "powershell -executionpolicy bypass -f ./InstallHuntress.powershellv2.ps1 [-acctkey <account_key>] [-orgkey <organization_key>] [-tags <tags>] [-reregister] [-reinstall] [-uninstall] `n"
+        LogMessage "Example:"
+        LogMessage 'powershell -executionpolicy bypass -f ./InstallHuntress.powershellv2.ps1 -acctkey "0b8a694b2eb7b642069" -orgkey "Buzzword Company Name" -tags "production,US West" '
+        copyLogAndExit
     }
 
-    # Originally created to fix a bug, now acts as a -reregister flag if no Hunress is found
-    if ($repair) {
-        # If Huntress installed: copy log and exit. Otherwise attempt a repair via -reregister flag
-        if (Test-Path(getAgentPath)){
-            copyLogAndExit
-        } else {
-            LogMessage "Agent not found! Attempting to install"
-            $reregister = $true
-        }
-    }
 
     # trim keys for blanks before use
     $AccountKey = $AccountKey.Trim()
