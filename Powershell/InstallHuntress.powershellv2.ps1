@@ -963,7 +963,7 @@ function copyLogAndExit {
     exit 0
 }
 
-# Sometimes previous installs can be stuck with services in the Disabled state, this function attempts to set the state to Automatic. 
+# Sometimes previous installs can be stuck with services in the Disabled state, this function attempts to set the state to Automatic.
 # Services in the Disabled state cannot be manually started, and TP will stop partners from fixing this themselves. AB
 function fixServices {
     echo "Attempting to fix services"
