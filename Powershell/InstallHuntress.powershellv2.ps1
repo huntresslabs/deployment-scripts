@@ -966,7 +966,6 @@ function copyLogAndExit {
 # Sometimes previous installs can be stuck with services in the Disabled state, this function attempts to set the state to Automatic.
 # Services in the Disabled state cannot be manually started, and TP will stop partners from fixing this themselves. AB
 function fixServices {
-    echo "Attempting to fix services"
     # Ensure the services are installed before repairing the state
     foreach ($svc in $services) {
         if (  (Confirm-ServiceExists($svc))) {
