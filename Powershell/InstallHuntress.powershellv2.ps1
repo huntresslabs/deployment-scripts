@@ -475,11 +475,6 @@ function Test-Installation {
     foreach ($svc in $services) {
         # check if the service is installed
         if ( ! (Confirm-ServiceExists($svc))) {
-            # repairing previously broken Huntress install which may have set it's services to disabled (services are not removed on uninstall)
-            if ( $(Get-Service $svc).StartType -ne "automatic") {
-                LogMessage "Disabled service $svc detected, attempting to set startup type to automatic."
-                c:\Windows\System32\sc.exe config $svc start=auto
-            }
             # if Huntress was installed before this script started and Rio is missing then we log that, but continue with this script
             if ($svc -eq $HuntressEDRServiceName) {
                 if ($isHuntressInstalled) {
