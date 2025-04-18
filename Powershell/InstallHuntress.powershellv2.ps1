@@ -149,6 +149,12 @@ if ($env:ProgramW6432) {
     $WindowsArchitecture = $X64
 }
 
+# Check for Legacy OS, any kernel below 6.2 cannot run Huntress EDR (so we skip that check)
+$services = @($HuntressAgentServiceName, $HuntressUpdaterServiceName, $HuntressEDRServiceName)
+if ( ($KernelVersion.major -eq 6 -and $KernelVersion.minor -lt 2) -or ($KernelVersion.major -lt 6) ) {
+    $services = @($HuntressAgentServiceName, $HuntressUpdaterServiceName)
+}
+
 # Checking to see if Huntress was installed before this script was run
 $isHuntressInstalled = $false
 if ((test-path "c:\program files\Huntress\HuntressAgent.exe") -OR (test-path "c:\program files (x86)\Huntress\HuntressAgent.exe")){
@@ -454,10 +460,8 @@ function Test-Installation {
     }
 
     # Check for Legacy OS, any kernel below 6.2 cannot run Huntress EDR (so we skip that check)
-    $services = @($HuntressAgentServiceName, $HuntressUpdaterServiceName, $HuntressEDRServiceName)
     if ( ($KernelVersion.major -eq 6 -and $KernelVersion.minor -lt 2) -or ($KernelVersion.major -lt 6) ) {
         LogMessage "WARNING: Legacy OS detected, Huntress EDR will not be installed"
-        $services = @($HuntressAgentServiceName, $HuntressUpdaterServiceName)
     } else {
         LogMessage "Huntress EDR will be installed automatically in < 24 hours."
     }
@@ -959,6 +963,21 @@ function copyLogAndExit {
     exit 0
 }
 
+# Sometimes previous installs can be stuck with services in the Disabled state, this function attempts to set the state to Automatic.
+# Services in the Disabled state cannot be manually started, and TP will stop partners from fixing this themselves.
+function fixServices {
+    # Ensure the services are installed before repairing the state
+    foreach ($svc in $services) {
+        if ( ! (Confirm-ServiceExists($svc))) {
+            # repairing service state
+            if ( $(Get-Service $svc).StartType -ne "automatic") {
+                LogMessage "Disabled service $svc detected, attempting to set startup type to automatic."
+                c:\Windows\System32\sc.exe config $svc start=auto
+            }
+        }
+    }
+}
+
 
 #########################################################################################
 #                                  begin main function                                  #
@@ -993,9 +1012,8 @@ function main () {
 
     # Originally created to fix a bug, now acts as a -reregister flag if no Hunress is found
     if ($repair) {
+        # If Huntress installed: copy log and exit. Otherwise attempt a repair via -reregister flag
         if (Test-Path(getAgentPath)){
-            if (!(repairAgent)){
-            }
             copyLogAndExit
         } else {
             LogMessage "Agent not found! Attempting to install"
@@ -1047,6 +1065,7 @@ function main () {
 
     Get-Installer
     Install-Huntress $OrganizationKey
+    fixServices
     Test-Installation
     LogMessage "Huntress Agent successfully installed!"
     copyLogAndExit
