@@ -447,9 +447,12 @@ function Test-Installation {
         LogMessage ($err + $SupportMessage)
         if (Test-Path "$($HuntressDirectory)\HuntressAgent.log") {
             $linesFromLog = Get-Content "$($HuntressDirectory)\HuntressAgent.log" | Select-Object -first 4
+            LogMessage "Last 4 lines of HuntressAgent.log:"
             ForEach ($line in $linesFromLog) {
                 LogMessage $line
             }
+        } else {
+            LogMessage "HuntressAgent.log not found after post-registration failure! Likely 3rd party interference (AV/ThreatLocker). " 
         }
     }
 
