@@ -452,7 +452,7 @@ function Test-Installation {
                 LogMessage $line
             }
         } else {
-            LogMessage "HuntressAgent.log not found after post-registration failure! Likely 3rd party interference (AV/ThreatLocker). " 
+            LogMessage "HuntressAgent.log not found after post-registration failure! Likely 3rd party interference (AV/ThreatLocker). "
         }
     }
 
