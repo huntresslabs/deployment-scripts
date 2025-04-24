@@ -1053,8 +1053,9 @@ function main () {
         StopHuntressServices
     } else {
         LogMessage "Checking for HuntressAgent install..."
+        $agentPath = getAgentPath
         $agentExe = Join-Path $agentPath "HuntressAgent.exe"
-        if ( (Test-Path $agentPath) -eq $true) {
+        if ( (Test-Path $agentExe) -eq $true) {
             LogMessage "The Huntress Agent is already installed in $agentPath. Exiting with no changes. Suggest using -reregister or -reinstall flags"
             copyLogAndExit
         }
