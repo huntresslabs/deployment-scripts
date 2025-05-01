@@ -84,6 +84,8 @@ $SupportMessage             = "Please send the error message to support@huntress
 $HuntressAgentServiceName   = "HuntressAgent"
 $HuntressUpdaterServiceName = "HuntressUpdater"
 $HuntressEDRServiceName     = "HuntressRio"
+$Vendor                     = "Huntress"
+$ScriptInfoName             = "rmm.json"
 
 # attempt to use a more central temporary location for the log file rather than the installing users folder
 if (Test-Path (Join-Path $env:SystemRoot "\temp")) {
@@ -98,7 +100,6 @@ Set-StrictMode -Version Latest
 # Pull various software versions for logging purposes
 $PoShVersion   = $PsVersionTable.PsVersion.Major
 $KernelVersion = [System.Environment]::OSVersion.Version
-$BuildVersion  = [System.Environment]::OSVersion.Version.Build
 
 # Check kernel version to download the appropriate installer for the OS version
 # kernel 6.1+ can use the regular Huntress agent, kernel versions 6.0 and lower require the legacy installer
@@ -168,7 +169,7 @@ function Get-TimeStamp {
 # adds time stamp to a message and then writes that to the log file
 function LogMessage ($msg) {
     Add-Content $DebugLog "$(Get-TimeStamp) $msg"
-    Write-Output "$(Get-TimeStamp) $msg"
+    Write-Host "$(Get-TimeStamp) $msg"
 }
 
 # test that all required parameters were passed, and that they are in the correct format
@@ -865,16 +866,6 @@ function logInfo {
     # Log OS details
     LogMessage $(systeminfo)
 
-    #LogMessage "Host name: '$env:computerName'"
-    try {  $os = (get-WMiObject -computername $env:computername -Class win32_operatingSystem).caption.Trim()
-    } catch {
-        LogMessage "WMI issues discovered (computer name query), attempting to fix the repository"
-        winmgmt -verifyrepository
-        $os = (get-itemproperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion" -Name ProductName).ProductName
-    }
-    #LogMessage "Host OS: '$os'"
-    #LogMessage "Host Build Version: $($BuildVersion)"
-
     LogMessage "Host Kernel Version: $($KernelVersion)"
     LogMessage "Detected Architecture (Windows 32/64 bit): '$($WindowsArchitecture)'"
 
@@ -981,6 +972,67 @@ function fixServices {
     }
 }
 
+function Get-ScriptInfoPath {
+    $results = getAgentPath
+    return Join-Path -Path $results -ChildPath $ScriptInfoName
+}
+
+# Get the hash of this currently running PowerShell script file
+function Get-Sha256Hash {
+    try {
+        # Get the hash of this file
+        $hash = Get-FileHash -Path $PSCommandPath -Algorithm SHA256
+        return $hash.Hash
+    } catch {
+        # catch failures in this function and return an empty hash
+        $ErrorMessage = $_.Exception.Message
+        LogMessage "Unable to retrieve script hash: $ErrorMessage"
+    }
+    return ""
+}
+
+# Get the operation we running for this script
+function Get-ScriptOperation {
+    $operation = "Install"
+    if ($reregister -eq $true) {
+        $operation = "Reregister"
+    } elseif ($reinstall -eq $true) {
+        $operation = "Reinstall"
+    }
+
+    return $operation
+}
+
+function Write-InstallScriptInfo {
+    $hold = $ErrorActionPreference
+    $ErrorActionPreference = "Stop"
+
+    try {
+        if ($uninstall) {
+            # No need to track installation on an uninstall
+            LogMessage "No script information will be saved for uninstall"
+            return
+        }
+
+        $info = [PSCustomObject]@{
+            vendor = $Vendor
+            sha256 = Get-Sha256Hash
+            operation = Get-ScriptOperation
+        }
+
+        $path = Get-ScriptInfoPath
+        $json = $info | ConvertTo-Json -Compress
+
+        # We make a "best-effort" attempt to write to the file
+        Set-Content -Path $path -Value $json
+    }
+    catch {
+        $ErrorMessage = $_.Exception.Message
+        LogMessage "Unable to save installation script information: $ErrorMessage"
+    }
+
+    $ErrorActionPreference = $hold
+}
 
 #########################################################################################
 #                                  begin main function                                  #
@@ -1070,8 +1122,11 @@ function main () {
 
 try {
     main
+    Write-InstallScriptInfo
 } catch {
     $ErrorMessage = $_.Exception.Message
     LogMessage $ErrorMessage
     copyLogAndExit
 }
+
+LogMessage "Script Complete"
