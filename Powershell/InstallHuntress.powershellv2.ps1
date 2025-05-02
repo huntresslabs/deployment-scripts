@@ -169,7 +169,7 @@ function Get-TimeStamp {
 # adds time stamp to a message and then writes that to the log file
 function LogMessage ($msg) {
     Add-Content $DebugLog "$(Get-TimeStamp) $msg"
-    Write-Host "$(Get-TimeStamp) $msg"
+    Write-Output "$(Get-TimeStamp) $msg"
 }
 
 # test that all required parameters were passed, and that they are in the correct format
@@ -981,14 +981,12 @@ function Get-ScriptInfoPath {
 function Get-Sha256Hash {
     try {
         # Get the hash of this file
-        $hash = Get-FileHash -Path $PSCommandPath -Algorithm SHA256
-        return $hash.Hash
+        return (Get-FileHah -Path $PSCommandPath -Algorithm SHA256).Hash
     } catch {
         # catch failures in this function and return an empty hash
         $ErrorMessage = $_.Exception.Message
-        LogMessage "Unable to retrieve script hash: $ErrorMessage"
+        return "", "Unable to retrieve script hash: $ErrorMessage"
     }
-    return ""
 }
 
 # Get the operation we running for this script
@@ -1014,9 +1012,14 @@ function Write-InstallScriptInfo {
             return
         }
 
+        [array]$hashResult = Get-Sha256Hash
+        if ($hashResult.Count -eq 2) {
+            LogMessage $hashResult[1]
+        }
+
         $info = [PSCustomObject]@{
             vendor = $Vendor
-            sha256 = Get-Sha256Hash
+            sha256 = $hashResult[0]
             operation = Get-ScriptOperation
         }
 
@@ -1121,7 +1124,7 @@ function main () {
 }
 
 try {
-    main
+    #main
     Write-InstallScriptInfo
 } catch {
     $ErrorMessage = $_.Exception.Message
