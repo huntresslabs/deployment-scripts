@@ -85,7 +85,7 @@ $HuntressAgentServiceName   = "HuntressAgent"
 $HuntressUpdaterServiceName = "HuntressUpdater"
 $HuntressEDRServiceName     = "HuntressRio"
 $Vendor                     = "Huntress"
-$ScriptInfoName             = "rmm.json"
+$ScriptInfoName             = "HuntressPoShInstaller.json"
 
 # attempt to use a more central temporary location for the log file rather than the installing users folder
 if (Test-Path (Join-Path $env:SystemRoot "\temp")) {
@@ -981,7 +981,7 @@ function Get-ScriptInfoPath {
 function Get-Sha256Hash {
     try {
         # Get the hash of this file
-        return (Get-FileHah -Path $PSCommandPath -Algorithm SHA256).Hash
+        return (Get-FileHash -Path $PSCommandPath -Algorithm SHA256).Hash
     } catch {
         # catch failures in this function and return an empty hash
         $ErrorMessage = $_.Exception.Message
@@ -1124,7 +1124,7 @@ function main () {
 }
 
 try {
-    #main
+    main
     Write-InstallScriptInfo
 } catch {
     $ErrorMessage = $_.Exception.Message
