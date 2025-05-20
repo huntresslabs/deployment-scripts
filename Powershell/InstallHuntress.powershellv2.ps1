@@ -37,10 +37,13 @@ param (
   [switch]$uninstall
 )
 
-
-##############################################################################
-## Begin user modified variables
-##############################################################################
+##############################################################################################################
+##              ---====>> DO NOT REMOVE OR COMMENT OUT ANYTHING IN THIS SCRIPT! <<====---
+## Modifications should only be done to the right side of the assignment statements, and in this section only.
+## Do not modify any variable names, change variable types, or introduce commenting characters
+##
+##                            Begin user modified variables section
+##############################################################################################################
 
 # Replace __ACCOUNT_KEY__ with your account secret key (from your Huntress portal's "download agent" section)
 $AccountKey = "__ACCOUNT_KEY__"
@@ -48,10 +51,10 @@ $AccountKey = "__ACCOUNT_KEY__"
 # Replace __ORGANIZATION_KEY__ with a unique identifier for the organization/client (your choice of naming scheme)
 $OrganizationKey = "__ORGANIZATION_KEY__"
 
-# Replace __TAGS__ with one or more tags, separated by commas (this field is optional!)
+# Replace __TAGS__ with one or more tags, separated by commas (leave the next line unmodified if you don't want to use Tags)
 $TagsKey = "__TAGS__"
 
-# Set to "Continue" to enable verbose logging.
+# Set to "Continue" to enable verbose logging. 
 $DebugPreference = "SilentlyContinue"
 
 # Legacy, spinning HDD, or overloaded machines may require tuning this value. Most modern end points install in 10 seconds
@@ -65,11 +68,11 @@ $estimatedSpaceNeeded = 200111222
 
 
 ##############################################################################
-## Do not modify anything below this line
+##              Do not modify anything below this line
 ##############################################################################
 
 # These are used by the Huntress support team when troubleshooting.
-$ScriptVersion = "Version 2, major revision 8, 2025 Apr 18"
+$ScriptVersion = "Version 2, major revision 8, 2025 May 20"
 $ScriptType = "PowerShell"
 
 # variables used throughout this script
