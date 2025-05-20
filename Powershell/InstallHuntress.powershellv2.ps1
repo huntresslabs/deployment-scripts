@@ -54,7 +54,7 @@ $OrganizationKey = "__ORGANIZATION_KEY__"
 # Replace __TAGS__ with one or more tags, separated by commas (leave the next line unmodified if you don't want to use Tags)
 $TagsKey = "__TAGS__"
 
-# Set to "Continue" to enable verbose logging. 
+# Set to "Continue" to enable verbose logging.
 $DebugPreference = "SilentlyContinue"
 
 # Legacy, spinning HDD, or overloaded machines may require tuning this value. Most modern end points install in 10 seconds
