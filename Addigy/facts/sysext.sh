@@ -14,7 +14,7 @@ check_legacy_status() {
     exit
   fi;
 
-  if [[ $output != *"EDR status: enabled"* ]]; then
+  if [[ $output != *"EDR: enabled"* ]]; then
     echo "No - EDR is not Enabled"
     exit
   fi;
