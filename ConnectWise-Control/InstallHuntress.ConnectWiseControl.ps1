@@ -15,7 +15,7 @@ $reinstall = $false
 $acctkey = $AccountKey
 $orgkey = $OrganizationKey
 Set-StrictMode -Version Latest
-$ScriptVersion = "Version 1, major revision 1, 2023 Oct 9"
+$ScriptVersion = "Version 1, major revision 2, 2025 July 10"
 $ScriptType = "PowerShell (ConnectWise Control / ScreenConnect)"
 if ( ! [string]::IsNullOrEmpty($acctkey) ) {
     $AccountKey = $acctkey

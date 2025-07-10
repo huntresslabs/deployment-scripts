@@ -69,7 +69,7 @@ Set-StrictMode -Version Latest
 
 # Do not modify the following variables.
 # These are used by the Huntress support team when troubleshooting.
-$ScriptVersion = "Version 3, major revision 7, 2023 July 20"
+$ScriptVersion = "Version 3, major revision 8, 2025 July 10"
 $ScriptType = "SolarWindsRMM"
 
 # Check for an account key specified on the command line.

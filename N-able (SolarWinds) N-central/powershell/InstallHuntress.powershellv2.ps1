@@ -78,7 +78,7 @@ if ($PsVersionTable.PsVersion.Major -lt 3){
 $kernelVersion = [System.Environment]::OSVersion.Version
 
 # These are used by the Huntress support team when troubleshooting.
-$ScriptVersion = "Version 2, major revision 7, 2023 May 1, N-central specific"
+$ScriptVersion = "Version 2, major revision 8, 2025 July 10, N-central specific"
 $ScriptType = "PowerShell"
 
 # Check for an account key specified on the command line.
