@@ -104,7 +104,7 @@ $estimatedSpaceNeeded = 200111222
 ##############################################################################
 
 # These are used by the Huntress support team when troubleshooting.
-$ScriptVersion = "Version 2, major revision 8, 2025 Apr 1"
+$ScriptVersion = "Version 2, major revision 9, 2025 July 10"
 $ScriptType = "PowerShell"
 
 # variables used throughout this script
@@ -428,7 +428,6 @@ function Install-Huntress ($OrganizationKey) {
 function Test-Installation {
     # Get the file locations of some of the Huntress executables and setting up some registry related variables
     $HuntressDirectory        = getAgentPath
-    $hUpdaterPath            = Join-Path $HuntressDirectory "hUpdate.exe"
     $HuntressAgentPath        = Join-Path $HuntressDirectory "HuntressAgent.exe"
     $HuntressUpdaterPath      = Join-Path $HuntressDirectory "HuntressUpdater.exe"
     $AgentIdKeyValueName      = "AgentId"
@@ -459,7 +458,7 @@ function Test-Installation {
     }
 
     # Ensure the critical files were created.
-    foreach ( $file in ($HuntressAgentPath, $HuntressUpdaterPath, $hUpdaterPath) ) {
+    foreach ( $file in ($HuntressAgentPath, $HuntressUpdaterPath) ) {
         if ( ! (Test-Path $file) ) {
             $err = "ERROR: $file did not exist. Check your AV/security software quarantine"
             LogMessage $err

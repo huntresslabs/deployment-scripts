@@ -1,4 +1,4 @@
-#!ps 
+#!ps
 #timeout=90000
 
 $AccountKey="__ACCOUNT_KEY__"
@@ -15,7 +15,7 @@ $reinstall = $false
 $acctkey = $AccountKey
 $orgkey = $OrganizationKey
 Set-StrictMode -Version Latest
-$ScriptVersion = "Version 1, major revision 1, 2023 Oct 9"
+$ScriptVersion = "Version 1, major revision 2, 2025 July 10"
 $ScriptType = "PowerShell (ConnectWise Control / ScreenConnect)"
 if ( ! [string]::IsNullOrEmpty($acctkey) ) {
     $AccountKey = $acctkey
@@ -207,12 +207,11 @@ function Test-Installation {
     }
     $HuntressAgentPath = Join-Path $HuntressDirPath "HuntressAgent.exe"
     $HuntressUpdaterPath = Join-Path $HuntressDirPath "HuntressUpdater.exe"
-    $hUpdaterPath = Join-Path $HuntressDirPath "hUpdate.exe"
     $HuntressKeyPath = "HKLM:\SOFTWARE\Huntress Labs\Huntress"
     $AgentIdKeyValueName = "AgentId"
     $OrganizationKeyValueName = "OrganizationKey"
     $TagsValueName = "Tags"
-    foreach ( $file in ($HuntressAgentPath, $HuntressUpdaterPath, $hUpdaterPath) ) {
+    foreach ( $file in ($HuntressAgentPath, $HuntressUpdaterPath) ) {
         if ( ! (Test-Path $file) ) {
             $err = "ERROR: $file did not exist."
             LogMessage $err
