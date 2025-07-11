@@ -421,7 +421,6 @@ function Install-Huntress ($OrganizationKey) {
 function Test-Installation {
     # Get the file locations of some of the Huntress executables and setting up some registry related variables
     $HuntressDirectory        = getAgentPath
-    $hUpdaterPath            = Join-Path $HuntressDirectory "hUpdate.exe"
     $HuntressAgentPath        = Join-Path $HuntressDirectory "HuntressAgent.exe"
     $HuntressUpdaterPath      = Join-Path $HuntressDirectory "HuntressUpdater.exe"
     $AgentIdKeyValueName      = "AgentId"
@@ -450,8 +449,8 @@ function Test-Installation {
         $err = "WARNING: It does not appear the agent has successfully registered. Check 3rd party AV exclusion lists to ensure Huntress is excluded."
         LogMessage ($err + $SupportMessage)
         if (Test-Path "$($HuntressDirectory)\HuntressAgent.log") {
-            $linesFromLog = Get-Content "$($HuntressDirectory)\HuntressAgent.log" | Select-Object -first 4
-            LogMessage "Last 4 lines of HuntressAgent.log:"
+            $linesFromLog = Get-Content "$($HuntressDirectory)\HuntressAgent.log" | Select-Object -last 6
+            LogMessage "Last 6 lines of HuntressAgent.log:"
             ForEach ($line in $linesFromLog) {
                 LogMessage $line
             }
@@ -461,7 +460,7 @@ function Test-Installation {
     }
 
     # Ensure the critical files were created.
-    foreach ( $file in ($HuntressAgentPath, $HuntressUpdaterPath, $hUpdaterPath) ) {
+    foreach ( $file in ($HuntressAgentPath, $HuntressUpdaterPath) ) {
         if ( ! (Test-Path $file) ) {
             $err = "ERROR: $file did not exist. Check your AV/security software quarantine"
             LogMessage $err
@@ -1106,7 +1105,6 @@ function main () {
             $err = "Script was run w/ reinstall flag but there's nothing to reinstall. Attempting to clean remnants, then install the agent fresh."
             LogMessage "$err"
             uninstallHuntress
-            copyLogAndExit
         }
         StopHuntressServices
     } else {
