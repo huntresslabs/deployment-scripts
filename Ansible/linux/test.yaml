@@ -1,0 +1,18 @@
+all:
+  vars:
+    account_key: "32af35242fdda425605a4504eb45f002"
+    ansible_user: "admin"
+  children:
+    organization1:
+      hosts:
+        debian: 
+          ansible_host: 192.168.68.64
+      vars:
+        organization_key: "linux-test"
+
+    organization2:
+      hosts:
+        ubuntu: 
+          ansible_host: 192.168.68.63
+      vars:
+        organization_key: "linux-test"

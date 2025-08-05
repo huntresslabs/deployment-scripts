@@ -1,0 +1,26 @@
+all:
+  vars:
+  # Replace __ACCOUNT_KEY__ with your account secret key (from your Huntress portal's "download agent" section)
+    account_key: "__ACCOUNT_KEY__"
+    ansible_user: "admin"
+  children:
+    # These "organization" containers can be renamed to anything you like, for example the organisation key or name
+    organization1:
+      hosts:
+        debian:
+          # ip address of 'debian'
+          ansible_host: 1.1.1.1
+      vars:
+        # Replace __ORGANIZATION_KEY__ with your desired name for the organization in the Huntress portal
+        organization_key: "__ORGANIZATION_KEY__"
+        # Tags are optional and can be deleted if you don't use them, see organization2 where they don't exist
+        tag_values: "__TAGS__"
+
+    organization2:
+      hosts:
+        ubuntu:
+          # ip address of 'ubuntu'
+          ansible_host: 1.1.1.2
+      vars:
+        # Replace __ORGANIZATION_KEY__ with your desired name for the organization in the Huntress portal
+        organization_key: "__ORGANIZATION_KEY__"
