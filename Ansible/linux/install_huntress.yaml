@@ -1,0 +1,54 @@
+- name: Install Huntress
+  hosts: all
+  vars:
+    temp_install_dir: /tmp/huntress
+    cmd_args:
+  become: true
+  tasks:
+    - name: Check organization key
+      ansible.builtin.assert:
+        that:
+          - organization_key is defined
+          - organization_key != "__ORGANIZATION_KEY__"
+        fail_msg: "org_key is undefined"
+    - name: Add organiztion key to install command arguments
+      ansible.builtin.set_fact:
+        cmd_args: "-o {{ organization_key }}"
+    - name: Check account key
+      ansible.builtin.assert:
+        that:
+          - account_key is defined
+          - account_key != "__ACCOUNT_KEY__"
+        fail_msg: "account_key is undefined"
+    - name: Add account key to install command arguments
+      ansible.builtin.set_fact:
+        cmd_args: "{{ cmd_args }} -a {{ account_key }}"
+    - name: Check tag values
+      ansible.builtin.set_fact:
+        cmd_args: "{{ cmd_args }} -t '{{ tag_values }}'"
+      when:
+        tag_values is defined and tag_values != "__TAGS__"
+    - name: Show command line
+      ansible.builtin.debug:
+        msg: "{{ cmd_args }}"
+    - name: Create temp download/install location
+      ansible.builtin.file:
+        state: directory
+        mode: '0700'
+        path: "{{ temp_install_dir }}"
+    - name: Download install script
+      ansible.builtin.get_url:
+        url: https://huntresscdn.com/huntress-installers/linux/huntress-linux-install.sh
+        dest: "{{ temp_install_dir }}"
+        mode: '0700'
+    - name: Run install script
+      ansible.builtin.command:
+        cmd: "{{ temp_install_dir }}/huntress-linux-install.sh {{ cmd_args }}"
+      register:
+        install_results
+      changed_when:
+        install_results.rc == 0
+    - name: Remove temp download/install location
+      ansible.builtin.file:
+        state: absent
+        path: "{{ temp_install_dir }}"

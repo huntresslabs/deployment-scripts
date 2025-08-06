@@ -1,0 +1,17 @@
+- name: Uninstall Huntress
+  hosts: all
+  vars:
+    uninstall_script: /usr/share/huntress/uninstall.sh
+  become: true
+  tasks:
+    - name: Check for unistall script
+      ansible.builtin.stat:
+        path: "{{ uninstall_script }}"
+      register: script
+    - name: Execute uninstall script
+      ansible.builtin.command:
+        cmd: "{{ uninstall_script }}"
+      register:
+        uninstall_results
+      changed_when:
+        uninstall_results.rc == 0
