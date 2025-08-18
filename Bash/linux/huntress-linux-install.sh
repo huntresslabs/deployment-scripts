@@ -17,6 +17,8 @@ declare PORTAL_URL="https://huntress.io"
 declare PACKAGE_FILE=
 declare ARCH=
 declare SCRIPT_VERSION=0.0.1
+declare CURL_INSTALLED=
+declare WGET_INSTALLED=
 
 readonly HUNTRESS_PKG=/tmp/HuntressAgentPackage
 # services
@@ -102,8 +104,15 @@ get_user_creds() {
 
 # download latest Huntress package from S3
 download_latest() {
-  status_code=$(curl -f -L -o "${HUNTRESS_PKG}" -w "%{http_code}" \
-    "${PORTAL_URL}/download/linux/${ACCOUNT_KEY}?arch=${ARCH}")
+  status_code="0"
+  # If neither wget or curl exists on the system, then we fail at the previous validation step
+  if [ "$WGET_INSTALLED" = true ]; then
+    status_code=$(wget -S -pO "${HUNTRESS_PKG}" "${PORTAL_URL}/download/linux/${ACCOUNT_KEY}?arch=${ARCH}" 2>&1 \
+     | grep "HTTP/" | awk '{print $2}')
+  else
+    status_code=$(curl -f -L -o "${HUNTRESS_PKG}" -w "%{http_code}" \
+      "${PORTAL_URL}/download/linux/${ACCOUNT_KEY}?arch=${ARCH}")
+  fi
 
   if [ $? != 0 ]; then
     if [ "$status_code" = "400" ]; then
@@ -147,6 +156,47 @@ validate_package() {
     log_info "[+] Downloading latest package"
     download_latest
   fi
+}
+
+# Check minimum requirements
+validate_requirements() {
+  log_info "[+] Validating requirements"
+
+  # Kernel version must be 5.14 or higher
+  version_check() {
+      return "$(uname -r | awk -F '.' '{ if ($1 < 5) { print 1; } else if ($1 == 5) { if ($2 < 14) { print 1; } else { print 0; } } else { print 0; } }')"
+  }
+  if ! version_check; then
+    die "REQUIREMENT FAILURE: Huntress requires a Linux kernel version of 5.14 or higher"
+  fi
+
+  # Systemd
+  if [ "$(ps -p 1 -o comm=)" != "systemd" ]; then
+    die "REQUIREMENT FAILURE: Systemd is required for the Huntress Agent"
+  fi
+
+  # Curl or wget
+  CURL_INSTALLED=false
+  WGET_INSTALLED=false
+  if [ "$(which curl)" ]; then
+    CURL_INSTALLED=true
+  fi
+  if [ "$(which wget)" ]; then
+    WGET_INSTALLED=true
+  fi
+  if [ "$CURL_INSTALLED" = false ] && [ "$WGET_INSTALLED" = false ]; then
+    die "REQUIREMENT FAILURE: curl or wget needs to be installed"
+  fi
+
+  test_url() {
+    if ! curl -s -o /dev/null "$1"; then
+      die "CONNECTION FAILURE: Unable to reach $1"
+    fi
+  }
+  test_url "https://huntress.io"
+  test_url "https://s3.amazonaws.com"
+  test_url "https://huntresscdn.com"
+  test_url "https://bugsnag.com"
 }
 
 # Install
@@ -238,6 +288,7 @@ set -- "${ARGS[@]}"
 
 log_info " ---- Installing Huntress EDR for Linux | script version: ${SCRIPT_VERSION} ---- "
 get_host_info
+validate_requirements
 validate_package
 get_user_creds
 install_pkg
