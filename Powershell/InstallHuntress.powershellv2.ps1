@@ -1094,7 +1094,7 @@ function main () {
     }
 
     # reregister > reinstall > uninstall > install (in decreasing order of impact)
-    # reregister = reinstall + delete registry keys 
+    # reregister = reinstall + delete registry keys
     # reinstall  = stop Huntress service + reinstall
     if ($reregister) {
         LogMessage "Re-register agent: '$reregister'"
