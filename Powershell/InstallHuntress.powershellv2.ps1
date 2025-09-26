@@ -727,7 +727,7 @@ function uninstallHuntress {
     # if Huntress services still exist, then delete
     $services = @("HuntressRio", "HuntressAgent", "HuntressUpdater", "Huntmon")
     foreach ($service in $services) {
-        if ( $service ) {
+        if (Confirm-ServiceExists $service) {
             LogMessage "Service $($service) detected post uninstall, attempting to remove"
             c:\Windows\System32\sc.exe STOP $service
             c:\Windows\System32\sc.exe DELETE $service
