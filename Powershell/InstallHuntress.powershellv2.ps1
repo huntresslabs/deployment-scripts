@@ -72,7 +72,7 @@ $estimatedSpaceNeeded = 200111222
 ##############################################################################
 
 # These are used by the Huntress support team when troubleshooting.
-$ScriptVersion = "Version 2, major revision 8, 2025 Sept 17"
+$ScriptVersion = "Version 2, major revision 8, 2025 Sept 26"
 $ScriptType = "PowerShell"
 
 # variables used throughout this script
@@ -1049,6 +1049,9 @@ function main () {
     # Start the script with logging as much as we can as soon as we can. All your logging are belong to us, Zero Wang.
     logInfo
     LogMessage "Script flags:  Reregister=$reregister  Reinstall=$reinstall  Uninstall=$uninstall "
+    
+    $masked = $AccountKey.Substring(0,4) + "************************" + $AccountKey.SubString(28,4)
+    LogMessage "Pre-trim variables: account key=[$masked]  org key=[$OrganizationKey]   (brackets are in place to show trailing/leading spaces)"
 
     # if run with the uninstall flag, exit so we don't reinstall the agent after
     if ($uninstall) {
@@ -1116,7 +1119,7 @@ function main () {
         if ( (Test-Path $agentPath) -eq $true) {
             $assetCount = (Get-ChildItem -Path $agentPath -File | Measure-Object).count
             # to avoid issues with a single file blocking installs, only exit script if multiple files are found and script not run with -reregister or -reinstall
-            if ($assetsCount -gt 1) {
+            if ($assetCount -gt 1) {
               LogMessage "The Huntress Agent is already installed in $agentPath. Exiting with no changes. Suggest using -reregister or -reinstall flags. Asset count = $assetCount"
               copyLogAndExit
             }
