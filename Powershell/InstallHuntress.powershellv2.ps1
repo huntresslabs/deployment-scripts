@@ -1049,9 +1049,13 @@ function main () {
     # Start the script with logging as much as we can as soon as we can. All your logging are belong to us, Zero Wang.
     logInfo
     LogMessage "Script flags:  Reregister=$reregister  Reinstall=$reinstall  Uninstall=$uninstall "
-    
-    $masked = $AccountKey.Substring(0,4) + "************************" + $AccountKey.SubString($AccountKey.length-4,4)
-    LogMessage "Pre-trim variables: account key=[$masked]  org key=[$OrganizationKey]   (brackets are in place to show trailing/leading spaces)"
+
+    if ($AccountKey.length -lt 8) {
+        LogMessage "Invalid key length, found $($AccountKey.length) (should be 32). Account key value: $AccountKey"
+    } else {
+        $masked = $AccountKey.Substring(0,4) + "************************" + $AccountKey.SubString($AccountKey.length-4,4)
+        LogMessage "Pre-trim variables: account key=[$masked]  org key=[$OrganizationKey]   (brackets are in place to show trailing/leading spaces)"
+    }
 
     # if run with the uninstall flag, exit so we don't reinstall the agent after
     if ($uninstall) {
