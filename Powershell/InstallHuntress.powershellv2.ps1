@@ -72,7 +72,7 @@ $estimatedSpaceNeeded = 200111222
 ##############################################################################
 
 # These are used by the Huntress support team when troubleshooting.
-$ScriptVersion = "Version 2, major revision 8, 2025 Sept 26"
+$ScriptVersion = "Version 2, major revision 8, 2025 Oct 13"
 $ScriptType = "PowerShell"
 
 # variables used throughout this script
@@ -1050,8 +1050,13 @@ function main () {
     logInfo
     LogMessage "Script flags:  Reregister=$reregister  Reinstall=$reinstall  Uninstall=$uninstall "
     
-    $masked = $AccountKey.Substring(0,4) + "************************" + $AccountKey.SubString(28,4)
-    LogMessage "Pre-trim variables: account key=[$masked]  org key=[$OrganizationKey]   (brackets are in place to show trailing/leading spaces)"
+    if ($AccountKey.length -lt 8) {
+        $keyError = "Account key too short! Length = $AccountKey.length   Value = $AccountKey"
+        LogMessage $keyError
+    } else {
+        $masked = $AccountKey.Substring(0,4) + "************************" + $AccountKey.SubString($AccountKey.length-4,4)
+        LogMessage "Pre-trim variables: account key=[$masked]  org key=[$OrganizationKey]   (brackets are in place to show trailing/leading spaces)"
+    }
 
     # if run with the uninstall flag, exit so we don't reinstall the agent after
     if ($uninstall) {
@@ -1090,10 +1095,15 @@ function main () {
 
     # Hide most of the account key in the logs, keeping the front and tail end for troubleshooting
     if ($AccountKey -ne "__Account_Key__") {
-        $masked = $AccountKey.Substring(0,4) + "************************" + $AccountKey.SubString(28,4)
-        LogMessage "AccountKey: '$masked'"
+        $masked = $AccountKey.Substring(0,4) + "************************" + $AccountKey.SubString($AccountKey.length-4,4)
+        LogMessage "AccountKey: '$masked' "
+	      if ($AccountKey.length -lt 32) {
+            LogMessage "length=$AccountKey.length (expected value is 32)"
+        }
         LogMessage "OrganizationKey: '$OrganizationKey'"
         LogMessage "Tags: $($Tags)"
+    } else {
+        LogMessage "AccountKey doesn't appear valid. The value is: $AccountKey"
     }
 
     # reregister > reinstall > uninstall > install (in decreasing order of impact)
