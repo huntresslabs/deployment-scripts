@@ -1095,7 +1095,7 @@ function main () {
     # Hide most of the account key in the logs, keeping the front and tail end for troubleshooting
     if ($AccountKey -ne "__Account_Key__") {
         $masked = $AccountKey.Substring(0,4) + "************************" + $AccountKey.SubString($AccountKey.length-4,4)
-        LogMessage "AccountKey: '$masked' "
+        LogMessage "AccountKey: '$masked'"
         LogMessage "OrganizationKey: '$OrganizationKey'"
         LogMessage "Tags: $($Tags)"
     }
