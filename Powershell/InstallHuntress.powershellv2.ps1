@@ -72,7 +72,7 @@ $estimatedSpaceNeeded = 200111222
 ##############################################################################
 
 # These are used by the Huntress support team when troubleshooting.
-$ScriptVersion = "Version 2, major revision 8, 2025 Sept 26"
+$ScriptVersion = "Version 2, major revision 8, 2025 Oct 13"
 $ScriptType = "PowerShell"
 
 # variables used throughout this script
@@ -192,7 +192,7 @@ function Test-Parameters {
         throw $ScriptFailed + " " + $err
         exit 1
     } elseif ($AccountKey.length -ne 32) {
-        $err = "Invalid AccountKey specified (incorrect length)! Suggest double checking the key was copy/pasted in its entirety"
+        $err = "Invalid AccountKey specified (incorrect length)! Suggest double checking the key was copy/pasted in its entirety. Length = $($AccountKey.length)   expected value = 32"
         LogMessage $err
         throw $ScriptFailed + " " + $err
         exit 1
@@ -1049,9 +1049,13 @@ function main () {
     # Start the script with logging as much as we can as soon as we can. All your logging are belong to us, Zero Wang.
     logInfo
     LogMessage "Script flags:  Reregister=$reregister  Reinstall=$reinstall  Uninstall=$uninstall "
-    
-    $masked = $AccountKey.Substring(0,4) + "************************" + $AccountKey.SubString(28,4)
-    LogMessage "Pre-trim variables: account key=[$masked]  org key=[$OrganizationKey]   (brackets are in place to show trailing/leading spaces)"
+
+    if ($AccountKey.length -lt 8) {
+        LogMessage "Invalid key length, found $($AccountKey.length) (should be 32). Account key value: $AccountKey"
+    } else {
+        $masked = $AccountKey.Substring(0,4) + "************************" + $AccountKey.SubString($AccountKey.length-4,4)
+        LogMessage "Pre-trim variables: account key=[$masked]  org key=[$OrganizationKey]   (brackets are in place to show trailing/leading spaces)"
+    }
 
     # if run with the uninstall flag, exit so we don't reinstall the agent after
     if ($uninstall) {
@@ -1090,7 +1094,7 @@ function main () {
 
     # Hide most of the account key in the logs, keeping the front and tail end for troubleshooting
     if ($AccountKey -ne "__Account_Key__") {
-        $masked = $AccountKey.Substring(0,4) + "************************" + $AccountKey.SubString(28,4)
+        $masked = $AccountKey.Substring(0,4) + "************************" + $AccountKey.SubString($AccountKey.length-4,4)
         LogMessage "AccountKey: '$masked'"
         LogMessage "OrganizationKey: '$OrganizationKey'"
         LogMessage "Tags: $($Tags)"
