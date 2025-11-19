@@ -104,7 +104,7 @@ $estimatedSpaceNeeded = 200111222
 ##############################################################################
 
 # These are used by the Huntress support team when troubleshooting.
-$ScriptVersion = "Version 2, major revision 8, 2025 Aug 1"
+$ScriptVersion = "Version 2, major revision 8, 2025 Nov 19"
 $ScriptType = "PowerShell (Datto)"
 
 # variables used throughout this script
@@ -1033,16 +1033,19 @@ function main () {
     $AccountKey = $AccountKey.Trim()
     $OrganizationKey = $OrganizationKey.Trim()
 
-    # check that all the parameters that were passed are valid
-    Test-Parameters
-
     # Hide most of the account key in the logs, keeping the front and tail end for troubleshooting
     if ($AccountKey -ne "__Account_Key__") {
         $masked = $AccountKey.Substring(0,4) + "************************" + $AccountKey.SubString(28,4)
         LogMessage "AccountKey: '$masked'"
-        LogMessage "OrganizationKey: '$OrganizationKey'"
-        LogMessage "Tags: $($Tags)"
+    } else {
+        LogMessage "WARNING: Account key not found! Software install cannot occur without a valid account key!"
     }
+    LogMessage "OrganizationKey: '$OrganizationKey'"
+    LogMessage "Tags: $($Tags)"
+    LogMessage "TagsKey: $(TagsKey)"
+
+    # check that all the parameters that were passed are valid
+    Test-Parameters
 
     # reregister > reinstall > uninstall > install (in decreasing order of impact)
     # reregister = reinstall + delete registry keys
