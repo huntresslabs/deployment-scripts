@@ -868,7 +868,7 @@ function logInfo {
     LogMessage $(systeminfo)
 
     #LogMessage "Host name: '$env:computerName'"
-    try {  
+    try {
         $os = (get-WMiObject -computername $env:computername -Class win32_operatingSystem).caption.Trim()
     } catch {
         LogMessage "WMI issues discovered (computer name query), attempting to fix the repository"
