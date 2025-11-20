@@ -14,7 +14,7 @@
 # OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-# Authors: Alan Bishop, Sharon Martin, John Ferrell, Dave Kleinatland, Evan Shewchuck
+# Authors: Alan Bishop, Sharon Martin, John Ferrell, Dave Kleinatland, Evan Shewchuk
 
 
 # The Huntress installer needs an Account Key and an Organization Key (a user specified name or description) which is used to affiliate an Agent with a
@@ -869,7 +869,7 @@ function logInfo {
 
     #LogMessage "Host name: '$env:computerName'"
     try {
-        $os = (get-WMiObject -computername $env:computername -Class win32_operatingSystem).caption.Trim()
+        $os = (Get-CimInstance -computername $env:computername -Class win32_operatingSystem).caption.Trim()
     } catch {
         LogMessage "WMI issues discovered (computer name query), attempting to fix the repository"
         winmgmt -verifyrepository
