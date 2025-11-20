@@ -14,7 +14,7 @@
 # OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-# Authors: Alan Bishop, Sharon Martin, John Ferrell, Dave Kleinatland, Cameron Granger
+# Authors: Alan Bishop, Sharon Martin, John Ferrell, Dave Kleinatland, Evan Shewchuk
 
 
 # The Huntress installer needs an Account Key and an Organization Key (a user specified name or description) which is used to affiliate an Agent with a
@@ -104,7 +104,7 @@ $estimatedSpaceNeeded = 200111222
 ##############################################################################
 
 # These are used by the Huntress support team when troubleshooting.
-$ScriptVersion = "Version 2, major revision 8, 2025 Nov 19"
+$ScriptVersion = "Version 2, major revision 8, 2025 Nov 20"
 $ScriptType = "PowerShell (Datto)"
 
 # variables used throughout this script
@@ -726,7 +726,7 @@ function uninstallHuntress {
     # if Huntress services still exist, then delete
     $services = @("HuntressRio", "HuntressAgent", "HuntressUpdater", "Huntmon")
     foreach ($service in $services) {
-        if ( $service ) {
+        if ( Get-Service -name $service -erroraction SilentlyContinue ) {
             LogMessage "Service $($service) detected post uninstall, attempting to remove"
             c:\Windows\System32\sc.exe STOP $service
             c:\Windows\System32\sc.exe DELETE $service
@@ -801,8 +801,7 @@ function testNetworkConnectivity {
 
     foreach ($URL in $URLs) {
         $StatusCode = 0
-        try
-        {
+        try {
             $Response = Invoke-WebRequest -Uri $URL -TimeoutSec 5 -ErrorAction Stop -ContentType "text/plain" -UseBasicParsing
             # This will only execute if the Invoke-WebRequest is successful.
             $StatusCode = $Response.StatusCode
@@ -810,13 +809,12 @@ function testNetworkConnectivity {
             # Convert from bytes, if necessary
             if ($Response.Content.GetType() -eq [System.Byte[]]) {
                 $StrContent = [System.Text.Encoding]::UTF8.GetString($Response.Content)
-            }else {
+            } else {
                 $StrContent = $Response.Content.ToString().Trim()
             }
 
             # Remove all newlines from the content
             $StrContent = [string]::join("",($StrContent.Split("`n")))
-
 
             $ContentMatch = $StrContent -eq "96bca0cef10f45a8f7cf68c4485f23a4"
         } catch {
@@ -870,7 +868,8 @@ function logInfo {
     LogMessage $(systeminfo)
 
     #LogMessage "Host name: '$env:computerName'"
-    try {  $os = (get-WMiObject -computername $env:computername -Class win32_operatingSystem).caption.Trim()
+    try {
+        $os = (Get-CimInstance -computername $env:computername -Class win32_operatingSystem).caption.Trim()
     } catch {
         LogMessage "WMI issues discovered (computer name query), attempting to fix the repository"
         winmgmt -verifyrepository
