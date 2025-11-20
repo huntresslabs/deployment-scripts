@@ -801,8 +801,7 @@ function testNetworkConnectivity {
 
     foreach ($URL in $URLs) {
         $StatusCode = 0
-        try
-        {
+        try {
             $Response = Invoke-WebRequest -Uri $URL -TimeoutSec 5 -ErrorAction Stop -ContentType "text/plain" -UseBasicParsing
             # This will only execute if the Invoke-WebRequest is successful.
             $StatusCode = $Response.StatusCode
@@ -810,13 +809,12 @@ function testNetworkConnectivity {
             # Convert from bytes, if necessary
             if ($Response.Content.GetType() -eq [System.Byte[]]) {
                 $StrContent = [System.Text.Encoding]::UTF8.GetString($Response.Content)
-            }else {
+            } else {
                 $StrContent = $Response.Content.ToString().Trim()
             }
 
             # Remove all newlines from the content
             $StrContent = [string]::join("",($StrContent.Split("`n")))
-
 
             $ContentMatch = $StrContent -eq "96bca0cef10f45a8f7cf68c4485f23a4"
         } catch {
