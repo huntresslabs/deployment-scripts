@@ -904,7 +904,7 @@ function logInfo {
     $count = 0
     foreach ( $app in $installedApps) {
         try {
-            if ( $app.DisplayName -like "*vc++*") {
+            if ( $app.DisplayName -like "*Visual C++*") {
                 LogMessage "Name: $($app.DisplayName)  Version: $($app.DisplayVersion)"
                 count++
             }
