@@ -1,4 +1,4 @@
- Copyright (c) 2025 Huntress Labs, Inc.
+# Copyright (c) 2025 Huntress Labs, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
@@ -186,18 +186,18 @@ function Test-Parameters {
 
     # Ensure we have an account key (hard coded or passed params) and that it's in the correct form
     if ($AccountKey -eq "__ACCOUNT_KEY__") {
-        copyLogAndExit -error "AccountKey not set! Suggest using the -acctkey flag followed by your account key (you can find it in the Downloads section of your Huntress portal)."
+        copyLogAndExit -throwError "AccountKey not set! Suggest using the -acctkey flag followed by your account key (you can find it in the Downloads section of your Huntress portal)."
     } elseif ($AccountKey.length -ne 32) {
-        copyLogAndExit -error "Invalid AccountKey specified (incorrect length)! Suggest double checking the key was copy/pasted in its entirety. Length = $($AccountKey.length)   expected value = 32"
+        copyLogAndExit -throwError "Invalid AccountKey specified (incorrect length)! Suggest double checking the key was copy/pasted in its entirety. Length = $($AccountKey.length)   expected value = 32"
     } elseif (($AccountKey -match '[^a-zA-Z0-9]')) {
-        copyLogAndExit -error "Invalid AccountKey specified (invalid characters found)! Suggest double checking the key was copy/pasted fully"
+        copyLogAndExit -throwError "Invalid AccountKey specified (invalid characters found)! Suggest double checking the key was copy/pasted fully"
     }
 
     # Ensure we have an organization key (hard coded or passed params).
     if ($OrganizationKey -eq "__ORGANIZATION_KEY__") {
-        copyLogAndExit -error "OrganizationKey not specified! This is a user defined identifier set by you (usually your customer's organization name)"
+        copyLogAndExit -throwError "OrganizationKey not specified! This is a user defined identifier set by you (usually your customer's organization name)"
     } elseif ($OrganizationKey.length -lt 1) {
-        copyLogAndExit -error "Invalid OrganizationKey specified (length should be > 0)!"
+        copyLogAndExit -throwError "Invalid OrganizationKey specified (length should be > 0)!"
     }
     LogMessage "Parameters verified."
 }
@@ -289,7 +289,7 @@ function verifyInstaller ($file) {
     try {
         $varChain.Build((Get-AuthenticodeSignature -FilePath "$file").SignerCertificate) | out-null
     } catch [System.Management.Automation.MethodInvocationException] {
-        copyLogAndExit -error "ERROR: '$file' did not contain a valid digital certificate, something may have corrupted the file. Try again and contact Support if the 2nd attempt fails"
+        copyLogAndExit -throwError "ERROR: '$file' did not contain a valid digital certificate, something may have corrupted the file. Try again and contact Support if the 2nd attempt fails"
     }
 }
 
@@ -324,7 +324,7 @@ function Get-Installer {
             # Rather than check for 'Tls12', we force-set TLS 1.2 and catch the error if it's truly unsupported.
             [Net.ServicePointManager]::SecurityProtocol = [Enum]::ToObject([Net.SecurityProtocolType], 3072)
         } catch {
-            copyLogAndExit -error "ERROR: Unable to use a secure version of TLS. Please verify Hotfix KB3140245 is installed. Error: ($_.Exception.Message)"
+            copyLogAndExit -throwError "ERROR: Unable to use a secure version of TLS. Please verify Hotfix KB3140245 is installed. Error: ($_.Exception.Message)"
         }
     }
 
@@ -352,7 +352,7 @@ function Get-Installer {
 
     # Ensure the file downloaded correctly, if not, throw error
     if ( ! (Test-Path $InstallerPath) ) {
-        copyLogAndExit -error "ERROR: Failed to download the Huntress Installer. Try accessing $($DownloadURL) from the host where the download failed. Please contact support@huntress.io if the problem persists."
+        copyLogAndExit -throwError "ERROR: Failed to download the Huntress Installer. Try accessing $($DownloadURL) from the host where the download failed. Please contact support@huntress.io if the problem persists."
     }
 
     $msg = "Installer downloaded to '$InstallerPath'..."
@@ -369,7 +369,7 @@ function Install-Huntress ($OrganizationKey) {
             "your logs. If the issue continues to occur, please send the log to the Huntress " +
             "Team for help at support@huntresslabs.com")
         LogMessage $err
-        copyLogAndExit -error $err
+        copyLogAndExit -throwError $err
     }
 
     # verify the installer's integrity
@@ -388,7 +388,7 @@ function Install-Huntress ($OrganizationKey) {
         $process | Wait-Process -Timeout $timeout -ErrorAction Stop
     } catch {
         $process | Stop-Process -Force
-        copyLogAndExit -error "ERROR: Installer failed to complete in $timeout seconds. Possible interference from a security product?"
+        copyLogAndExit -throwError "ERROR: Installer failed to complete in $timeout seconds. Possible interference from a security product?"
     }
 }
 
@@ -439,7 +439,7 @@ function Test-Installation {
     # Ensure the critical files were created.
     foreach ( $file in ($HuntressAgentPath, $HuntressUpdaterPath, $hUpdaterPath) ) {
         if ( ! (Test-Path $file) ) {
-            copyLogAndExit -error "ERROR: $file did not exist. Check your AV/security software quarantine"
+            copyLogAndExit -throwError "ERROR: $file did not exist. Check your AV/security software quarantine"
         }
         LogMessage "'$file' is present."
     }
@@ -464,7 +464,7 @@ function Test-Installation {
                     LogMessage "New install detected. It may take 24 hours for Huntress EDR (Rio) to install!"
                 }
             } else {
-                copyLogAndExit -error "$($svc) service is missing! + $($SupportMessage)"
+                copyLogAndExit -throwError "$($svc) service is missing! + $($SupportMessage)"
             }
         }
         # check if the service is running, attempt to restart if not (only for base agent).
@@ -475,7 +475,7 @@ function Test-Installation {
                 LogMessage "ERROR: The $($svc) service is not running. Attempting to restart"
                 Start-Service $svc
                 if (! (Confirm-ServiceRunning($svc))) {
-                    copyLogAndExit -error "ERROR: restart of service $($svc) failed."
+                    copyLogAndExit -throwError "ERROR: restart of service $($svc) failed."
                 }
             } else {
                 LogMessage "'$svc' is running."
@@ -490,14 +490,14 @@ function Test-Installation {
     } else {
         # Ensure the Huntress registry key is present.
         if ( ! (Test-Path $HuntressKeyPath) ) {
-            copyLogAndExit -error "ERROR: The registry key '$HuntressKeyPath' did not exist. You may need to reinstall with the -reregister flag"
+            copyLogAndExit -throwError "ERROR: The registry key '$HuntressKeyPath' did not exist. You may need to reinstall with the -reregister flag"
         }
 
         # Ensure the Huntress registry values are present.
         $HuntressKeyObject = Get-ItemProperty $HuntressKeyPath
         foreach ( $value in ($AgentIdKeyValueName, $OrganizationKeyValueName, $TagsValueName) ) {
             If ( ! (Get-Member -inputobject $HuntressKeyObject -name $value -Membertype Properties) ) {
-                copyLogAndExit -error "ERROR: The registry value $value did not exist within $HuntressKeyPath. You may need to reinstall with the -reregister flag"
+                copyLogAndExit -throwError "ERROR: The registry value $value did not exist within $HuntressKeyPath. You may need to reinstall with the -reregister flag"
             }
         }
     }
@@ -507,7 +507,7 @@ function Test-Installation {
         LogMessage "WARNING: Can't verify agent registration due to 32bit PowerShell on 64bit host."
     } else {
         If ($HuntressKeyObject.$AgentIdKeyValueName -eq 0) {
-            copyLogAndExit -error "ERROR: The agent did not register. Check the log (%ProgramFiles%\Huntress\HuntressAgent.log) for errors. Missing $($HuntressKeyObject.$AgentIdKeyValueName)"
+            copyLogAndExit -throwError "ERROR: The agent did not register. Check the log (%ProgramFiles%\Huntress\HuntressAgent.log) for errors. Missing $($HuntressKeyObject.$AgentIdKeyValueName)"
         }
         LogMessage "Agent registered."
     }
@@ -611,7 +611,7 @@ function runProcess ($process, $flags, $name){
         }
 
         $err = "ERROR: $($name) running as '$($process) $($flags)' failed to complete in $timeout seconds, full error message: '$($msg).'"
-        copyLogAndExit -error $err
+        copyLogAndExit -throwError $err
     }
 }
 
@@ -898,7 +898,7 @@ function logInfo {
     if ( $areURLsAvailable) {
         LogMessage "Network Connectivity verified!"
     } else {
-        copyLogAndExit -error "ERROR: Network connectivity problem detected!"
+        copyLogAndExit -throwError "ERROR: Network connectivity problem detected!"
     }
 
     # Search both 64-bit and 32-bit uninstall registry paths for the required C++ library (version 12+ recommended)
@@ -919,15 +919,19 @@ function logInfo {
 }
 
 # This function copies the Huntress DebugLog to a more permanent location as it's incredibly helpful for troubleshooting.
-# Exits with a code 0 if $error wasn't passed, otherwise throws the error contained in the $error string
+# Exits with a code 0 if $throwError wasn't passed, otherwise throws the error contained in the $throwError string
 function copyLogAndExit {
     param (
-        [string]$error="0"
+        [string]$throwError
     )
 
+    if ( $null -eq $throwError ) {
+        $throwError="0"
+    }
+
     # log the error message first
-    if ($error -ne "0") {
-        LogMessage "WARNING: Script errors detected, operation may not have completed! $error `n$SupportMessage"
+    if ($throwError -ne "0") {
+        LogMessage "WARNING: Script errors detected, operation may not have completed! $throwError `n$SupportMessage"
     }
 
     # sleep to ensure file operations have completed
@@ -939,11 +943,11 @@ function copyLogAndExit {
     if (!$uninstall){
         if (!(Test-Path -path $agentPath)) {New-Item $agentPath -Type Directory}
         try {
-	    Copy-Item -Path $DebugLog -Destination $logLocation -Force -ErrorAction SilentlyContinue
-	    Write-Output "'$($DebugLog)' copied to '$logLocation'."
-	} catch {
-	    Write-Output "Unable to copy Installer log, possible Tamper Protection interference. Look in \Windows\temp\ for HuntressPoShInstaller.log"
-	}
+	       Copy-Item -Path $DebugLog -Destination $logLocation -Force -ErrorAction SilentlyContinue
+	       Write-Output "'$($DebugLog)' copied to '$logLocation'."
+	   } catch {
+	       Write-Output "Unable to copy Installer log, possible Tamper Protection interference. Look in \Windows\temp\ for HuntressPoShInstaller.log"
+	   }
     }
 
     # if no error was passed, exit gracefully, otherwise throw an error and exit
@@ -951,8 +955,8 @@ function copyLogAndExit {
          Write-Output "Script complete!"
          exit 0
     } else {
-        Write-Output "WARNING: Script errors detected, operation may not have completed! Error: [$error]"
-        throw "$error"
+        Write-Output "WARNING: Script errors detected, operation may not have completed! Error: [$throwError]"
+        throw $throwError
     }
 }
 
@@ -1076,7 +1080,7 @@ function main () {
         LogMessage "powershell -executionpolicy bypass -f ./InstallHuntress.powershellv2.ps1 [-acctkey <account_key>] [-orgkey <organization_key>] [-tags <tags>] [-reregister] [-reinstall] [-uninstall] `n"
         LogMessage "Example:"
         LogMessage 'powershell -executionpolicy bypass -f ./InstallHuntress.powershellv2.ps1 -acctkey "0b8a694b2eb7b642069" -orgkey "Buzzword Company Name" -tags "production,US West" '
-        copyLogAndExit -error "No flags or account key found! Exiting."
+        copyLogAndExit -throwError "No flags or account key found! Exiting."
     }
 
 
@@ -1119,7 +1123,7 @@ function main () {
             $assetCount = (Get-ChildItem -Path $agentPath -File | Measure-Object).count
             # to avoid issues with a single file blocking installs, only exit script if multiple files are found and script not run with -reregister or -reinstall
             if ($assetCount -gt 1) {
-              copyLogAndExit -error "The Huntress Agent is already installed in $agentPath. Exiting with no changes. Suggest using -reregister or -reinstall flags. Asset count = $assetCount"
+              copyLogAndExit -throwError "The Huntress Agent is already installed in $agentPath. Exiting with no changes. Suggest using -reregister or -reinstall flags. Asset count = $assetCount"
             }
         }
     }
@@ -1136,7 +1140,7 @@ try {
     main
     Write-InstallScriptInfo
 } catch {
-    copyLogAndExit -error $_.Exception.Message
+    copyLogAndExit -throwError $_.Exception.Message
 }
 
 LogMessage "Script Complete"
