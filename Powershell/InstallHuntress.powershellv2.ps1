@@ -772,14 +772,12 @@ function testNetworkConnectivity {
             # Convert from bytes, if necessary
             if ($Response.Content.GetType() -eq [System.Byte[]]) {
                 $StrContent = [System.Text.Encoding]::UTF8.GetString($Response.Content)
-            }else {
+            } else {
                 $StrContent = $Response.Content.ToString().Trim()
             }
 
             # Remove all newlines from the content
             $StrContent = [string]::join("",($StrContent.Split("`n")))
-
-
             $ContentMatch = $StrContent -eq "96bca0cef10f45a8f7cf68c4485f23a4"
         } catch {
             LogMessage "Error: $($_.Exception.Message)"
@@ -910,7 +908,9 @@ function logInfo {
                 LogMessage "Name: $($app.DisplayName)  Version: $($app.DisplayVersion)"
                 count++
             }
-        } catch {}
+        } catch {
+		    # do nothing for blank entries
+		}
     }
     if ( $count -eq 0 ) {
         LogMessage "Warning: Visual C++ library not found! You may have issues with Huntress running." +
