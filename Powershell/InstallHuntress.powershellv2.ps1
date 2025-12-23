@@ -72,7 +72,7 @@ $estimatedSpaceNeeded = 200111222
 ##############################################################################
 
 # These are used by the Huntress support team when troubleshooting.
-$ScriptVersion = "Version 2, major revision 8, 2025 Dec 22"
+$ScriptVersion = "Version 2, major revision 8, 2025 Dec 23"
 $ScriptType = "PowerShell"
 
 # variables used throughout this script
@@ -458,7 +458,7 @@ function Test-Installation {
             # if Huntress was installed before this script started and Rio is missing then we log that, but continue with this script
             if ($svc -eq $HuntressEDRServiceName) {
                 if ($isHuntressInstalled) {
-                    LogMessage "Warning: Huntress Process Insights (aka Rio) is installed automatically by the Huntress portal. It can take up to 24 hours to show up"
+                    LogMessage "Information: Huntress Process Insights (aka Rio) is installed automatically by the Huntress portal. It can take up to 24 hours to show up"
                     LogMessage "See more about compatibility here: https://support.huntress.io/hc/en-us/articles/4410699983891-Supported-Operating-Systems-System-Requirements-Compatibility"
                 } else {
                     LogMessage "New install detected. It may take 24 hours for Huntress EDR (Rio) to install!"
@@ -853,13 +853,13 @@ function logInfo {
         LogMessage "Warning: Not run under the SYSTEM user, you may have issues with Huntress Tamper Protection"
     }
 
-    # Log machine uptime
+    # Log machine uptime, use -1 to call attention to machines that have issues running the GCIM command
     try
     {
         $uptime = ((Get-Date) - (GCIM Win32_OperatingSystem).LastBootUpTime).days
     } catch {
         LogMessage "Unable to determine system uptime"
-        $uptime = 0
+        $uptime = -1
     }
     if ($uptime -gt 9) {
         LogMessage "Warning, high uptime detected  This machine may need a reboot in order to resolve Windows update-based file locks."
@@ -898,36 +898,15 @@ function logInfo {
     } else {
         copyLogAndExit -throwError "ERROR: Network connectivity problem detected!"
     }
-
-    # Search both 64-bit and 32-bit uninstall registry paths for the required C++ library (version 12+ recommended)
-    $installedApps = (Get-ItemProperty 'HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*', 'HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*' )
-    $count = 0
-    foreach ( $app in $installedApps) {
-        try {
-            if ( $app.DisplayName -like "*Visual C++*") {
-                LogMessage "Name: $($app.DisplayName)  Version: $($app.DisplayVersion)"
-                count++
-            }
-        } catch {
-		    # do nothing for blank entries
-		}
-    }
-    if ( $count -eq 0 ) {
-        LogMessage "Warning: Visual C++ library not found! You may have issues with Huntress running." +
-                   " Highly recommend installing C++ and trying the deploy again: https://www.microsoft.com/en-us/download/details.aspx?id=48145"
-    }
 }
 
-# This function copies the Huntress DebugLog to a more permanent location as it's incredibly helpful for troubleshooting.
+# This function copies the Huntress DebugLog to a more permanent location as it's incredibly helpful for troubleshooting. AB
 # Exits with a code 0 if $throwError wasn't passed, otherwise throws the error contained in the $throwError string
 function copyLogAndExit {
     param (
         [string]$throwError
     )
-
-    if ( $null -eq $throwError ) {
-        $throwError="0"
-    }
+    if ( [string]::IsNullOrEmpty($throwError) ) { $throwError="0" }
 
     # log the error message first
     if ($throwError -ne "0") {
@@ -943,15 +922,15 @@ function copyLogAndExit {
     if (!$uninstall){
         if (!(Test-Path -path $agentPath)) {New-Item $agentPath -Type Directory}
         try {
-	       Copy-Item -Path $DebugLog -Destination $logLocation -Force -ErrorAction SilentlyContinue
-	       Write-Output "'$($DebugLog)' copied to '$logLocation'."
-	   } catch {
-	       Write-Output "Unable to copy Installer log, possible Tamper Protection interference. Look in \Windows\temp\ for HuntressPoShInstaller.log"
-	   }
+           Copy-Item -Path $DebugLog -Destination $logLocation -Force -ErrorAction SilentlyContinue
+           Write-Output "'$($DebugLog)' copied to '$logLocation'."
+       } catch {
+           Write-Output "Unable to copy Installer log, possible Tamper Protection interference. Look in \Windows\temp\ for HuntressPoShInstaller.log"
+       }
     }
 
     # if no error was passed, exit gracefully, otherwise throw an error and exit
-    if ($error -eq "0") {
+    if ($throwError -eq "0") {
          Write-Output "Script complete!"
          exit 0
     } else {
@@ -1041,12 +1020,60 @@ function Write-InstallScriptInfo {
     $ErrorActionPreference = $hold
 }
 
+# Logging Visual C++ info for a Windows 8.1 specific issue
+function libraryCheck {
+    # Since this issue only affects Win 8.1, check the OS version before logging.
+    try {
+        if ( (Get-CimInstance -classname Win32_OperatingSystem | select caption) -notlike "*8.1*") {
+            LogMessage "Windows 8.1 not detected, not checking for missing dependencies"
+            return
+        }
+    } catch { LogMessage "Unable to determine system OS. Checking for dependencies just in case, but this Visual C++ check is only relevant for Windows 8.1 machines!" }
+
+    # Fleet Health Check: UCRT + VC Redistributables
+    $Results = [PSCustomObject]@{
+        ComputerName  = $env:COMPUTERNAME
+        KB2919355     = "Missing, install KB2919355 https://www.microsoft.com/en-us/download/details.aspx?id=42327"
+        KB2999226     = "Missing, install KB2999226 https://www.microsoft.com/en-ie/download/details.aspx?id=51109"
+        UCRT_Version  = "None, install Universal CRT https://support.microsoft.com/en-us/topic/update-for-universal-c-runtime-in-windows-c0514201-7fe6-95a3-b0a5-287930f3560c"
+        VCRedist_x64  = "Not Found, install x64 Visual C++ Redistributable v14 https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170#visual-c-redistributable-v14"
+        VCRedist_x86  = "Not Found, install x86 Visual C++ Redistributable v14 https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170#visual-c-redistributable-v14"
+    }
+
+    # 1. Check for KBs
+    $Hotfixes = Get-HotFix | Select-Object -ExpandProperty HotFixID
+    if ($Hotfixes -contains "KB2919355") { $Results.KB2919355 = "Installed`n" }
+    if ($Hotfixes -contains "KB2999226") { $Results.KB2999226 = "Installed`n" }
+
+    # 2. Check for UCRT DLL Version
+    if (Test-Path "$env:windir\System32\ucrtbase.dll") {
+        $Results.UCRT_Version = "$((Get-Item "$env:windir\System32\ucrtbase.dll").VersionInfo.ProductVersion)  (version 10.0.14393+ is recommended)"
+    }
+
+    # 3. Check for VC Redist 2015-2022 via Registry (Fastest for Fleet)
+    $UninstallKeys = @(
+        "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*",
+        "HKLM:\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*"
+    )
+    Get-ItemProperty $UninstallKeys | Where-Object { $_.psobject.Properties["DisplayName"] } | Where-Object { $_.DisplayName -like "*Visual C++*" } | ForEach-Object {
+        if ($_.DisplayName -like "*x64*") { $Results.VCRedist_x64 = "$($_.DisplayVersion)  (version 14+ is recommended)" }
+        if ($_.DisplayName -like "*x86*") { $Results.VCRedist_x86 = "$($_.DisplayVersion)  (version 14+ is recommended)" }
+    }
+
+    # Save each of the name and property values on a new line in the installer log
+    foreach ($property in $Results.PSObject.Properties) {
+        if ($null -ne $property) { LogMessage "$($property.Name) - $($property.Value)" }
+    }
+}
+
+
 #########################################################################################
 #                                  begin main function                                  #
 #########################################################################################
 function main () {
     # Start the script with logging as much as we can as soon as we can. All your logging are belong to us, Zero Wang.
     logInfo
+
     LogMessage "Script flags:  Reregister=$reregister  Reinstall=$reinstall  Uninstall=$uninstall "
 
     if ($AccountKey.length -lt 8) {
@@ -1062,6 +1089,9 @@ function main () {
         uninstallHuntress
         copyLogAndExit
     }
+
+    # Logging some additional info for a temporary issue with Windows 8.1 and missing Visual C++ dependencies
+    libraryCheck
 
     # if the agent is orphaned, switch to the full uninstall/reinstall (reregister flag)
     if ( !($reregister)) {
