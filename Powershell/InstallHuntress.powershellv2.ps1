@@ -1024,7 +1024,7 @@ function Write-InstallScriptInfo {
 function libraryCheck {
     # Since this issue only affects Win 8.1, check the OS version before logging.
     try {
-        if ( (Get-CimInstance -classname Win32_OperatingSystem | select caption) -notlike "*8.1*") {
+        if ( (Get-CimInstance -classname Win32_OperatingSystem | Select-Object caption) -notlike "*8.1*") {
             LogMessage "Windows 8.1 not detected, not checking for missing dependencies"
             return
         }
