@@ -1058,7 +1058,7 @@ function libraryCheck {
 
     # Save each of the name and property values on a new line in the installer log
     foreach ($property in $Results.PSObject.Properties) {
-	if ($null -ne $property) { LogMessage "$($property.Name) - $($property.Value)" }
+		if ($null -ne $property) { LogMessage "$($property.Name) - $($property.Value)" }
     }
 }
 
