@@ -72,7 +72,7 @@ $estimatedSpaceNeeded = 200111222
 ##############################################################################
 
 # These are used by the Huntress support team when troubleshooting.
-$ScriptVersion = "Version 2, major revision 8, 2025 Dec 23"
+$ScriptVersion = "Version 2, major revision 8, 2025 Dec 24"
 $ScriptType = "PowerShell"
 
 # variables used throughout this script
@@ -807,10 +807,6 @@ function testNetworkConnectivity {
 
 # Log useful data about the machine for troubleshooting AB
 function logInfo {
-    # gather info on the host for logging purposes
-    LogMessage "Script type: '$ScriptType'"
-    LogMessage "Script version: '$ScriptVersion'"
-
     # if Huntress was already installed, pull version info and TP status
     LogMessage "Script cursory check, is Huntress installed already: $($isHuntressInstalled)"
     if ($isHuntressInstalled){
@@ -893,7 +889,7 @@ function logInfo {
     }
 
     $areURLsAvailable = testNetworkConnectivity
-    if ( $areURLsAvailable) {
+    if ( $areURLsAvailable ) {
         LogMessage "Network Connectivity verified!"
     } else {
         copyLogAndExit -throwError "ERROR: Network connectivity problem detected!"
@@ -1062,7 +1058,7 @@ function libraryCheck {
 
     # Save each of the name and property values on a new line in the installer log
     foreach ($property in $Results.PSObject.Properties) {
-        if ($null -ne $property) { LogMessage "$($property.Name) - $($property.Value)" }
+	if ($null -ne $property) { LogMessage "$($property.Name) - $($property.Value)" }
     }
 }
 
@@ -1071,19 +1067,19 @@ function libraryCheck {
 #                                  begin main function                                  #
 #########################################################################################
 function main () {
-    # Start the script with logging as much as we can as soon as we can. All your logging are belong to us, Zero Wang.
-    logInfo
-
+    # Start the script with logging to capture useful data for troubleshooting. All your logging are belong to us, Zero Wang.
+    LogMessage "Script type: '$ScriptType'"
+    LogMessage "Script version: '$ScriptVersion'"
     LogMessage "Script flags:  Reregister=$reregister  Reinstall=$reinstall  Uninstall=$uninstall "
-
     if ($AccountKey.length -lt 8) {
         LogMessage "Invalid key length, found $($AccountKey.length) (should be 32). Account key value: $AccountKey"
     } else {
         $masked = $AccountKey.Substring(0,4) + "************************" + $AccountKey.SubString($AccountKey.length-4,4)
         LogMessage "Pre-trim variables: account key=[$masked]  org key=[$OrganizationKey]   (brackets are in place to show trailing/leading spaces)"
     }
+    logInfo
 
-    # if run with the uninstall flag, exit so we don't reinstall the agent after
+    # if run with the uninstall flag, exit afterward so we don't reinstall the agent after
     if ($uninstall) {
         LogMessage "Uninstalling Huntress agent"
         uninstallHuntress
@@ -1163,7 +1159,6 @@ function main () {
     fixServices
     Test-Installation
     LogMessage "Huntress Agent successfully installed!"
-    copyLogAndExit
 }
 
 try {
@@ -1174,3 +1169,4 @@ try {
 }
 
 LogMessage "Script Complete"
+copyLogAndExit
