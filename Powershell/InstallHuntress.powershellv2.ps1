@@ -750,16 +750,17 @@ function testNetworkConnectivity {
     Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Internet Explorer\Main" -Name "DisableFirstRunCustomize" -Value 2
 
     $file_name = "96bca0cef10f45a8f7cf68c4485f23a4.txt"
-    $URLs = @(("https://eetee.huntress.io/{0}"-f $file_name),
-    ("https://huntress-installers.s3.us-east-1.amazonaws.com/agent/connectivity/{0}" -f $file_name),
-    ("https://huntress-rio.s3.amazonaws.com/agent/connectivity/{0}" -f $file_name),
-    ("https://huntress-survey-results.s3.amazonaws.com/agent/connectivity/{0}" -f $file_name),
-    ("https://huntress-updates.s3.amazonaws.com/agent/connectivity/{0}" -f $file_name),
-    ("https://huntress-uploads.s3.us-west-2.amazonaws.com/agent/connectivity/{0}" -f $file_name),
-    ("https://huntress-user-uploads.s3.amazonaws.com/agent/connectivity/{0}" -f $file_name),
-    ("https://huntress.io/agent/connectivity/{0}" -f $file_name),
-    ("https://huntresscdn.com/agent/connectivity/{0}" -f $file_name),
-    ("https://update.huntress.io/agent/connectivity/{0}" -f $file_name))
+    $URLs = @(("https://update.huntress.io/agent/connectivity/{0}" -f $file_name),
+			("https://huntress.io/agent/connectivity/{0}" -f $file_name),
+			("https://eetee.huntress.io/{0}"-f $file_name),
+			("https://huntresscdn.com/agent/connectivity/{0}" -f $file_name),
+			("https://huntress-installers.s3.amazonaws.com/agent/connectivity/{0}" -f $file_name),
+			("https://huntress-updates.s3.amazonaws.com/agent/connectivity/{0}" -f $file_name),
+			("https://huntress-uploads.s3.us-west-2.amazonaws.com/agent/connectivity/{0}" -f $file_name),
+			("https://huntress-user-uploads.s3.amazonaws.com/agent/connectivity/{0}" -f $file_name),
+			("https://huntress-rio.s3.amazonaws.com/agent/connectivity/{0}" -f $file_name),
+			("https://huntress-survey-results.s3.amazonaws.com/agent/connectivity/{0}" -f $file_name),
+			("https://huntress-log-uploads.s3.amazonaws.com/agent/connectivity/{0}" -f $file_name))
 
     foreach ($URL in $URLs) {
         $StatusCode = 0
