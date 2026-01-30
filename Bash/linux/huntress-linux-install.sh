@@ -106,16 +106,19 @@ get_user_creds() {
 download_latest() {
   local url="${PORTAL_URL}/download/linux/${ACCOUNT_KEY}?arch=${ARCH}"
   local status_code="0"
+  local exit_code=0
 
   # If neither wget or curl exists on the system, then we fail at the previous validation step
   if [ "$CURL_INSTALLED" = true ]; then
     status_code=$(curl -f -L -o "${HUNTRESS_PKG}" -w "%{http_code}" "${url}")
+    exit_code=$?
   elif [ "$WGET_INSTALLED" = true ]; then
     # if there is a redirect, get the last http response code
     status_code=$(wget -S -pO "${HUNTRESS_PKG}" "${url}" 2>&1 | grep "HTTP/" | awk '{print $2}' | tail -n 1 | tr -d '[:space:]' )
+    exit_code=$?
   fi
 
-  if [ $? != 0 ] || [ "$status_code" != "200" ]; then
+  if [ "$exit_code" != 0 ] || [ "$status_code" != "200" ]; then
     # provide helpful failure message
     if [ "$status_code" = "400" ]; then
       die "Account Key not valid."
@@ -177,7 +180,7 @@ test_url() {
     exit_code=${exit_code:-0}
 
     # return code 8 connection succeeded, but the server returned a non-200 status
-    if [ $exit_code -eq 0 ] || [ $exit_code -eq 8 ]; then
+    if [ "$exit_code" -eq 0 ] || [ "$exit_code" -eq 8 ]; then
       return 0 # success
     fi
   fi
