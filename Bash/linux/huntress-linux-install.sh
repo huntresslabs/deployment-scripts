@@ -4,7 +4,7 @@
 # Unauthorized copying of this file, via any medium is strictly prohibited
 # without the express written consent of Huntress Labs, Inc.
 
-set -euo pipefail
+set -uo pipefail
 
 declare ACCOUNT_KEY=
 declare ORG_KEY=
@@ -104,17 +104,22 @@ get_user_creds() {
 
 # download latest Huntress package from S3
 download_latest() {
-  status_code="0"
+  local url="${PORTAL_URL}/download/linux/${ACCOUNT_KEY}?arch=${ARCH}"
+  local status_code="0"
+  local exit_code=0
+
   # If neither wget or curl exists on the system, then we fail at the previous validation step
-  if [ "$WGET_INSTALLED" = true ]; then
-    status_code=$(wget -S -pO "${HUNTRESS_PKG}" "${PORTAL_URL}/download/linux/${ACCOUNT_KEY}?arch=${ARCH}" 2>&1 \
-     | grep "HTTP/" | awk '{print $2}')
-  else
-    status_code=$(curl -f -L -o "${HUNTRESS_PKG}" -w "%{http_code}" \
-      "${PORTAL_URL}/download/linux/${ACCOUNT_KEY}?arch=${ARCH}")
+  if [ "$CURL_INSTALLED" = true ]; then
+    status_code=$(curl -f -L -o "${HUNTRESS_PKG}" -w "%{http_code}" "${url}")
+    exit_code=$?
+  elif [ "$WGET_INSTALLED" = true ]; then
+    # if there is a redirect, get the last http response code
+    status_code=$(wget -S -pO "${HUNTRESS_PKG}" "${url}" 2>&1 | grep "HTTP/" | awk '{print $2}' | tail -n 1 | tr -d '[:space:]' )
+    exit_code=$?
   fi
 
-  if [ $? != 0 ]; then
+  if [ "$exit_code" != 0 ] || [ "$status_code" != "200" ]; then
+    # provide helpful failure message
     if [ "$status_code" = "400" ]; then
       die "Account Key not valid."
     elif [ "$status_code" = "404" ]; then
@@ -122,9 +127,15 @@ download_latest() {
     elif [ "$status_code" = "409" ]; then
       die "The Linux Beta has not been enabled for this account."
     fi
-  elif ! [ -f "$HUNTRESS_PKG" ]; then
+
+    die "Failed to download installation package"
+  fi
+
+  if ! [ -f "$HUNTRESS_PKG" ]; then
     die "File download failed."
   fi
+
+  return 0
 }
 
 # determine arch type
@@ -158,6 +169,25 @@ validate_package() {
   fi
 }
 
+test_url() {
+  # use curl if installed
+  if [ "$CURL_INSTALLED" = true ]; then
+    if curl -s -o /dev/null "$1"; then
+      return 0 # success
+    fi
+  elif [ "$WGET_INSTALLED" = true ]; then
+    wget --spider --quiet "$1" || local exit_code=$?
+    exit_code=${exit_code:-0}
+
+    # return code 8 connection succeeded, but the server returned a non-200 status
+    if [ "$exit_code" -eq 0 ] || [ "$exit_code" -eq 8 ]; then
+      return 0 # success
+    fi
+  fi
+
+  die "CONNECTION FAILURE: Unable to reach $1"
+}
+
 # Check minimum requirements
 validate_requirements() {
   log_info "[+] Validating requirements"
@@ -188,11 +218,6 @@ validate_requirements() {
     die "REQUIREMENT FAILURE: curl or wget needs to be installed"
   fi
 
-  test_url() {
-    if ! curl -s -o /dev/null "$1"; then
-      die "CONNECTION FAILURE: Unable to reach $1"
-    fi
-  }
   test_url "https://huntress.io"
   test_url "https://s3.amazonaws.com"
   test_url "https://huntresscdn.com"
