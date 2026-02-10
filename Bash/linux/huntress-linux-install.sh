@@ -120,7 +120,7 @@ download_latest() {
     elif [ "$status_code" = "404" ]; then
       die "File not found on S3."
     elif [ "$status_code" = "409" ]; then
-      die "The Linux Beta has not been enabled for this account."
+      die "Linux EDR support has not been enabled for this account."
     fi
   elif ! [ -f "$HUNTRESS_PKG" ]; then
     die "File download failed."
