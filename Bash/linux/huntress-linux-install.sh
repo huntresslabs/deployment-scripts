@@ -202,7 +202,7 @@ validate_requirements() {
       fi
     elif [ "$WGET_INSTALLED" = true ]; then
       wget --spider --quiet "$1" || local exit_code=$?
-      exit_code=${exit_code:-0}
+      exit_code=${exit_code:-1}
 
       # return code 8 connection succeeded, but the server returned a non-200 status
       if [ "$exit_code" -eq 0 ] || [ "$exit_code" -eq 8 ]; then
