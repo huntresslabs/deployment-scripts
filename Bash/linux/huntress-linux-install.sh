@@ -195,10 +195,24 @@ validate_requirements() {
   fi
 
   test_url() {
-    if ! curl -s -o /dev/null "$1"; then
-      die "CONNECTION FAILURE: Unable to reach $1"
+    # use curl if installed
+    if [ "$CURL_INSTALLED" = true ]; then
+      if curl -s -o /dev/null "$1"; then
+        return 0 # success
+      fi
+    elif [ "$WGET_INSTALLED" = true ]; then
+      wget --spider --quiet "$1" || local exit_code=$?
+      exit_code=${exit_code:-0}
+
+      # return code 8 connection succeeded, but the server returned a non-200 status
+      if [ "$exit_code" -eq 0 ] || [ "$exit_code" -eq 8 ]; then
+        return 0 # success
+      fi
     fi
+
+    die "CONNECTION FAILURE: Unable to reach $1"
   }
+
   test_url "https://huntress.io"
   test_url "https://s3.amazonaws.com"
   test_url "https://huntresscdn.com"
