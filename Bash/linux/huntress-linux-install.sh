@@ -4,7 +4,7 @@
 # Unauthorized copying of this file, via any medium is strictly prohibited
 # without the express written consent of Huntress Labs, Inc.
 
-set -uo pipefail
+set -euo pipefail
 
 declare ACCOUNT_KEY=
 declare ORG_KEY=
@@ -104,38 +104,27 @@ get_user_creds() {
 
 # download latest Huntress package from S3
 download_latest() {
-  local url="${PORTAL_URL}/download/linux/${ACCOUNT_KEY}?arch=${ARCH}"
-  local status_code="0"
-  local exit_code=0
-
+  status_code="0"
   # If neither wget or curl exists on the system, then we fail at the previous validation step
   if [ "$CURL_INSTALLED" = true ]; then
-    status_code=$(curl -f -L -o "${HUNTRESS_PKG}" -w "%{http_code}" "${url}")
-    exit_code=$?
-  elif [ "$WGET_INSTALLED" = true ]; then
-    # if there is a redirect, get the last http response code
-    status_code=$(wget -S -pO "${HUNTRESS_PKG}" "${url}" 2>&1 | grep "HTTP/" | awk '{print $2}' | tail -n 1 | tr -d '[:space:]' )
-    exit_code=$?
+    status_code=$(curl -f -L -o "${HUNTRESS_PKG}" -w "%{http_code}" \
+      "${PORTAL_URL}/download/linux/${ACCOUNT_KEY}?arch=${ARCH}")
+  else
+    status_code=$(wget -S -O "${HUNTRESS_PKG}" "${PORTAL_URL}/download/linux/${ACCOUNT_KEY}?arch=${ARCH}" 2>&1 |
+      grep "HTTP/" | awk '{print $2}')
   fi
 
-  if [ "$exit_code" != 0 ] || [ "$status_code" != "200" ]; then
-    # provide helpful failure message
+  if [ $? != 0 ]; then
     if [ "$status_code" = "400" ]; then
       die "Account Key not valid."
     elif [ "$status_code" = "404" ]; then
       die "File not found on S3."
     elif [ "$status_code" = "409" ]; then
-      die "The Linux Beta has not been enabled for this account."
+      die "Linux EDR support has not been enabled for this account."
     fi
-
-    die "Failed to download installation package"
-  fi
-
-  if ! [ -f "$HUNTRESS_PKG" ]; then
+  elif ! [ -f "$HUNTRESS_PKG" ]; then
     die "File download failed."
   fi
-
-  return 0
 }
 
 # determine arch type
@@ -169,35 +158,22 @@ validate_package() {
   fi
 }
 
-test_url() {
-  # use curl if installed
-  if [ "$CURL_INSTALLED" = true ]; then
-    if curl -s -o /dev/null "$1"; then
-      return 0 # success
-    fi
-  elif [ "$WGET_INSTALLED" = true ]; then
-    wget --spider --quiet "$1" || local exit_code=$?
-    exit_code=${exit_code:-0}
-
-    # return code 8 connection succeeded, but the server returned a non-200 status
-    if [ "$exit_code" -eq 0 ] || [ "$exit_code" -eq 8 ]; then
-      return 0 # success
-    fi
-  fi
-
-  die "CONNECTION FAILURE: Unable to reach $1"
-}
-
 # Check minimum requirements
 validate_requirements() {
   log_info "[+] Validating requirements"
 
-  # Kernel version must be 5.14 or higher
+  # Kernel version must be 5.14 or higher, or 4.18 for RHEL
   version_check() {
+    os_release_id=$(grep '^ID=' /etc/os-release | cut -d'=' -f2)
+    allowed_418=("rhel cloudlinux")
+    if [[ " ${allowed_418[*]} " =~ [[:space:]]${os_release_id}[[:space:]] ]]; then
+      return "$(uname -r | awk -F '.' '{ if ($1 < 4) { print 1; } else if ($1 == 4) { if ($2 < 18) { print 1; } else { print 0; } } else { print 0; } }')"
+    else
       return "$(uname -r | awk -F '.' '{ if ($1 < 5) { print 1; } else if ($1 == 5) { if ($2 < 14) { print 1; } else { print 0; } } else { print 0; } }')"
+    fi
   }
   if ! version_check; then
-    die "REQUIREMENT FAILURE: Huntress requires a Linux kernel version of 5.14 or higher"
+    die "REQUIREMENT FAILURE: Huntress requires a Linux kernel version of 5.14 or higher (4.18 or higher for RHEL-compatible)"
   fi
 
   # Systemd
@@ -217,6 +193,25 @@ validate_requirements() {
   if [ "$CURL_INSTALLED" = false ] && [ "$WGET_INSTALLED" = false ]; then
     die "REQUIREMENT FAILURE: curl or wget needs to be installed"
   fi
+
+  test_url() {
+    # use curl if installed
+    if [ "$CURL_INSTALLED" = true ]; then
+      if curl -s -o /dev/null "$1"; then
+        return 0 # success
+      fi
+    elif [ "$WGET_INSTALLED" = true ]; then
+      wget --spider --quiet "$1" || local exit_code=$?
+      exit_code=${exit_code:-1}
+
+      # return code 8 connection succeeded, but the server returned a non-200 status
+      if [ "$exit_code" -eq 0 ] || [ "$exit_code" -eq 8 ]; then
+        return 0 # success
+      fi
+    fi
+
+    die "CONNECTION FAILURE: Unable to reach $1"
+  }
 
   test_url "https://huntress.io"
   test_url "https://s3.amazonaws.com"
@@ -247,6 +242,10 @@ install_pkg() {
   log_info "[+] Starting Huntress Services"
   $huntress_agent start || die "Failed to start huntress-agent service"
   $huntress_updater start || die "Failed to start huntress-updater service"
+
+  # trigger an update check
+  log_info "[+] Checking for updates"
+  $huntress_agent update
 }
 
 if [ $# -eq 0 ]; then
