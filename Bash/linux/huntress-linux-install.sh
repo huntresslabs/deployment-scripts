@@ -173,7 +173,7 @@ validate_requirements() {
     fi
   }
   if ! version_check; then
-    die "REQUIREMENT FAILURE: Huntress requires a Linux kernel version of 5.14 or higher (4.18 or higher for RHEL)"
+    die "REQUIREMENT FAILURE: Huntress requires a Linux kernel version of 5.14 or higher (4.18 or higher for RHEL-compatible)"
   fi
 
   # Systemd
