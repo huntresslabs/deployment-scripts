@@ -162,9 +162,9 @@ validate_package() {
 validate_requirements() {
   log_info "[+] Validating requirements"
 
-  # Kernel version must be 5.14 or higher, or 4.18 for RHEL
+  # Kernel version must be 5.14 or higher, or 4.18 for RHEL-compatible distros
   version_check() {
-    os_release_id=$(grep '^ID=' /etc/os-release | cut -d'=' -f2)
+    os_release_id=$(grep '^ID=' /etc/os-release | cut -d'=' -f2| tr -d \")
     allowed_418=("rhel cloudlinux")
     if [[ " ${allowed_418[*]} " =~ [[:space:]]${os_release_id}[[:space:]] ]]; then
       return "$(uname -r | awk -F '.' '{ if ($1 < 4) { print 1; } else if ($1 == 4) { if ($2 < 18) { print 1; } else { print 0; } } else { print 0; } }')"
@@ -173,7 +173,7 @@ validate_requirements() {
     fi
   }
   if ! version_check; then
-    die "REQUIREMENT FAILURE: Huntress requires a Linux kernel version of 5.14 or higher (4.18 or higher for RHEL-compatible)"
+    die "REQUIREMENT FAILURE: Huntress requires a Linux kernel version of 5.14 or higher (4.18 or higher for RHEL-compatible distros)"
   fi
 
   # Systemd
@@ -194,6 +194,15 @@ validate_requirements() {
     die "REQUIREMENT FAILURE: curl or wget needs to be installed"
   fi
 
+  # tar
+  TAR_INSTALLED=false
+  if [ "$(which tar)" ]; then
+    TAR_INSTALLED=true
+  fi
+  if [ "$TAR_INSTALLED" = false ]; then
+    die "REQUIREMENT FAILURE: tar needs to be installed"
+  fi
+
   test_url() {
     # use curl if installed
     if [ "$CURL_INSTALLED" = true ]; then
@@ -201,8 +210,8 @@ validate_requirements() {
         return 0 # success
       fi
     elif [ "$WGET_INSTALLED" = true ]; then
-      wget --spider --quiet "$1" || local exit_code=$?
-      exit_code=${exit_code:-1}
+      exit_code=0
+      wget --spider --quiet "$1" || exit_code=$?
 
       # return code 8 connection succeeded, but the server returned a non-200 status
       if [ "$exit_code" -eq 0 ] || [ "$exit_code" -eq 8 ]; then
