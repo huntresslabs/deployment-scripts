@@ -148,8 +148,8 @@
       <p:PolicySequence.Variables>
         <Variable x:TypeArguments="x:String" Name="IfElse_ResultString" />
         <Variable x:TypeArguments="x:Double" Name="IfElse_Result" />
-        <Variable x:TypeArguments="x:String" Default="062a65a4c793212ce5a1f4f971767a43" Name="AccountKey" />
-        <Variable x:TypeArguments="x:String" Default="cameron-test" Name="OrganizationKey" />
+        <Variable x:TypeArguments="x:String" Default="" Name="AccountKey" />
+        <Variable x:TypeArguments="x:String" Default="" Name="OrganizationKey" />
       </p:PolicySequence.Variables>
     </p:PolicySequence>
   </Activity>
