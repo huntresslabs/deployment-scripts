@@ -404,35 +404,33 @@ function Test-Installation {
 
     LogMessage "Verifying installation..."
 
-    # Watch the agent logs for registration event, log if succeeded, waiting no longer than 10 seconds before outputting failure to log
+    # 
+    # Watch for HuntressAgent.log, checking every 1/4 second until 10 seconds elapsed, if found grab the last 8 lines
     $didAgentRegister = $false
     for ($i = 0; $i -le 40; $i++) {
         if (Test-Path "$($HuntressDirectory)\HuntressAgent.log") {
-            $linesFromLog = Get-Content "$($HuntressDirectory)\HuntressAgent.log" | Select-Object -last 6
-            ForEach ($line in $linesFromLog) {
-                if ($line -like "*registered agent*") {
-                    LogMessage "Agent successfully registered in $($i/4) seconds"
-                    $didAgentRegister = $true
-                    Start-Sleep -Milliseconds 250
-                    $i=100
-                }
-            }
+            $linesFromLog = Get-Content "$($HuntressDirectory)\HuntressAgent.log" | Select-Object -last 8
+            break
         }
         Start-Sleep -Milliseconds 250
+    }
+    # Write the end of HuntressAgent log to this PoSh deploy log, and note if the agent registered successfully
+    if ($NULL -ne $linesFromLog) {
+        ForEach ($line in $linesFromLog) {
+            LogMessage $line
+            if ($line -like "*registered agent*") {
+                $didAgentRegister = $true
+            }
+        }
+    } else {
+        LogMessage "Warning: HuntressAgent.log not found! This is typically caused by 3rd party interference - AV, EDR, ThreatLocker"
     }
     # If the agent didn't register, log the tail of HuntressAgent.log so Support can see the reason registration failed
     if ( ! $didAgentRegister) {
         $err = "WARNING: It does not appear the agent has successfully registered. Check 3rd party AV exclusion lists to ensure Huntress is excluded."
         LogMessage ($err + $SupportMessage)
-        if (Test-Path "$($HuntressDirectory)\HuntressAgent.log") {
-            $linesFromLog = Get-Content "$($HuntressDirectory)\HuntressAgent.log" | Select-Object -last 8
-            LogMessage "Newest 8 lines of HuntressAgent.log:"
-            ForEach ($line in $linesFromLog) {
-                LogMessage $line
-            }
-        } else {
-            LogMessage "HuntressAgent.log not found after post-registration failure! Likely 3rd party interference (AV/ThreatLocker)."
-        }
+    } else {
+        LogMessage "Agent successfully registered in $($i/4) seconds"
     }
 
     # Ensure the critical files were created.
@@ -786,17 +784,10 @@ function testNetworkConnectivity {
         }
     }
     # process the data from github
-    if ($data -is [System.Collections.IDictionary]) {
-        $testURLs      = @($data['array1'])
-        $certURLs      = @($data['array2'])
-        $certTemp      = @($data['array4'])
-        $expIssuerName = @($data['array5'])
-    } else {
-        $testURLs      = @($data.array1)
-        $certURLs      = @($data.array2)
-        $certTemp      = @($data.array4)
-        $expIssuerName = @($data.array5)
-    }
+    $testURLs      = @($data.array1)
+    $certURLs      = @($data.array2)
+    $certTemp      = @($data.array4)
+    $expIssuerName = @($data.array5)
     $expSubject    = @()
     $expIssuer     = @()
     # array4 contains two different sets of info, even indices are subject, odd indices are issuer
@@ -988,7 +979,8 @@ function logInfo {
     }
 
     # Log machine uptime, use -1 to call attention to machines that have issues running the GCIM command
-    $uptime = ([Regex]::Replace((Get-WmiObject Win32_OperatingSystem).LastBootUpTime, '^(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2}).*', '$1-$2-$3 $4:$5:$6') -as [DateTime] | ForEach-Object { [Math]::Abs(((Get-Date) - $_).Days) })
+    $uptime = ([Timespan]::FromMilliseconds([Environment]::TickCount)).Days
+
 
     if ($uptime -gt 9) {
         LogMessage "Warning, high uptime detected. This machine may need a reboot in order to resolve Windows update-based file locks. $($uptime)`n"
@@ -1102,18 +1094,9 @@ function Write-InstallScriptInfo {
         if ($hashResult.Count -eq 2) {
             LogMessage $hashResult[1]
         }
-
-        $info = [PSCustomObject]@{
-            vendor = $Vendor
-            sha256 = $hashResult[0]
-            operation = Get-ScriptOperation
-        }
-
-        $path = Get-ScriptInfoPath
-        $json = $info | ConvertTo-Json -Compress
-
-        # We make a "best-effort" attempt to write to the file
-        Set-Content -Path $path -Value $json
+        # Write the values to a json file in the Huntress install directory (not using built in JSON methods to ensure maximum PoSh version compatibility)
+        $json="{`"vendor`":`"$Vendor`",`"sha256`":`"$($hashResult[0])`",`"operation`":`"$(Get-ScriptOperation)`"}"
+        Set-Content -Path $(Get-ScriptInfoPath) -Value $json
     }
     catch {
         $ErrorMessage = $_.Exception.Message
