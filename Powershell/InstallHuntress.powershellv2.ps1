@@ -1,4 +1,4 @@
-# Copyright (c) 2025 Huntress Labs, Inc.
+# Copyright (c) 2026 Huntress Labs, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
@@ -20,7 +20,7 @@
 # The Huntress installer needs an Account Key and an Organization Key (a user specified name or description) which is used to affiliate an Agent with a
 # specific Organization within the Huntress Partner's Account. These keys can be hard coded below or passed in when the script is run.
 # For more details, see our KB article  https://support.huntress.io/hc/en-us/articles/4404004936339-Deploying-Huntress-with-PowerShell
-
+#
 # Usage (remove brackets [] and substitute <variable> for your value):
 # powershell -executionpolicy bypass -f ./InstallHuntress.powershellv2.ps1 [-acctkey <account_key>] [-orgkey <organization_key>] [-tags <tags>] [-reregister] [-reinstall] [-uninstall]
 #
@@ -72,7 +72,7 @@ $estimatedSpaceNeeded = 200111222
 ##############################################################################
 
 # These are used by the Huntress support team when troubleshooting.
-$ScriptVersion = "Version 2, major revision 8, 2025 Dec 24"
+$ScriptVersion = "Version 2, major revision 9, 2026 July 10"
 $ScriptType = "PowerShell"
 
 # variables used throughout this script
@@ -82,7 +82,7 @@ $InstallerName              = "HuntressInstaller.exe"
 $InstallerPath              = Join-Path $Env:TMP $InstallerName
 $HuntressKeyPath            = "HKLM:\SOFTWARE\Huntress Labs\Huntress"
 $HuntressRegKey             = "HKLM:\SOFTWARE\Huntress Labs"
-$SupportMessage             = "Please send the error message to support@huntress.com"
+$SupportMessage             = "Send the error message to support@huntress.com"
 $HuntressAgentServiceName   = "HuntressAgent"
 $HuntressUpdaterServiceName = "HuntressUpdater"
 $HuntressEDRServiceName     = "HuntressRio"
@@ -324,7 +324,7 @@ function Get-Installer {
             # Rather than check for 'Tls12', we force-set TLS 1.2 and catch the error if it's truly unsupported.
             [Net.ServicePointManager]::SecurityProtocol = [Enum]::ToObject([Net.SecurityProtocolType], 3072)
         } catch {
-            copyLogAndExit -throwError "ERROR: Unable to use a secure version of TLS. Please verify Hotfix KB3140245 is installed. Error: ($_.Exception.Message)"
+            copyLogAndExit -throwError "ERROR: Unable to use a secure version of TLS. Verify Hotfix KB3140245 is installed. Error: ($_.Exception.Message)"
         }
     }
 
@@ -352,7 +352,7 @@ function Get-Installer {
 
     # Ensure the file downloaded correctly, if not, throw error
     if ( ! (Test-Path $InstallerPath) ) {
-        copyLogAndExit -throwError "ERROR: Failed to download the Huntress Installer. Try accessing $($DownloadURL) from the host where the download failed. Please contact support@huntress.io if the problem persists."
+        copyLogAndExit -throwError "ERROR: Failed to download the Huntress Installer. Try accessing $($DownloadURL) from the host where the download failed. Contact support@huntress.io if the problem persists."
     }
 
     $msg = "Installer downloaded to '$InstallerPath'..."
@@ -365,8 +365,8 @@ function Install-Huntress ($OrganizationKey) {
     LogMessage "Checking for installer '$InstallerPath'..."
     if ( ! (Test-Path $InstallerPath) ) {
         $err = ("ERROR: The installer was unexpectedly removed from $InstallerPath `n"+
-            "A security product may have quarantined the installer. Please check " +
-            "your logs. If the issue continues to occur, please send the log to the Huntress " +
+            "A security product may have quarantined the installer. Check your security product logs." +
+            "If the issue continues to occur, send the log to the Huntress " +
             "Team for help at support@huntresslabs.com")
         LogMessage $err
         copyLogAndExit -throwError $err
@@ -396,7 +396,6 @@ function Install-Huntress ($OrganizationKey) {
 function Test-Installation {
     # Get the file locations of some of the Huntress executables and setting up some registry related variables
     $HuntressDirectory        = getAgentPath
-    $hUpdaterPath            = Join-Path $HuntressDirectory "hUpdate.exe"
     $HuntressAgentPath        = Join-Path $HuntressDirectory "HuntressAgent.exe"
     $HuntressUpdaterPath      = Join-Path $HuntressDirectory "HuntressUpdater.exe"
     $AgentIdKeyValueName      = "AgentId"
@@ -437,7 +436,7 @@ function Test-Installation {
     }
 
     # Ensure the critical files were created.
-    foreach ( $file in ($HuntressAgentPath, $HuntressUpdaterPath, $hUpdaterPath) ) {
+    foreach ( $file in ($HuntressAgentPath, $HuntressUpdaterPath) ) {
         if ( ! (Test-Path $file) ) {
             copyLogAndExit -throwError "ERROR: $file did not exist. Check your AV/security software quarantine"
         }
@@ -486,7 +485,7 @@ function Test-Installation {
 
     # look for a condition that prevents checking registry keys, if not then check for registry keys
     if ( ($PowerShellArch -eq $X86) -and ($WindowsArchitecture -eq $X64) ) {
-        LogMessage "WARNING: Can't verify registry settings due to 32bit PowerShell on 64bit host. Please run PowerShell in 64 bit mode"
+        LogMessage "WARNING: Can't verify registry settings due to 32bit PowerShell on 64bit host. Run PowerShell in 64 bit mode"
     } else {
         # Ensure the Huntress registry key is present.
         if ( ! (Test-Path $HuntressKeyPath) ) {
@@ -557,27 +556,38 @@ function testAdministrator {
 }
 
 # Ensure the disk has enough space for the install files + agent, then write results to the log AB
-function checkFreeDiskSpace {
-    # Using an older disk query to be backwards compatible with PoSh 2, catch WMI errors and check repository
-    try {
-        $freeSpace = (Get-WmiObject -query "Select * from Win32_LogicalDisk where DeviceID='c:'" | Select-Object FreeSpace).FreeSpace
-    } catch {
-        LogMessage "WMI issues discovered (free space query), attempting to fix the repository"
-        winmgmt -verifyrepository
-        $drives = get-psdrive
-        foreach ($drive in $drives) {
-            if ($drive.Name -eq "C") {
-                $freeSpace = $drive.Free
+function getDiskFreeSpace {
+    $freeSpace = (Get-PSDrive C).Free
+    if ($freeSpace -lt 200111222) {
+        $err = "WARNING: Low disk space detected, you may have troubles completing this install. Only $($freeSpace) bytes remaining (need about $(200111222))."
+        echo $err
+    } else {
+        echo "Free disk space: $($freeSpace) bytes"
+    }
+}
+
+# Gather information about active network adapters for troubleshooting purposes
+function getNetworkAdapterInfo {
+    # Filter out adapters that are unlikely to be useful to log
+    $adapters = [System.Net.NetworkInformation.NetworkInterface]::GetAllNetworkInterfaces() | Where-Object { $_.OperationalStatus -eq 'Up' -and $_.NetworkInterfaceType -ne 'Loopback' -and $_.Speed -ge 1 -and $_.Description -ne 'Tunnel'}
+
+    $adaptersData = foreach ($adapter in $adapters) {
+        # Fetch the IP properties and filter out local and empty IPv4 entries
+        $ipProps = $adapter.GetIPProperties()
+        $ipv4 = $ipProps.UnicastAddresses | Where-Object { $_.Address.AddressFamily -eq 'InterNetwork' } | Select-Object -ExpandProperty Address | ForEach-Object { $_.IPAddressToString }
+
+        # Format output as a custom object
+        if ($null -ne $ipv4 -and $ipv4 -ne "") {
+            [PSCustomObject]@{
+                "Adapter Name"    = $adapter.Name
+                "IPv4 Address"    = ($ipv4 -join ', ')
+                "DNS Servers"     = ($ipProps.DnsAddresses | ForEach-Object { $_.IPAddressToString }) -join ', '
+                "Default Gateway" = ($ipProps.GatewayAddresses | ForEach-Object { $_.Address.IPAddressToString }) -join ', '
             }
         }
     }
-    $freeSpaceNice = $freeSpace.ToString('N0')
-    if ($freeSpace -lt $estimatedSpaceNeeded) {
-        $err = "Low disk space detected, you may have troubles completing this install. Only $($freeSpaceNice) bytes remaining (need about $($estimatedSpaceNeeded.ToString('N0'))."
-        LogMessage $err
-    } else {
-        LogMessage "Free disk space: $($freeSpaceNice)"
-    }
+    $adaptersData = (($adaptersData | Out-String).Split("`r`n") | Where-Object { $_.Trim() -ne "" }) -join "`r`n"
+    LogMessage "`n$adaptersData`n"
 }
 
 # determine the path in which Huntress is installed AB
@@ -729,7 +739,7 @@ function repairAgent {
 
     # For Rio/EDR we don't return false as we don't know if it's a fresh install that hasn't received Rio yet, but still attempt to restart service
     if (($null -eq $RioService) -AND $isHuntressInstalled){
-        LogMessage "Repair was unable to find the RioService. If this is a fresh install it may take up to 24 hours for Rio to install. Otherwise please contact support to ensure EDR coverage."
+        LogMessage "Repair was unable to find the RioService. If this is a fresh install it may take up to 24 hours for Rio to install. Otherwise contact support to ensure EDR coverage."
     } elseif ($null -eq $RioService) {
         LogMessage "Fresh install detected, it can take up to 24 hours for Rio to install."
     } else {
@@ -740,75 +750,158 @@ function repairAgent {
     return $DidRepairFinish
 }
 
-# Agent will not function when communication is blocked so exit the script if too much communication is blocked AB
-# return true if connectivity is acceptable, false if too many connections fail
+# Agent will not function when communication is blocked so we exit the script if too many URLs are blocked AB
+# Essentially this function tests for port 443 outbound to Huntress URLs, and tests that Huntress certs aren't intercepted.
+# Blocking port 443 or intercepting Huntress certs will prevent the agent from functioning, so we exit rather than installing an agent that probably won't function as intended.
 function testNetworkConnectivity {
-    # number of URL's that can fail the connectivity before the agent refuses to install (the test fails incorrectly sometimes, so 1 failure is acceptable)
-    $connectivityTolerance = 1
+    $countFails=0
 
-    # Avoid "IE first start" errors by disabling the first run customize option
+    # Avoid "First Run Customize" blocking the testing by disabling it
     Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Internet Explorer\Main" -Name "DisableFirstRunCustomize" -Value 2
+    # Force TLS 1.2 to avoid compatibility issues and ensure accurate testing (Huntress uses TLS 1.2+ only)
+    try {
+        [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+    } catch {
+        copyLogAndExit -throwError "Failed to enable TLS 1.2, Huntress requires TLS 1.2 or higher for security reasons."
+    }
 
-    $file_name = "96bca0cef10f45a8f7cf68c4485f23a4.txt"
-    $URLs = @(("https://update.huntress.io/agent/connectivity/{0}" -f $file_name),
-			("https://huntress.io/agent/connectivity/{0}" -f $file_name),
-			("https://eetee.huntress.io/{0}"-f $file_name),
-			("https://huntresscdn.com/agent/connectivity/{0}" -f $file_name),
-			("https://huntress-installers.s3.amazonaws.com/agent/connectivity/{0}" -f $file_name),
-			("https://huntress-updates.s3.amazonaws.com/agent/connectivity/{0}" -f $file_name),
-			("https://huntress-uploads.s3.us-west-2.amazonaws.com/agent/connectivity/{0}" -f $file_name),
-			("https://huntress-user-uploads.s3.amazonaws.com/agent/connectivity/{0}" -f $file_name),
-			("https://huntress-rio.s3.amazonaws.com/agent/connectivity/{0}" -f $file_name),
-			("https://huntress-survey-results.s3.amazonaws.com/agent/connectivity/{0}" -f $file_name),
-			("https://huntress-log-uploads.s3.amazonaws.com/agent/connectivity/{0}" -f $file_name))
-
-    foreach ($URL in $URLs) {
-        $StatusCode = 0
-        try
-        {
-            $Response = Invoke-WebRequest -Uri $URL -TimeoutSec 5 -ErrorAction Stop -ContentType "text/plain" -UseBasicParsing
-            # This will only execute if the Invoke-WebRequest is successful.
-            $StatusCode = $Response.StatusCode
-
-            # Convert from bytes, if necessary
-            if ($Response.Content.GetType() -eq [System.Byte[]]) {
-                $StrContent = [System.Text.Encoding]::UTF8.GetString($Response.Content)
-            } else {
-                $StrContent = $Response.Content.ToString().Trim()
-            }
-
-            # Remove all newlines from the content
-            $StrContent = [string]::join("",($StrContent.Split("`n")))
-            $ContentMatch = $StrContent -eq "96bca0cef10f45a8f7cf68c4485f23a4"
+    # retrieve URLs, cert Issuer, and cert Subject from Huntress github
+    $URL = 'https://raw.githubusercontent.com/huntresslabs/support/refs/heads/main/URLdata.json'
+    try {
+        $data = (Invoke-WebRequest -Uri $URL -UseBasicParsing -ErrorAction Stop).Content | ConvertFrom-Json
+    } catch {
+        LogMessage "Fallback using WebClient (still uses TLS 1.2)"
+        $wc = New-Object System.Net.WebClient
+        $wc.Headers['User-Agent'] = 'HuntressSupportScript'
+        try {
+            $jsonString = $wc.DownloadString($URL)
         } catch {
-            LogMessage "Error: $($_.Exception.Message)"
+            copyLogAndExit -throwError "Unable to connect to github, connectivity to raw.githubusercontent.com on port 443 is required for this script to verify the machine is ready for Huntress!"
+        }
+        try {
+            $data = $jsonString | ConvertFrom-Json
+        } catch {
+            copyLogAndExit "Failed to parse JSON from github: $_"
+        }
+    }
+    # process the data from github
+    $testURLs      = @($data.array1)
+    $certURLs      = @($data.array2)
+    $certTemp      = @($data.array4)
+    $expIssuerName = @($data.array5)
+    $expSubject    = @()
+    $expIssuer     = @()
+    # array4 contains two different sets of info, even indices are subject, odd indices are issuer
+    for ($i = 0; $i -lt $certTemp.Count; $i++) {
+        if ($i % 2 -eq 0) {
+            $expSubject += $certTemp[$i]
+        } else {
+            $expIssuer += $certTemp[$i]
+        }
+    }
+
+    # tests that the expected certificates are not intercepted. If the expected cert is not returned the agent will not function.
+    LogMessage "-- Testing Certificate Validation --"
+    $countFails = 0
+    for ($i = 0; $i -lt $certURLs.Count; $i++) {
+        $cleanURL = ($certURLs[$i] -replace '^https://', '') -replace '/.*',''
+        $uri = ([uri]$cleanURL)
+        $tcp = New-Object Net.Sockets.TcpClient
+        $tcp.Connect("$uri", 443)
+        $ssl = New-Object Net.Security.SslStream($tcp.GetStream(),$false,{$true})
+        $ssl.AuthenticateAsClient($uri)
+        $cert       = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2 $ssl.RemoteCertificate
+        $recSubject = $cert.Subject
+        $recIssuer  = $cert.Issuer
+        # retrieve a hashed/encrypted version of the certificate to log in case troubleshooting is required
+        $PEM = @"
+-----BEGIN CERTIFICATE-----
+$([System.Convert]::ToBase64String($cert.Export([System.Security.Cryptography.X509Certificates.X509ContentType]::Cert), [System.Base64FormattingOptions]::InsertLineBreaks))
+-----END CERTIFICATE-----
+"@
+
+        if ($recSubject -eq $expSubject[$i]) {
+            LogMessage "[Certificate subject validation successful for $cleanURL]"
+        } else {
+            LogMessage "[FAILED: Subject validation. Certificate does not match for [$cleanURL] !]"
+            LogMessage "Subject that was returned: [$recSubject]"
+            LogMessage "Subject that was expected: [$($expSubject[$i])]"
+            $countFails++
         }
 
-        if ($StatusCode -ne 200) {
-            $err = "WARNING, connectivity to Huntress URL's is being interrupted. You MUST open port 443 for $($URL) in order for the Huntress agent to function."
-            LogMessage $err
-            $connectivityTolerance --
-        } elseif (!$ContentMatch) {
-            $err = "WARNING, successful connection to Huntress URL, however, content did not match expected. Ensure no proxy or content filtering is preventing access!"
-            LogMessage $err
-            $connectivityTolerance --
-            LogMessage "Content: $($StrContent)"
+        # Issuer can vary based on the specific server the script reaches. To compensate, we check for exact match then a wildcard match.
+        if ($recIssuer -eq $expIssuer[$i]) {
+            LogMessage "[Certificate issuer validation successful for $cleanURL]"
         } else {
-            LogMessage "Connection succeeded to $($URL)"
+            if ($recIssuer -like "*$($expIssuerName[$i])*") {
+                LogMessage "Note: this was not an exact match, expected with big infrastructure. As long as the expected and returned Issuer lines are similar you can ignore this."
+                LogMessage "Issuer that was returned: [$recIssuer]"
+                LogMessage "Issuer that was expected: [$($expIssuer[$i])]"
+            } else { 
+                LogMessage "[FAILED: Issuer validation. Certificate does not match for [$cleanURL] !]"
+                LogMessage "Issuer that was returned: [$recIssuer]"
+                LogMessage "Issuer that was expected: [$($expIssuer[$i])]"
+                LogMessage "PEM that was received: $PEM"
+                $countFails++
+            }
+        }
+        $ssl.Dispose()
+        $tcp.Close()
+    }
+    if ($countFails -gt 0) {
+         LogMessage ""
+         LogMessage "------------------------------------------------------------------------------------------------------------------------------"
+         LogMessage "The Subject/Issuer text above usually identifies if this is a DPI/cert interception issue, or a cert chain issue."
+         LogMessage "* If the returned SUBJECT does not contain 'Huntress' or 'Microsoft' in the text this is likely a DPI/cert interception issue."
+         LogMessage "      You'll need to add an exclusion for the certificate for this URL in your DPI/cert interception service: $cleanURL"
+         LogMessage "* If the returned ISSUER does not contain 'DigiCert', 'Google', or 'Microsoft', this is likely a  DPI/cert interception issue."
+         LogMessage "      You'll need to add an exclusion for the certificate for this URL in your DPI/cert interception service: $cleanURL"
+         LogMessage "* Otherwise this is likely a missing certificate chain. Check for pending OS updates, reboot, and try again."
+         LogMessage "------------------------------------------------------------------------------------------------------------------------------"
+    }
+    LogMessage ""
+     
+    # test outgoing port 443 connectivity to Huntress URLs
+    LogMessage "-- Verifying Huntress services can be reached --"
+    foreach ($testURL in $testURLs) {
+        $tcp = New-Object System.Net.Sockets.TcpClient
+        try {
+            $cleanURL = $($testURL -replace '^https://', '') -replace '/.*',''
+            $tcp.connect($cleanURL, 443)
+            LogMessage "[Connection to $cleanURL successful]"
+        } catch {
+            LogMessage = "WARNING, connectivity to Huntress URL's is being interrupted. You MUST open port 443 for $cleanURL in order for the Huntress agent to function."
+            LogMessage "Error: $($_.Exception.Message)"
+            $countFails++
+        } finally {
+            $tcp.Close()
         }
     }
-    if ($connectivityTolerance -lt 0) {
-        LogMessage "Please fix the closed port 443 for the above domains before attempting to install"
-        $err = "Too many connections failed $($connectivityTolerance), exiting"
-        LogMessage "$($err), $($SupportMessage)"
-        return $false
+    LogMessage ""
+
+    if ($countFails -gt 1) {
+        LogMessage "[FAILED to connect to all Huntress services]"
+        LogMessage "------------------------ FAILED network test ----------------------------------"
+        copyLogAndExit "FAILED to connect to all Huntress services"
+    } else {
+        LogMessage "[Successfully connected to Huntress services]"
     }
-    return $true
 }
 
 # Log useful data about the machine for troubleshooting AB
 function logInfo {
-    # if Huntress was already installed, pull version info and TP status
+    LogMessage "============================== Pre-flight checks and logging =============================="
+    LogMessage "Script type: '$ScriptType'"
+    LogMessage "Script version: '$ScriptVersion'"
+    LogMessage "Script flags:  Reregister=$reregister  Reinstall=$reinstall  Uninstall=$uninstall "
+    if ($AccountKey.length -lt 8) {
+        LogMessage "Invalid key length, found $($AccountKey.length) (should be 32). Account key value: $AccountKey"
+    } else {
+        $masked = $AccountKey.Substring(0,4) + "************************" + $AccountKey.SubString($AccountKey.length-4,4)
+        LogMessage "Pre-trim variables: account key=[$masked]  org key=[$OrganizationKey]   (brackets are in place to show trailing/leading spaces)"
+    }
+
+    # if Huntress was already installed, pull version info and TP status. This is intentionally a vague check, not intended to definitively show install status!
     LogMessage "Script cursory check, is Huntress installed already: $($isHuntressInstalled)"
     if ($isHuntressInstalled){
         LogMessage "Agent version $(getAgentVersion) found"
@@ -817,30 +910,11 @@ function logInfo {
     if (Confirm-ServiceRunning $HuntressEDRServiceName){
         $checkTP = (Confirm-ServiceRunning $HuntressAgentServiceName)
         if ( $null -eq $checkTP ) {
-            LogMessage "Warning: Tamper Protection may be enabled; you may need to disable TP or run this as SYSTEM to repair, upgrade, or reinstall this agent. `n"
+            LogMessage "Warning: Tamper Protection may be enabled; you may need to disable TP or run this as SYSTEM to repair, upgrade, or reinstall this agent."
         } else {
-            LogMessage "Pass: Tamper Protection not detected, or this script is running as SYSTEM `n"
+            LogMessage "Pass: Tamper Protection not detected, or this script is running as SYSTEM"
         }
     }
-
-    # Log OS details
-    LogMessage $(systeminfo)
-
-    LogMessage "Host Kernel Version: $($KernelVersion)"
-    LogMessage "Detected Architecture (Windows 32/64 bit): '$($WindowsArchitecture)'"
-
-    # Log PowerShell details
-    LogMessage "PowerShell Architecture (PoSh 32/64 bit): '$PowerShellArch'"
-    LogMessage "PowerShell version: $($PoShVersion).$($PSversionTable.PsVersion.Minor)"
-    LogMessage "Powershell legacy detected: $($LegacyCommandsRequired)"
-    if ($LegacyCommandsRequired) {
-        LogMessage "Warning! Older version of PowerShell detected"
-    }
-
-    # Logging other details about the machine
-    checkFreeDiskSpace
-    LogMessage "Installer location: '$InstallerPath'"
-    LogMessage "Installer log: '$DebugLog'"
 
     LogMessage "Administrator access: $(testAdministrator)"
     $userContext = whoami
@@ -850,31 +924,33 @@ function logInfo {
         LogMessage "Warning: Not run under the SYSTEM user, you may have issues with Huntress Tamper Protection"
     }
 
-    # Log machine uptime, use -1 to call attention to machines that have issues running the GCIM command
-    try
-    {
-        $uptime = ((Get-Date) - (GCIM Win32_OperatingSystem).LastBootUpTime).days
-    } catch {
-        LogMessage "Unable to determine system uptime"
-        $uptime = -1
-    }
-    if ($uptime -gt 9) {
-        LogMessage "Warning, high uptime detected  This machine may need a reboot in order to resolve Windows update-based file locks."
-    } else {
-        LogMessage "Days of uptime: $($uptime)"
-    }
+    LogMessage "Installing to location: '$InstallerPath'"
+    LogMessage "Installer log location: '$DebugLog'"
 
-    # Logging TCP/IP configuration to ensure connectivity
-    LogMessage "$(ipconfig)"
+    LogMessage ""
+    LogMessage "============================== Logging machine details =============================="
+    # Log OS details
+    $patterns = "Host Name", "OS Name", "OS Version", "OS Configuration", "Original Install Date", "System Boot Time", "System Type", "Processor(s)", "Time Zone", "Total Physical Memory", "Available Physical Memory", "Domain", "Logon Server", "Network Card(s)", "Hyper-V Requirements"
+    $systemInfo = systeminfo | Out-String
+    $systemInfo = (($systemInfo -split "`r`n") | Select-String -Pattern $patterns | Select-Object -ExpandProperty Line)
+    LogMessage $($systemInfo -join "`r`n")
+    getDiskFreeSpace
+
+    # Logging some additional info for a temporary issue with Windows 8.1 and missing Visual C++ dependencies
+    libraryCheck
 
     # Log status of AD joined and the (in)ability to contact a DC
+    $ErrorActionPreference = 'SilentlyContinue'    
     try {
-        $domainJoined = (gwmi win32_computersystem).PartOfDomain
+        if (Get-Command Get-CimInstance -ErrorAction SilentlyContinue) {
+            $domainJoined = (Get-CimInstance Win32_ComputerSystem).PartOfDomain
+        } else {
+            $domainJoined = (Get-WmiObject Win32_ComputerSystem).PartOfDomain
+        }
     } catch {
-        LogMessage "Warning, unable to determine if domain joined"
+        LogMessage "Attention: Unable to determine if domain joined (non-stoppage error)"
         $domainJoined = $false
     }
-
     if ( $domainJoined ) {
         try {
             $secureChannelStatus = Test-ComputerSecureChannel
@@ -887,14 +963,37 @@ function logInfo {
         } else {
             LogMessage "AD joined and DC connectivity verified!"
         }
+    } else {
+        LogMessage "Not AD joined, skipping Test-ComputerSecureChannel"
     }
 
-    $areURLsAvailable = testNetworkConnectivity
-    if ( $areURLsAvailable ) {
-        LogMessage "Network Connectivity verified!"
-    } else {
-        copyLogAndExit -throwError "ERROR: Network connectivity problem detected!"
+    # Log architecture and PowerShell details
+    LogMessage "Detected Architecture (Windows 32/64 bit): '$($WindowsArchitecture)'"
+    LogMessage "PowerShell Architecture (PoSh 32/64 bit): '$PowerShellArch'"
+    LogMessage "PowerShell version: $($PoShVersion).$($PSversionTable.PsVersion.Minor)"
+    LogMessage "Powershell legacy detected: $($LegacyCommandsRequired)"
+    if ($LegacyCommandsRequired) {
+        LogMessage "Warning! Older version of PowerShell detected"
     }
+
+    # Log machine uptime, use -1 to call attention to machines that have issues running the GCIM command
+    try {
+        $uptime = ((Get-Date) - (GCIM Win32_OperatingSystem).LastBootUpTime).days
+    } catch {
+        LogMessage "Unable to determine system uptime"
+        $uptime = -1
+    }
+    if ($uptime -gt 9) {
+        LogMessage "Warning, high uptime detected. This machine may need a reboot in order to resolve Windows update-based file locks. $($uptime)`n"
+    } else {
+        LogMessage "Days of uptime: $($uptime)`n"
+    }
+
+    LogMessage "============================== Logging machine networking details =============================="
+    # Logging TCP/IP configuration 
+    getNetworkAdapterInfo
+    # Checking connectivity to Huntress servers
+    testNetworkConnectivity
 }
 
 # This function copies the Huntress DebugLog to a more permanent location as it's incredibly helpful for troubleshooting. AB
@@ -1069,15 +1168,6 @@ function libraryCheck {
 #########################################################################################
 function main () {
     # Start the script with logging to capture useful data for troubleshooting. All your logging are belong to us, Zero Wang.
-    LogMessage "Script type: '$ScriptType'"
-    LogMessage "Script version: '$ScriptVersion'"
-    LogMessage "Script flags:  Reregister=$reregister  Reinstall=$reinstall  Uninstall=$uninstall "
-    if ($AccountKey.length -lt 8) {
-        LogMessage "Invalid key length, found $($AccountKey.length) (should be 32). Account key value: $AccountKey"
-    } else {
-        $masked = $AccountKey.Substring(0,4) + "************************" + $AccountKey.SubString($AccountKey.length-4,4)
-        LogMessage "Pre-trim variables: account key=[$masked]  org key=[$OrganizationKey]   (brackets are in place to show trailing/leading spaces)"
-    }
     logInfo
 
     # if run with the uninstall flag, exit afterward so we don't reinstall the agent after
@@ -1087,9 +1177,8 @@ function main () {
         copyLogAndExit
     }
 
-    # Logging some additional info for a temporary issue with Windows 8.1 and missing Visual C++ dependencies
-    libraryCheck
-
+    LogMessage ""
+    LogMessage "============================== Starting Install =============================="
     # if the agent is orphaned, switch to the full uninstall/reinstall (reregister flag)
     if ( !($reregister)) {
         $orphanStatus = isOrphan
