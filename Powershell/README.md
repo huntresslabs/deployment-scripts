@@ -1,6 +1,6 @@
 ## Deploying the Huntress Agent using PowerShell
 
-This PowerShell script will install the Huntress Agent. The script will automatically download the installer from the Huntress servers and run it. The script is written to run on PowerShell versions 2 through 7, however some work may be required for older versions that may be missing TLS 1.2+, specific Microsoft updates, or other dependencies that are already built into modern versions of Windows. 
+This PowerShell script will install the Huntress Agent. The script will automatically download the installer from the Huntress servers and run it. The script is written to run on PowerShell versions 3 through 7, however some work may be required for older versions that may be missing TLS 1.2+, specific Microsoft updates, or other dependencies that are already built into modern versions of Windows. 
 
 You have the option to hard code your Huntress account key, organization key, and tags (optional) in the script, or pass as arguments to the script. [Click here for more details regarding the Account Key and Organization Key.](https://support.huntress.io/hc/en-us/articles/4404012734227-Using-Account-Keys-Organization-Keys-and-Agent-Tags)
 
