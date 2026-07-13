@@ -870,7 +870,7 @@ $([System.Convert]::ToBase64String($cert.Export([System.Security.Cryptography.X5
             $tcp.connect($cleanURL, 443)
             LogMessage "[Connection to $cleanURL successful]"
         } catch {
-            LogMessage = "WARNING, connectivity to Huntress URL's is being interrupted. You MUST open port 443 for $cleanURL in order for the Huntress agent to function."
+            LogMessage "WARNING, connectivity to Huntress URL's is being interrupted. You MUST open port 443 for $cleanURL in order for the Huntress agent to function."
             LogMessage "Error: $($_.Exception.Message)"
             $countFails++
         } finally {
