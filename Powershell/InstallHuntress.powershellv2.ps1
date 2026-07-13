@@ -72,7 +72,7 @@ $estimatedSpaceNeeded = 200111222
 ##############################################################################
 
 # These are used by the Huntress support team when troubleshooting.
-$ScriptVersion = "Version 2, major revision 9, 2026 July 10"
+$ScriptVersion = "Version 2, major revision 9, 2026 July 13"
 $ScriptType = "PowerShell"
 
 # variables used throughout this script
@@ -560,9 +560,9 @@ function getDiskFreeSpace {
     $freeSpace = (Get-PSDrive C).Free
     if ($freeSpace -lt 200111222) {
         $err = "WARNING: Low disk space detected, you may have troubles completing this install. Only $($freeSpace) bytes remaining (need about $(200111222))."
-        echo $err
+        LogMessage $err
     } else {
-        echo "Free disk space: $($freeSpace) bytes"
+        LogMessage "Free disk space: $($freeSpace) bytes"
     }
 }
 
@@ -570,24 +570,20 @@ function getDiskFreeSpace {
 function getNetworkAdapterInfo {
     # Filter out adapters that are unlikely to be useful to log
     $adapters = [System.Net.NetworkInformation.NetworkInterface]::GetAllNetworkInterfaces() | Where-Object { $_.OperationalStatus -eq 'Up' -and $_.NetworkInterfaceType -ne 'Loopback' -and $_.Speed -ge 1 -and $_.Description -ne 'Tunnel'}
+    LogMessage "Adapter Name                            IPv4               DNS                               Gateway"
 
-    $adaptersData = foreach ($adapter in $adapters) {
-        # Fetch the IP properties and filter out local and empty IPv4 entries
+    foreach ($adapter in $adapters) {
         $ipProps = $adapter.GetIPProperties()
         $ipv4 = $ipProps.UnicastAddresses | Where-Object { $_.Address.AddressFamily -eq 'InterNetwork' } | Select-Object -ExpandProperty Address | ForEach-Object { $_.IPAddressToString }
-
-        # Format output as a custom object
+        # Fetch the IP properties and filter out local and empty IPv4 entries
         if ($null -ne $ipv4 -and $ipv4 -ne "") {
-            [PSCustomObject]@{
-                "Adapter Name"    = $adapter.Name
-                "IPv4 Address"    = ($ipv4 -join ', ')
-                "DNS Servers"     = ($ipProps.DnsAddresses | ForEach-Object { $_.IPAddressToString }) -join ', '
-                "Default Gateway" = ($ipProps.GatewayAddresses | ForEach-Object { $_.Address.IPAddressToString }) -join ', '
-            }
+            $adapterName = ([string]$adapter.Name).PadRight(36)
+            $ipv4 = ([string]$ipv4).PadRight(15)
+            $dns  = (($ipProps.DnsAddresses | ForEach-Object { $_.IPAddressToString }) -join ', ').PadRight(30)
+            $gway = (($ipProps.GatewayAddresses | ForEach-Object { $_.Address.IPAddressToString }) -join ', ').PadRight(30)
+            LogMessage "$adaptername    $ipv4    $dns    $gway"
         }
     }
-    $adaptersData = (($adaptersData | Out-String).Split("`r`n") | Where-Object { $_.Trim() -ne "" }) -join "`r`n"
-    LogMessage "`n$adaptersData`n"
 }
 
 # determine the path in which Huntress is installed AB
@@ -758,9 +754,9 @@ function testNetworkConnectivity {
 
     # Avoid "First Run Customize" blocking the testing by disabling it
     Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Internet Explorer\Main" -Name "DisableFirstRunCustomize" -Value 2
-    # Force TLS 1.2 to avoid compatibility issues and ensure accurate testing (Huntress uses TLS 1.2+ only)
+    # Force TLS 1.2 to avoid compatibility issues and ensure accurate testing (Huntress uses TLS 1.2+ only). Casting 'TLS12' as '3072' for compatibility with legacy OS.
     try {
-        [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+        [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]3072
     } catch {
         copyLogAndExit -throwError "Failed to enable TLS 1.2, Huntress requires TLS 1.2 or higher for security reasons."
     }
@@ -826,6 +822,13 @@ $([System.Convert]::ToBase64String($cert.Export([System.Security.Cryptography.X5
             LogMessage "[FAILED: Subject validation. Certificate does not match for [$cleanURL] !]"
             LogMessage "Subject that was returned: [$recSubject]"
             LogMessage "Subject that was expected: [$($expSubject[$i])]"
+            LogMessage "------------------------------------------------------------------------------------------------------------------------------"
+            LogMessage "The Subject text above usually identifies if this is a DPI/cert interception issue, or a cert chain issue."
+            LogMessage "* If the returned SUBJECT does not contain 'Huntress' or 'Microsoft' in the text this is likely a DPI/cert interception issue."
+            LogMessage "      You'll need to add an exclusion for the certificate for this URL in your DPI/cert interception service: $cleanURL"
+            LogMessage "* Otherwise this is likely a missing certificate chain. Check for pending OS updates, reboot, and try again."
+            LogMessage "------------------------------------------------------------------------------------------------------------------------------"
+
             $countFails++
         }
 
@@ -833,6 +836,7 @@ $([System.Convert]::ToBase64String($cert.Export([System.Security.Cryptography.X5
         if ($recIssuer -eq $expIssuer[$i]) {
             LogMessage "[Certificate issuer validation successful for $cleanURL]"
         } else {
+            # Wildcard match to compensate for big infrastructure having slightly different certificate lines
             if ($recIssuer -like "*$($expIssuerName[$i])*") {
                 LogMessage "Note: this was not an exact match, expected with big infrastructure. As long as the expected and returned Issuer lines are similar you can ignore this."
                 LogMessage "Issuer that was returned: [$recIssuer]"
@@ -842,22 +846,17 @@ $([System.Convert]::ToBase64String($cert.Export([System.Security.Cryptography.X5
                 LogMessage "Issuer that was returned: [$recIssuer]"
                 LogMessage "Issuer that was expected: [$($expIssuer[$i])]"
                 LogMessage "PEM that was received: $PEM"
+                LogMessage "------------------------------------------------------------------------------------------------------------------------------"
+                LogMessage "The Issuer text above usually identifies if this is a DPI/cert interception issue, or a cert chain issue."
+                LogMessage "* If the returned ISSUER does not contain 'DigiCert', 'Google', or 'Microsoft', this is likely a  DPI/cert interception issue."
+                LogMessage "      You'll need to add an exclusion for the certificate for this URL in your DPI/cert interception service: $cleanURL"
+                LogMessage "* Otherwise this is likely a missing certificate chain. Check for pending OS updates, reboot, and try again."
+                LogMessage "------------------------------------------------------------------------------------------------------------------------------"
                 $countFails++
             }
         }
         $ssl.Dispose()
         $tcp.Close()
-    }
-    if ($countFails -gt 0) {
-         LogMessage ""
-         LogMessage "------------------------------------------------------------------------------------------------------------------------------"
-         LogMessage "The Subject/Issuer text above usually identifies if this is a DPI/cert interception issue, or a cert chain issue."
-         LogMessage "* If the returned SUBJECT does not contain 'Huntress' or 'Microsoft' in the text this is likely a DPI/cert interception issue."
-         LogMessage "      You'll need to add an exclusion for the certificate for this URL in your DPI/cert interception service: $cleanURL"
-         LogMessage "* If the returned ISSUER does not contain 'DigiCert', 'Google', or 'Microsoft', this is likely a  DPI/cert interception issue."
-         LogMessage "      You'll need to add an exclusion for the certificate for this URL in your DPI/cert interception service: $cleanURL"
-         LogMessage "* Otherwise this is likely a missing certificate chain. Check for pending OS updates, reboot, and try again."
-         LogMessage "------------------------------------------------------------------------------------------------------------------------------"
     }
     LogMessage ""
      
@@ -870,7 +869,7 @@ $([System.Convert]::ToBase64String($cert.Export([System.Security.Cryptography.X5
             $tcp.connect($cleanURL, 443)
             LogMessage "[Connection to $cleanURL successful]"
         } catch {
-            LogMessage "WARNING, connectivity to Huntress URL's is being interrupted. You MUST open port 443 for $cleanURL in order for the Huntress agent to function."
+            LogMessage = "WARNING, connectivity to Huntress URL's is being interrupted. You MUST open port 443 for $cleanURL in order for the Huntress agent to function."
             LogMessage "Error: $($_.Exception.Message)"
             $countFails++
         } finally {
@@ -977,12 +976,8 @@ function logInfo {
     }
 
     # Log machine uptime, use -1 to call attention to machines that have issues running the GCIM command
-    try {
-        $uptime = ((Get-Date) - (GCIM Win32_OperatingSystem).LastBootUpTime).days
-    } catch {
-        LogMessage "Unable to determine system uptime"
-        $uptime = -1
-    }
+    $uptime = ([Regex]::Replace((Get-WmiObject Win32_OperatingSystem).LastBootUpTime, '^(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2}).*', '$1-$2-$3 $4:$5:$6') -as [DateTime] | ForEach-Object { [Math]::Abs(((Get-Date) - $_).Days) })
+
     if ($uptime -gt 9) {
         LogMessage "Warning, high uptime detected. This machine may need a reboot in order to resolve Windows update-based file locks. $($uptime)`n"
     } else {
@@ -1119,12 +1114,10 @@ function Write-InstallScriptInfo {
 # Logging Visual C++ info for a Windows 8.1 specific issue
 function libraryCheck {
     # Since this issue only affects Win 8.1, check the OS version before logging.
-    try {
-        if ( (Get-CimInstance -classname Win32_OperatingSystem | Select-Object caption) -notlike "*8.1*") {
-            LogMessage "Windows 8.1 not detected, not checking for missing dependencies"
-            return
-        }
-    } catch { LogMessage "Unable to determine system OS. Checking for dependencies just in case, but this Visual C++ check is only relevant for Windows 8.1 machines!" }
+    if ( (Get-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion").ProductName -notlike "*Windows 8.1*" ) {
+        LogMessage "Windows 8.1 not detected, not checking for missing dependencies"
+        return
+    }
 
     # Fleet Health Check: UCRT + VC Redistributables
     $Results = [PSCustomObject]@{
