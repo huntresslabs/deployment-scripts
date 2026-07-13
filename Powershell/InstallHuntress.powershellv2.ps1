@@ -786,10 +786,17 @@ function testNetworkConnectivity {
         }
     }
     # process the data from github
-    $testURLs      = @($data.array1)
-    $certURLs      = @($data.array2)
-    $certTemp      = @($data.array4)
-    $expIssuerName = @($data.array5)
+    if ($data -is [System.Collections.IDictionary]) {
+        $testURLs      = @($data['array1'])
+        $certURLs      = @($data['array2'])
+        $certTemp      = @($data['array4'])
+        $expIssuerName = @($data['array5'])
+    } else {
+        $testURLs      = @($data.array1)
+        $certURLs      = @($data.array2)
+        $certTemp      = @($data.array4)
+        $expIssuerName = @($data.array5)
+    }
     $expSubject    = @()
     $expIssuer     = @()
     # array4 contains two different sets of info, even indices are subject, odd indices are issuer
