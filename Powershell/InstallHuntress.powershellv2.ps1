@@ -763,6 +763,7 @@ function testNetworkConnectivity {
 
     # retrieve URLs, cert Issuer, and cert Subject from Huntress github
     $URL = 'https://raw.githubusercontent.com/huntresslabs/support/refs/heads/main/URLdata.json'
+    # Try the modern set of commands first, then fallback to legacy commands
     try {
         $data = (Invoke-WebRequest -Uri $URL -UseBasicParsing -ErrorAction Stop).Content | ConvertFrom-Json
     } catch {
@@ -775,9 +776,13 @@ function testNetworkConnectivity {
             copyLogAndExit -throwError "Unable to connect to github, connectivity to raw.githubusercontent.com on port 443 is required for this script to verify the machine is ready for Huntress!"
         }
         try {
-            $data = $jsonString | ConvertFrom-Json
+            # For PoSh 2 we need to use the legacy .NET JavaScriptSerializer
+            [void][Reflection.Assembly]::LoadWithPartialName("System.Web.Extensions")
+            # Create the serializer object and parse the string
+            $Serializer = New-Object System.Web.Script.Serialization.JavaScriptSerializer
+            $data = $Serializer.DeserializeObject($jsonString)
         } catch {
-            copyLogAndExit "Failed to parse JSON from github: $_"
+            copyLogAndExit -throwError "Unable to parse JSON from githubusercontent.com"
         }
     }
     # process the data from github
@@ -869,7 +874,7 @@ $([System.Convert]::ToBase64String($cert.Export([System.Security.Cryptography.X5
             $tcp.connect($cleanURL, 443)
             LogMessage "[Connection to $cleanURL successful]"
         } catch {
-            LogMessage = "WARNING, connectivity to Huntress URL's is being interrupted. You MUST open port 443 for $cleanURL in order for the Huntress agent to function."
+            LogMessage "WARNING, connectivity to Huntress URL's is being interrupted. You MUST open port 443 for $cleanURL in order for the Huntress agent to function."
             LogMessage "Error: $($_.Exception.Message)"
             $countFails++
         } finally {
