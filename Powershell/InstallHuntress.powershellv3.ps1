@@ -22,10 +22,10 @@
 # For more details, see our KB article  https://support.huntress.io/hc/en-us/articles/4404004936339-Deploying-Huntress-with-PowerShell
 #
 # Usage (remove brackets [] and substitute <variable> for your value):
-# powershell -executionpolicy bypass -f ./InstallHuntress.powershellv2.ps1 [-acctkey <account_key>] [-orgkey <organization_key>] [-tags <tags>] [-reregister] [-reinstall] [-uninstall]
+# powershell -executionpolicy bypass -f ./InstallHuntress.powershellv3.ps1 [-acctkey <account_key>] [-orgkey <organization_key>] [-tags <tags>] [-reregister] [-reinstall] [-uninstall]
 #
 # example:
-# powershell -executionpolicy bypass -f ./InstallHuntress.powershellv2.ps1 -acctkey "0b8a694b2eb7b642069" -orgkey "Buzzword Company Name" -tags "production,US West"
+# powershell -executionpolicy bypass -f ./InstallHuntress.powershellv3.ps1 -acctkey "0b8a694b2eb7b642069" -orgkey "Buzzword Company Name" -tags "production,US West"
 
 # Optional command line params, this has to be the first line in the script.
 param (
@@ -1195,9 +1195,9 @@ function Start-Main () {
     if (!$reregister -and !$uninstall -and !$reinstall -and ($AccountKey -eq '__ACCOUNT_KEY__')) {
         Write-LogMessage 'No flags or account key found! Exiting.'
         Write-LogMessage 'Usage (remove brackets [] and substitute <variable> for your value):'
-        Write-LogMessage "powershell -executionpolicy bypass -f ./InstallHuntress.powershellv2.ps1 [-acctkey <account_key>] [-orgkey <organization_key>] [-tags <tags>] [-reregister] [-reinstall] [-uninstall] `n"
+        Write-LogMessage "powershell -executionpolicy bypass -f ./InstallHuntress.powershellv3.ps1 [-acctkey <account_key>] [-orgkey <organization_key>] [-tags <tags>] [-reregister] [-reinstall] [-uninstall] `n"
         Write-LogMessage 'Example:'
-        Write-LogMessage 'powershell -executionpolicy bypass -f ./InstallHuntress.powershellv2.ps1 -acctkey "0b8a694b2eb7b642069" -orgkey "Buzzword Company Name" -tags "production,US West" '
+        Write-LogMessage 'powershell -executionpolicy bypass -f ./InstallHuntress.powershellv3.ps1 -acctkey "0b8a694b2eb7b642069" -orgkey "Buzzword Company Name" -tags "production,US West" '
         Copy-LogAndExt -throwError 'No flags or account key found! Exiting.'
     }
 
