@@ -446,6 +446,7 @@ function Test-Installation {
     # 
     # Watch for HuntressAgent.log, checking every 1/4 second until 10 seconds elapsed, if found grab the last 8 lines
     $didAgentRegister = $false
+    $linesFromLog = $null
     for ($i = 0; $i -le 40; $i++) {
         if (Test-Path "$($HuntressDirectory)\HuntressAgent.log") {
             $linesFromLog = Get-Content "$($HuntressDirectory)\HuntressAgent.log" | Select-Object -Last 8
@@ -635,6 +636,7 @@ function Get-AgentPath {
 
 # attempt to run a process and log the results AB
 function Invoke-RunProcess ($process, $flags, $name) {
+    $proc = $null
     try {
         $proc = Start-Process $process $flags -PassThru
         Wait-Process -Timeout $timeout -ErrorAction Stop -InputObject $proc
