@@ -275,6 +275,29 @@ function Confirm-UninstallKeyExists {
     return $false
 }
 
+# Remove any leftover Windows uninstall registry (Add/Remove Programs) entries for the Huntress Agent.
+# The bundled uninstaller normally removes its own entry, but a botched/interrupted uninstall can leave
+# it behind, which would cause future installs to see a stale "Huntress Agent" entry. Checks both the
+# native and Wow6432Node hives since the uninstall entry's location can vary.
+function Remove-UninstallKeyEntries {
+    $uninstallPaths = @(
+        'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*',
+        'HKLM:\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*'
+    )
+
+    $removed = $false
+    foreach ($path in $uninstallPaths) {
+        $uninstallpathMatches = Get-ItemProperty -Path $path -ErrorAction SilentlyContinue |
+        Where-Object { $_.DisplayName -like 'Huntress Agent*' -or $_.DisplayName -like 'Huntress Rio*' }
+        foreach ($match in $uninstallpathMatches) {
+            Write-LogMessage "Removing leftover uninstall registry entry: '$($match.PSPath)'"
+            Remove-Item -Path $match.PSPath -Recurse -Force -ErrorAction SilentlyContinue
+            $removed = $true
+        }
+    }
+    return $removed
+}
+
 # Stop the Agent and Updater services
 function Stop-HuntressServices {
     Write-LogMessage 'Stopping Huntress services...'
@@ -675,7 +698,7 @@ function Uninstall-Huntress {
     # if uninstaller was run, loop until Huntress assets are all successfully removed, or exit & report if timer exceeds 15 seconds
     if ($wasUninstallerRun) {
         for ($i = 0; $i -le 15; $i++) {
-            if ((Test-Path $exeAgentPath) -or (Test-Path $HuntressRegKey)) {
+            if ((Test-Path $exeAgentPath) -or (Test-Path $HuntressRegKey) -or (Confirm-UninstallKeyExists)) {
                 Start-Sleep 1
             } else {
                 Write-LogMessage "Agent successfully uninstall in $($i) seconds"
@@ -702,6 +725,13 @@ function Uninstall-Huntress {
         Write-LogMessage 'Manually deleted Huntress registry keys'
     } else {
         Write-LogMessage 'No registry keys found, uninstallation complete'
+    }
+
+    # look for leftover Add/Remove Programs uninstall entries, if found then delete
+    if (Remove-UninstallKeyEntries) {
+        Write-LogMessage 'Manually deleted leftover uninstall registry entries'
+    } else {
+        Write-LogMessage 'No leftover uninstall registry entries found'
     }
 
     # if Huntress services still exist, then delete
