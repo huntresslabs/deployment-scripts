@@ -287,11 +287,12 @@ function Remove-UninstallKeyEntries {
 
     $removed = $false
     foreach ($path in $uninstallPaths) {
-        $uninstallpathMatches = Get-ItemProperty -Path $path -ErrorAction SilentlyContinue |
-        Where-Object { $_.DisplayName -like 'Huntress Agent*' -or $_.DisplayName -like 'Huntress Rio*' }
-        foreach ($match in $uninstallpathMatches) {
-            Write-LogMessage "Removing leftover uninstall registry entry: '$($match.PSPath)'"
-            Remove-Item -Path $match.PSPath -Recurse -Force -ErrorAction SilentlyContinue
+        $foundEntries = Get-ItemProperty -Path $path -ErrorAction SilentlyContinue |
+        Where-Object { $_.psobject.Properties['DisplayName'] } |
+        Where-Object { $_.DisplayName -like 'Huntress Agent*' -or $_.DisplayName -like 'Huntress Rio*' -or $_.DisplayName -like 'Huntress Updater*' }
+        foreach ($entry in $foundEntries) {
+            Write-LogMessage "Removing leftover uninstall registry entry: '$($entry.PSPath)'"
+            Remove-Item -Path $entry.PSPath -Recurse -Force -ErrorAction SilentlyContinue
             $removed = $true
         }
     }
