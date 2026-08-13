@@ -61,6 +61,16 @@ if ($env:HUNTRESS_TAGS) {
     $TagsKey = $env:HUNTRESS_TAGS
 }
 
+# NOTE (PoSh 3.0): Get-ItemPropertyValue was introduced in PowerShell 5.0 and is
+# NOT available on PowerShell 3.0. Use Get-ItemProperty and expand the property so
+# the DeviceID is retrieved identically on legacy hosts (Windows 8 / PoSh 3.0).
+$DRMMDeviceID = (Get-ItemProperty -Path "HKLM:\SOFTWARE\CentraStage" -Name "DeviceID").DeviceID
+if (([string]::IsNullOrWhiteSpace($TagsKey)) -or ($TagsKey -eq "__TAGS__")) {
+    $TagsKey="DRMM:$DRMMDeviceID"
+} else {
+    $TagsKey=$TagsKey + ",DRMM:$DRMMDeviceID"
+}
+
 # The account key should be stored in the DattoRMM account variable HUNTRESS_ACCOUNT_KEY. It may also be stored
 # on a per job basis in the HUNTRESS_ACCOUNT_KEY_JOB
 $AccountKey = "__ACCOUNT_KEY__"
@@ -80,7 +90,6 @@ if ($env:HUNTRESS_ACCOUNT_KEY_JOB) {
 $OrganizationKey = $env:CS_PROFILE_NAME
 if (!$env:CS_PROFILE_NAME) { $OrganizationKey = 'MISSING_CS_PROFILE_NAME' }
 
-
 ##############################################################################
 ## Begin user modified variables
 ##############################################################################
@@ -92,7 +101,7 @@ $DebugPreference = "SilentlyContinue"
 # Legacy, spinning HDD, or overloaded machines may require tuning this value. Most modern end points install in 10 seconds
 # 3rd party security software (AV/EDR/etc) may significantly slow down the install if Huntress exclusions aren't properly put in!
 # Read more about exclusions here https://support.huntress.io/hc/en-us/articles/4404005178771
-$timeout         = 120         # number of seconds to wait before continuing the install
+$timeout         = 180         # number of seconds to wait before continuing the install
 
 # Currently a fresh install of Huntress + EDR is approximately 100mb, double this for safety as fresh installs can bloat up in size slightly at first
 # This can vary based on several factors including process creation rate, if EDR is installed or not, as well as number of users in the c:\users folder
@@ -104,7 +113,7 @@ $estimatedSpaceNeeded = 200111222
 ##############################################################################
 
 # These are used by the Huntress support team when troubleshooting.
-$ScriptVersion = "Version 2, major revision 8, 2025 Nov 20"
+$ScriptVersion = "Version 2, major revision 9, 2026 Aug 12"
 $ScriptType = "PowerShell (Datto)"
 
 # variables used throughout this script
@@ -180,6 +189,39 @@ if ($env:ProgramW6432) {
 $isHuntressInstalled = $false
 if ((test-path "c:\program files\Huntress\HuntressAgent.exe") -OR (test-path "c:\program files (x86)\Huntress\HuntressAgent.exe")){
     $isHuntressInstalled = $true
+}
+
+# Select a secure TLS protocol for the CURRENT PowerShell process. This must be
+# called before ANY Invoke-WebRequest / WebClient call (i.e. before the
+# connectivity checks) so that TLS 1.2-only endpoints negotiate correctly on
+# hosts whose .NET default is still "Ssl3, Tls" (Windows 8 / PowerShell 3.0).
+function Set-SecureTls {
+    try {
+        # NOTE (PoSh 3.0 / .NET 4.0): detect protocol support via STRING comparison
+        # against the enum value list. Referencing [System.Net.SecurityProtocolType]::Tls13
+        # (or ::Tls12) directly would THROW on frameworks where that member is undefined,
+        # which is exactly the Windows 8 / PowerShell 3.0 case this script must support.
+        $ProtocolsSupported = [System.Enum]::GetValues([System.Net.SecurityProtocolType])
+
+        if ( ($ProtocolsSupported -contains 'Tls13') -and ($ProtocolsSupported -contains 'Tls12') ) {
+            # Use only TLS 1.3 or 1.2
+            LogMessage "Using TLS 1.3 or 1.2..."
+            [System.Net.ServicePointManager]::SecurityProtocol = (
+                [System.Enum]::ToObject([System.Net.SecurityProtocolType], 12288) -bOR [System.Enum]::ToObject([System.Net.SecurityProtocolType], 3072)
+            )
+        } else {
+            # In certain .NET 4.0 patch levels, SecurityProtocolType does not have a TLS 1.2 entry.
+            # Rather than check for 'Tls12', we force-set TLS 1.2 and catch the error if it's truly unsupported.
+            LogMessage "Using TLS 1.2..."
+            [System.Net.ServicePointManager]::SecurityProtocol = [System.Enum]::ToObject([System.Net.SecurityProtocolType], 3072)
+        }
+    } catch {
+        $msg = $_.Exception.Message
+        $err = "ERROR: Unable to use a secure version of TLS. Please verify Hotfix KB3140245 is installed."
+        LogMessage $msg
+        LogMessage $err
+        throw $ScriptFailed + " " + $msg + " " + $err
+    }
 }
 
 # test that all required parameters were passed, and that they are in the correct format
@@ -329,28 +371,10 @@ function Get-Installer {
     $msg = "Downloading installer to '$InstallerPath'..."
     LogMessage $msg
 
-    # Ensure a secure TLS version is used.
-    $ProtocolsSupported = [enum]::GetValues('Net.SecurityProtocolType')
-    if ( ($ProtocolsSupported -contains 'Tls13') -and ($ProtocolsSupported -contains 'Tls12') ) {
-        # Use only TLS 1.3 or 1.2
-        LogMessage "Using TLS 1.3 or 1.2..."
-        [Net.ServicePointManager]::SecurityProtocol = (
-            [Enum]::ToObject([Net.SecurityProtocolType], 12288) -bOR [Enum]::ToObject([Net.SecurityProtocolType], 3072)
-        )
-    } else {
-        LogMessage "Using TLS 1.2..."
-        try {
-            # In certain .NET 4.0 patch levels, SecurityProtocolType does not have a TLS 1.2 entry.
-            # Rather than check for 'Tls12', we force-set TLS 1.2 and catch the error if it's truly unsupported.
-            [Net.ServicePointManager]::SecurityProtocol = [Enum]::ToObject([Net.SecurityProtocolType], 3072)
-        } catch {
-            $msg = $_.Exception.Message
-            $err = "ERROR: Unable to use a secure version of TLS. Please verify Hotfix KB3140245 is installed."
-            LogMessage $msg
-            LogMessage $err
-            throw $ScriptFailed + " " + $msg + " " + $err
-        }
-    }
+    # TLS is now configured once, early in main(), via Set-SecureTls. We call
+    # it again here defensively (idempotent) in case Get-Installer is ever
+    # reached through a path that did not run main()'s early setup.
+    Set-SecureTls
 
     # Delete stale installer before downloading the most recent installer
     if (Test-Path $InstallerPath -PathType Leaf) {
@@ -415,6 +439,12 @@ function Install-Huntress ($OrganizationKey) {
 
     try {
         $process | Wait-Process -Timeout $timeout -ErrorAction Stop
+        if ($process.exitcode -ne 0) {
+            $err = "ERROR: Installer exited with a non-zero exit code. This indicates an error. The exit code is $($process.exitcode)."
+            LogMessage $err
+            LogMessage $SupportMessage
+            throw $ScriptFailed + " " + $err + " " + $SupportMessage
+        }
     } catch {
         $process | Stop-Process -Force
         $err = "ERROR: Installer failed to complete in $timeout seconds. Possible interference from a security product?"
@@ -428,7 +458,6 @@ function Install-Huntress ($OrganizationKey) {
 function Test-Installation {
     # Get the file locations of some of the Huntress executables and setting up some registry related variables
     $HuntressDirectory        = getAgentPath
-    $hUpdaterPath            = Join-Path $HuntressDirectory "hUpdate.exe"
     $HuntressAgentPath        = Join-Path $HuntressDirectory "HuntressAgent.exe"
     $HuntressUpdaterPath      = Join-Path $HuntressDirectory "HuntressUpdater.exe"
     $AgentIdKeyValueName      = "AgentId"
@@ -459,7 +488,7 @@ function Test-Installation {
     }
 
     # Ensure the critical files were created.
-    foreach ( $file in ($HuntressAgentPath, $HuntressUpdaterPath, $hUpdaterPath) ) {
+    foreach ( $file in ($HuntressAgentPath, $HuntressUpdaterPath) ) {
         if ( ! (Test-Path $file) ) {
             $err = "ERROR: $file did not exist. Check your AV/security software quarantine"
             LogMessage $err
@@ -726,7 +755,7 @@ function uninstallHuntress {
     # if Huntress services still exist, then delete
     $services = @("HuntressRio", "HuntressAgent", "HuntressUpdater", "Huntmon")
     foreach ($service in $services) {
-        if ( Get-Service -name $service -erroraction SilentlyContinue ) {
+        if ( Get-Service -name $service -ErrorAction SilentlyContinue ) {
             LogMessage "Service $($service) detected post uninstall, attempting to remove"
             c:\Windows\System32\sc.exe STOP $service
             c:\Windows\System32\sc.exe DELETE $service
@@ -815,14 +844,17 @@ function testNetworkConnectivity {
 
             # Remove all newlines from the content
             $StrContent = [string]::join("",($StrContent.Split("`n")))
-
             $ContentMatch = $StrContent -eq "96bca0cef10f45a8f7cf68c4485f23a4"
         } catch {
-            LogMessage "Error: $($_.Exception.Message)"
+            $ConnectionError = $_.Exception.Message
+            LogMessage "Error: $($ConnectionError)"
         }
 
         if ($StatusCode -ne 200) {
-            $err = "WARNING, connectivity to Huntress URL's is being interrupted. You MUST open port 443 for $($URL) in order for the Huntress agent to function."
+            # Clarify that a failed HTTPS test is not necessarily a blocked port.
+            # A "Could not create SSL/TLS secure channel" error points to TLS
+            # protocol negotiation, certificate trust, or cipher compatibility.
+            $err = "WARNING: HTTPS connectivity test failed for $($URL). If the error above is 'Could not create SSL/TLS secure channel', this is likely TLS negotiation, certificate trust, or cipher compatibility rather than a blocked port. Otherwise, ensure port 443 is open for this domain."
             LogMessage $err
             $connectivityTolerance --
         } elseif (!$ContentMatch) {
@@ -869,7 +901,7 @@ function logInfo {
 
     #LogMessage "Host name: '$env:computerName'"
     try {
-        $os = (Get-CimInstance -computername $env:computername -Class win32_operatingSystem).caption.Trim()
+        $os = (Get-WMiObject -computername $env:computername -Class win32_operatingSystem).caption.Trim()
     } catch {
         LogMessage "WMI issues discovered (computer name query), attempting to fix the repository"
         winmgmt -verifyrepository
@@ -953,6 +985,8 @@ function logInfo {
 # DebugLog contains useful info not found in surveys, so copy to Huntress folder for higher visibility with future troubleshooting AB
 # In the past we copied to the users temp folder, difficult to find on machines with lots of profiles. Solved this by always placing the log in the normal Huntress folder.
 function copyLogAndExit {
+    param([int]$ExitCode = 0)
+
     Start-Sleep 1
     $agentPath = getAgentPath
     $logLocation = Join-Path $agentPath "HuntressPoShInstaller.log"
@@ -966,7 +1000,7 @@ function copyLogAndExit {
     }
 
     Write-Output "Script complete"
-    exit 0
+    exit $ExitCode
 }
 
 
@@ -974,6 +1008,12 @@ function copyLogAndExit {
 #                                  begin main function                                  #
 #########################################################################################
 function main () {
+    # Set the process-wide TLS protocol BEFORE any web requests are made. The
+    # connectivity checks inside logInfo -> testNetworkConnectivity use
+    # Invoke-WebRequest, which otherwise inherits the .NET default ("Ssl3, Tls"
+    # on Windows 8 / PowerShell 3.0) and fails against TLS 1.2-only endpoints.
+    Set-SecureTls
+
     if ($env:repairAgent -eq $true) {
         $repair = $true
     }
@@ -1032,19 +1072,17 @@ function main () {
     $AccountKey = $AccountKey.Trim()
     $OrganizationKey = $OrganizationKey.Trim()
 
+    # check that all the parameters that were passed are valid
+    Test-Parameters
+
     # Hide most of the account key in the logs, keeping the front and tail end for troubleshooting
     if ($AccountKey -ne "__Account_Key__") {
         $masked = $AccountKey.Substring(0,4) + "************************" + $AccountKey.SubString(28,4)
         LogMessage "AccountKey: '$masked'"
-    } else {
-        LogMessage "WARNING: Account key not found! Software install cannot occur without a valid account key!"
     }
     LogMessage "OrganizationKey: '$OrganizationKey'"
     LogMessage "Tags: $($Tags)"
-    LogMessage "TagsKey: $(TagsKey)"
-
-    # check that all the parameters that were passed are valid
-    Test-Parameters
+    LogMessage "TagsKey: $($TagsKey)"
 
     # reregister > reinstall > uninstall > install (in decreasing order of impact)
     # reregister = reinstall + delete registry keys
@@ -1085,5 +1123,5 @@ try {
 } catch {
     $ErrorMessage = $_.Exception.Message
     LogMessage $ErrorMessage
-    copyLogAndExit
+    copyLogAndExit 1
 }
