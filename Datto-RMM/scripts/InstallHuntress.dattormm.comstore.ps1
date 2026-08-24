@@ -90,6 +90,12 @@ if ($env:HUNTRESS_ACCOUNT_KEY_JOB) {
 $OrganizationKey = $env:CS_PROFILE_NAME
 if (!$env:CS_PROFILE_NAME) { $OrganizationKey = 'MISSING_CS_PROFILE_NAME' }
 
+# If the site override variable is set, use this for the org name instead.
+if ($env:HUNTRESS_SITE_OVERRIDE) {
+    LogMessage "Overriding site name."
+    $OrganizationKey = $env:HUNTRESS_SITE_OVERRIDE
+}
+
 ##############################################################################
 ## Begin user modified variables
 ##############################################################################
