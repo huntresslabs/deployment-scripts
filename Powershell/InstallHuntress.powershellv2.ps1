@@ -70,7 +70,12 @@ $estimatedSpaceNeeded = 200111222
 
 # During network testing we count the number of failures. By default no failures are allowed, however if directed by Huntress staff you can 
 # adjust this number to allow for some failures (-1 would allow for one failure, etc)
-$script:countFails    = 0
+$script:countFails = 0
+
+# If you want to force the alternate location and never use the working directory, change $localJSON to your desired value. Example:
+# $localJSON = "c:\Users\Public\URLdata.json"
+$altJSON   = "$env:temp\URLdata.json"
+$localJSON = Join-Path $(Split-Path -Parent -Path $MyInvocation.MyCommand.Definition) "URLdata.json"
 
 ##############################################################################
 ##              Do not modify anything below this line
@@ -90,8 +95,8 @@ $HuntressEDRServiceName     = "HuntressRio"
 $Vendor                     = "Huntress"
 $ScriptInfoName             = "HuntressPoShInstaller.json"
 
-# Network tester variables
-$localJSON = Join-Path $(Split-Path -Parent -Path $MyInvocation.MyCommand.Definition) "URLdata.json"
+
+# Variables for network testing
 $script:testURLs      = @()
 $script:certURLs      = @()
 $script:expIssuerName = @()
@@ -238,12 +243,57 @@ function certFail {
     
 }
 
+# Returns true if the passed file is writable, otherwise returns false
+function isWritable {
+    param ( [Parameter(Mandatory = $true)]
+            [string]$file )
+    try {
+        # Attempt to open the file for writing and immediately close it
+        $stream = [System.IO.File]::OpenWrite($file)
+        $stream.Close()
+        return $true
+    } catch {
+        return $false
+    }
+    return $false
+}
+
+# If the local JSON file exists and was modified less than 14 days ago, skip downloading from github
+function getLocalJSON {
+    # try to use local JSON first
+    if (Test-Path -Path $localJSON) {
+        $lastWrite = (Get-Item $localJSON).LastWriteTime
+        if ($lastWrite -gt ((Get-Date).AddDays(-14))) {
+            logger "Using local URLdata.json from $lastWrite `n"
+            getJSON 0
+        }
+    # try to use alternate JSON location next
+    } elseif (Test-Path -Path $altJSON) {
+        $script:localJSON = $altJSON
+        $lastWrite = (Get-Item $localJSON).LastWriteTime
+        if ($lastWrite -gt ((Get-Date).AddDays(-14))) {
+            logger "Using alternate local URLdata.json ($altJSON) from $lastWrite `n"
+            getJSON 0
+        }
+    # Otherwise download github to localJSON if writable, alternate otherwise
+    } else {
+        try {
+            New-Item -Name $localJSON -ItemType File
+            Remove-Item -Name $localJSON -Force
+            logger "$localJSON not found, attempting to retrieve from github."
+        } catch {
+            logger "$localJSON is not writeable, attempting to use alternate"
+            $script:localJSON = $altJSON
+        }
+        getJSON 1
+    }
+}
+
 # Pass a [int]1 to download a fresh copy of the JSON data, or [int]0 to use a local copy
 # Function populates $data array with the resulting file contents
 function getJSON {
     param ( [Parameter(Mandatory = $true)]
             [int]$downloadFromGithub )
-
     # Attempt to download the JSON from github if prompted by $downloadFromGithub
     if ($downloadFromGithub -eq 1) {
         try { 
@@ -256,7 +306,7 @@ function getJSON {
             try {
                 (New-Object System.Net.WebClient).DownloadFile($URL, $localJSON)
             } catch {
-                if (Test-Path -Path $global:localJSON) {
+                if (Test-Path -Path $localJSON) {
                     logger "[Warning: Unable to connect to github, using a stale version of the JSON. Test may be inaccurate without fresh data!]"
                 } else {
                     logger "[ERROR: Unable to connect to github, unable to find local copy of JSON file!]"
@@ -268,7 +318,7 @@ function getJSON {
     }
 
     # Read text lines from file and convert them into a JSON array. Not using ConvertFrom-Json as PowerShell 2.0 doesn't support it.
-    [array]$global:data = @(Get-Content -Path $localJSON -Raw | ConvertFrom-Json)
+    [array]$script:data = @(Get-Content -Path $localJSON -Raw | ConvertFrom-Json)
     #  Note if you really need PoSh 2.0 compatibility you can comment the line above, and uncomment the 4 lines below
     #  You will need TLS 1.2 setup, .NET 3.5, and may need some registry patches to accomplish those. More info here:
     #  https://stackoverflow.com/questions/28077854/powershell-2-0-convertfrom-json-and-convertto-json-implementation
@@ -294,23 +344,6 @@ function getJSON {
     # process the URL strings from github for use
     cleanURL -ArrayRef ([ref]$script:testURLs)
     cleanURL -ArrayRef ([ref]$script:certURLs)
-}
-
-# If the local JSON file exists and was modified less than 14 days ago, skip downloading from github
-function getLocalJSON {
-    if (Test-Path -Path $localJSON) {
-        $lastWrite = (Get-Item $localJSON).LastWriteTime
-        if ($lastWrite -gt ((Get-Date).AddDays(-14))) {
-            logger "Using local URLdata.json from $lastWrite `n"
-            getJSON 0
-        } else {
-            logger "Attempting to retrieve URLdata.json from github`n"
-            getJSON 1
-        }
-    } else {
-        logger "Attempting to retrieve URLdata.json from github`n"
-        getJSON 1
-    }
 }
 
 # tests that the expected certificates are not intercepted. If the expected cert is not returned the agent will not function.
