@@ -266,6 +266,9 @@ function getLocalJSON {
         if ($lastWrite -gt ((Get-Date).AddDays(-14))) {
             logger "Using local URLdata.json from $lastWrite `n"
             getJSON 0
+        } else {
+            logger "$localJSON is stale, downloading new version from github"
+            getJSON 1
         }
     # try to use alternate JSON location next
     } elseif (Test-Path -Path $altJSON) {
@@ -274,6 +277,9 @@ function getLocalJSON {
         if ($lastWrite -gt ((Get-Date).AddDays(-14))) {
             logger "Using alternate local URLdata.json ($altJSON) from $lastWrite `n"
             getJSON 0
+        } else {
+            logger "$localJSON (alternate location) is stale, downloading new version from github"
+            getJSON 1
         }
     # Otherwise download github to localJSON if writable, alternate otherwise
     } else {
