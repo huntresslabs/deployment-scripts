@@ -285,7 +285,7 @@ function getLocalJSON {
     } else {
         try {
             New-Item -Name $localJSON -ItemType File
-            Remove-Item -Name $localJSON -Force
+            Remove-Item $localJSON -Force
             logger "$localJSON not found, attempting to retrieve from github."
         } catch {
             logger "$localJSON is not writeable, attempting to use alternate"
