@@ -324,9 +324,7 @@ function getJSON {
     }
 
     # The data on github is purposely over-verbose for future use, so we strip extra characters.
-    for ($i = 0; $i -lt $netDataObject.testURLs.Count; $i++) {
-        $netDataObject.testURLs[$i] = $(($netDataObject.testURLs[$i] -replace '^https://', '') -replace '/.*', '')
-    }
+    $netDataObject.testURLs = $netDataObject.testURLs | ForEach-Object { ($_ = ($_ -replace '^https://', '') -replace '/.*', '')}
 }
 
 # tests that the expected certificates are not intercepted. If the expected cert is not returned the agent will not function.
