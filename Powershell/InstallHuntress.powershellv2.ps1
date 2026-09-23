@@ -53,7 +53,7 @@ $TagsKey = "__TAGS__"
 
 # These are used by the Huntress support team when troubleshooting. 
 # It's suggested to change $ScriptType to be the name of your automation system deploying this.
-$ScriptVersion = "Version 2, major revision 9, 2026 Sept 21"
+$ScriptVersion = "Version 2, major revision 10, 2026 Sept 23"
 $ScriptType = "PowerShell"
 
 # Set to "Continue" to enable verbose logging. "SilentlyContinue" is default
@@ -68,18 +68,13 @@ $timeout         = 120         # number of seconds to wait before continuing the
 # This can vary based on several factors including process creation rate, if EDR is installed or not, as well as number of users in the c:\users folder
 $estimatedSpaceNeeded = 200111222
 
-# During network testing we count the number of failures. By default no failures are allowed, however if directed by Huntress staff you can 
-# adjust this number to allow for some failures (-1 would allow for one failure, etc)
-$script:countFails = 0
-
-# If you want to force the alternate location and never use the working directory, change $localJSON to your desired value. Example:
-# $localJSON = "c:\Users\Public\URLdata.json"
-$altJSON   = "$env:temp\URLdata.json"
-$localJSON = Join-Path $(Split-Path -Parent -Path $MyInvocation.MyCommand.Definition) "URLdata.json"
+# If you'd like to use a local JSON file in a specified location, uncomment the below line and change the location if needed
+# $alternateLocalJSONFile = "$env:temp\URLdata.json"
 
 ##############################################################################
 ##              Do not modify anything below this line
 ##############################################################################
+
 
 # variables used throughout this script
 $X64 = 64
@@ -95,13 +90,20 @@ $HuntressEDRServiceName     = "HuntressRio"
 $Vendor                     = "Huntress"
 $ScriptInfoName             = "HuntressPoShInstaller.json"
 
-
-# Variables for network testing
-$script:testURLs      = @()
-$script:certURLs      = @()
-$script:expIssuerName = @()
-$script:expSubject    = @()
-$script:expIssuer     = @()
+# Setup custom object for network testing
+$localJSONLocation = Join-Path $(Split-Path -Parent -Path $MyInvocation.MyCommand.Definition) "URLdata.json"
+if ($null -ne $alternateLocalJSONFile) {
+    $localJSONLocation = $alternateLocalJSONFile
+}
+$testURLs      = @()
+$certData      = @()
+$netDataObject = New-Object -TypeName PSObject -Property @{
+    altJSON    = "$env:temp\URLdata.json"
+    localJSON  = $localJSONLocation
+    countFails = 0
+    testURLs   = $testURLs
+    certData   = $certData
+}
 
 # attempt to use a more central temporary location for the log file rather than the installing users folder
 if (Test-Path (Join-Path $env:SystemRoot "\temp")) {
@@ -187,44 +189,24 @@ function setNetworking {
     Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Internet Explorer\Main" -Name "DisableFirstRunCustomize" -Value 2
 
     try {
-        try {
-            $ProtocolsSupported = [System.Enum]::GetValues([System.Net.SecurityProtocolType])
-            # Only TLS 1.3 or 1.2 are supported for secure communication with the Huntress portal
-            if ( ($ProtocolsSupported -contains 'Tls13') -and ($ProtocolsSupported -contains 'Tls12') ) {
-                [System.Net.ServicePointManager]::SecurityProtocol = (
-                    [System.Enum]::ToObject([System.Net.SecurityProtocolType], 12288) -bOR [System.Enum]::ToObject([System.Net.SecurityProtocolType], 3072)
-                )
-            } else {
-                # In certain .NET 4.0 patch levels, SecurityProtocolType does not have a TLS 1.2 entry.
-                # Rather than check for 'Tls12', we force-set TLS 1.2 and catch the error if it's truly unsupported.
-                # Note that these legacy systems will also need some manual configuration work before using protocol 3072 (TLS 1.2)
-                # See: https://support.microsoft.com/en-us/topic/support-for-tls-system-default-versions-included-in-the-net-framework-2-0-sp2-on-windows-vista-sp2-and-server-2008-sp2-1001add1-103f-0a22-e807-00ee2fc7c75d
-                [System.Net.ServicePointManager]::SecurityProtocol = [System.Enum]::ToObject([System.Net.SecurityProtocolType], 3072)
-            }
-        } catch {
-            $msg = $_.Exception.Message
-            logger "Failed to enable TLS 1.2, Huntress requires TLS 1.2 or higher for security reasons."
-            logger "$msg"
-            throw $msg
+        $ProtocolsSupported = [System.Enum]::GetValues([System.Net.SecurityProtocolType])
+        # Only TLS 1.3 or 1.2 are supported for secure communication with the Huntress portal
+        if ( ($ProtocolsSupported -contains 'Tls13') -and ($ProtocolsSupported -contains 'Tls12') ) {
+            [System.Net.ServicePointManager]::SecurityProtocol = (
+                [System.Enum]::ToObject([System.Net.SecurityProtocolType], 12288) -bOR [System.Enum]::ToObject([System.Net.SecurityProtocolType], 3072)
+            )
+        } else {
+            # In certain .NET 4.0 patch levels, SecurityProtocolType does not have a TLS 1.2 entry.
+            # Rather than check for 'Tls12', we force-set TLS 1.2 and catch the error if it's truly unsupported.
+            # Note that these legacy systems will also need some manual configuration work before using protocol 3072 (TLS 1.2)
+            # See: https://support.microsoft.com/en-us/topic/support-for-tls-system-default-versions-included-in-the-net-framework-2-0-sp2-on-windows-vista-sp2-and-server-2008-sp2-1001add1-103f-0a22-e807-00ee2fc7c75d
+            [System.Net.ServicePointManager]::SecurityProtocol = [System.Enum]::ToObject([System.Net.SecurityProtocolType], 3072)
         }
     } catch {
         $msg = $_.Exception.Message
         logger "Failed to enable TLS 1.2, Huntress requires TLS 1.2 or higher for security reasons."
         logger "$msg"
         throw $msg
-    }
-}
-
-# The data on github is purposely over-verbose for future use, so we strip extra characters.
-function cleanURL {
-    param ( [Parameter(Mandatory = $true)]
-            [ref]$ArrayRef )
-
-    # Access the actual array using .Value (i.e. modifying the array that was passed, not a copy of it)
-    $targetArray = $ArrayRef.Value
-    # Loop through the array by its index to setup the URL for use
-    for ($i = 0; $i -lt $targetArray.Count; $i++) {
-        $targetArray[$i] = $(($targetArray[$i] -replace '^https://', '') -replace '/.*', '')
     }
 }
 
@@ -243,76 +225,64 @@ function certFail {
     
 }
 
-# Returns true if the passed file is writable, otherwise returns false
-function isWritable {
-    param ( [Parameter(Mandatory = $true)]
-            [string]$file )
-    try {
-        # Attempt to open the file for writing and immediately close it
-        $stream = [System.IO.File]::OpenWrite($file)
-        $stream.Close()
-        return $true
-    } catch {
-        return $false
-    }
-    return $false
-}
-
 # If the local JSON file exists and was modified less than 14 days ago, skip downloading from github
 function getLocalJSON {
+    param ( [PSObject]$netDataObject )
+
     # try to use local JSON first
-    if (Test-Path -Path $localJSON) {
-        $lastWrite = (Get-Item $localJSON).LastWriteTime
+    if (Test-Path -Path $netDataObject.localJSON) {
+        $lastWrite = (Get-Item $netDataObject.localJSON).LastWriteTime
         if ($lastWrite -gt ((Get-Date).AddDays(-14))) {
-            logger "Using local URLdata.json from $lastWrite `n"
-            getJSON 0
+            logger "Using local URLdata.json from $lastWrite for network testing.`n"
+            getJSON $netDataObject
         } else {
-            logger "$localJSON is stale, downloading new version from github"
-            getJSON 1
+            logger "$($netDataObject.localJSON) is stale, downloading new version from github for network testing"
+            getJSON $netDataObject -downloadFromGithub
         }
     # try to use alternate JSON location next
-    } elseif (Test-Path -Path $altJSON) {
-        $script:localJSON = $altJSON
-        $lastWrite = (Get-Item $localJSON).LastWriteTime
+    } elseif (Test-Path -Path $netDataObject.altJSON) {
+        $netDataObject.localJSON = $netDataObject.altJSON
+        $lastWrite = (Get-Item $netDataObject.localJSON).LastWriteTime
         if ($lastWrite -gt ((Get-Date).AddDays(-14))) {
-            logger "Using alternate local URLdata.json ($altJSON) from $lastWrite `n"
-            getJSON 0
+            logger "Using alternate local URLdata.json ($($netDataObject.altJSON)) from $lastWrite `n"
+            getJSON $netDataObject
         } else {
-            logger "$localJSON (alternate location) is stale, downloading new version from github"
-            getJSON 1
+            logger "$($netDataObject.localJSON) (alternate location) is stale, downloading new version from github"
+            getJSON $netDataObject -downloadFromGithub
         }
     # Otherwise download github to localJSON if writable, alternate otherwise
     } else {
         try {
-            New-Item -Name $localJSON -ItemType File
-            Remove-Item $localJSON -Force
-            logger "$localJSON not found, attempting to retrieve from github."
+            New-Item -Path $netDataObject.localJSON -ItemType File
+            Remove-Item $netDataObject.localJSON -Force
+            logger "$($netDataObject.localJSON) not found, attempting to retrieve from github."
         } catch {
-            logger "$localJSON is not writeable, attempting to use alternate"
-            $script:localJSON = $altJSON
+            logger "$($netDataObject.localJSON) is not writeable, attempting to use alternate"
+            $netDataObject.localJSON = $netDataObject.altJSON
         }
-        getJSON 1
+        getJSON $netDataObject -downloadFromGithub
     }
 }
 
-# Pass a [int]1 to download a fresh copy of the JSON data, or [int]0 to use a local copy
+# Pass [bool]true to download a fresh copy of the JSON data, or [bool]false to use a local copy
 # Function populates $data array with the resulting file contents
 function getJSON {
-    param ( [Parameter(Mandatory = $true)]
-            [int]$downloadFromGithub )
+    param ( [PSObject]$netDataObject,
+            [switch]$downloadFromGithub )
+
     # Attempt to download the JSON from github if prompted by $downloadFromGithub
-    if ($downloadFromGithub -eq 1) {
+    if ($downloadFromGithub) {
         try { 
             $URL = 'https://raw.githubusercontent.com/huntresslabs/support/refs/heads/main/URLdata.json'
-            Invoke-WebRequest -Uri $URL -OutFile $localJSON -UseBasicParsing -ErrorAction Stop
+            Invoke-WebRequest -Uri $URL -OutFile $netDataObject.localJSON -UseBasicParsing -ErrorAction Stop
         } catch {
             logger "Fallback using WebClient (still uses TLS 1.2)"
             $wc = New-Object System.Net.WebClient
             $wc.Headers['User-Agent'] = 'HuntressSupportScript'
             try {
-                (New-Object System.Net.WebClient).DownloadFile($URL, $localJSON)
+                (New-Object System.Net.WebClient).DownloadFile($URL, $netDataObject.localJSON)
             } catch {
-                if (Test-Path -Path $localJSON) {
+                if (Test-Path -Path $netDataObject.localJSON) {
                     logger "[Warning: Unable to connect to github, using a stale version of the JSON. Test may be inaccurate without fresh data!]"
                 } else {
                     logger "[ERROR: Unable to connect to github, unable to find local copy of JSON file!]"
@@ -324,7 +294,7 @@ function getJSON {
     }
 
     # Read text lines from file and convert them into a JSON array. Not using ConvertFrom-Json as PowerShell 2.0 doesn't support it.
-    [array]$script:data = @(Get-Content -Path $localJSON -Raw | ConvertFrom-Json)
+    [array]$data = @(Get-Content -Path $netDataObject.localJSON -Raw | ConvertFrom-Json)
     #  Note if you really need PoSh 2.0 compatibility you can comment the line above, and uncomment the 4 lines below
     #  You will need TLS 1.2 setup, .NET 3.5, and may need some registry patches to accomplish those. More info here:
     #  https://stackoverflow.com/questions/28077854/powershell-2-0-convertfrom-json-and-convertto-json-implementation
@@ -335,32 +305,41 @@ function getJSON {
     #[array]$data = $serializer.DeserializeObject($jsonString)
 
     # process the data from the $data array
-    $script:testURLs      = @($data.array1)
-    $script:certURLs      = @($data.array2)
-    $certTemp             = @($data.array4)
-    $script:expIssuerName = @($data.array5)
+    $netDataObject.testURLs = @($data.array1)
+    $certURL                = @($data.array2)
+    $certArrayTemp          = @($data.array4)
+    $expIssuerName          = @($data.array5)
+
     # array4 contains two different sets of info, even indices are subject, odd indices are issuer
-    for ($i = 0; $i -lt $certTemp.Count; $i++) {
-        if ($i % 2 -eq 0) {
-            $script:expSubject += $certTemp[$i]
-        } else {
-            $script:expIssuer += $certTemp[$i]
+    # The rest of the arrays are single sets of data, enjoy.
+    for ($i = 0; $i -lt $certArrayTemp.Count-1; $i = $i + 2) {
+        $tempCert = $(($certURL[$i/2] -replace '^https://', '') -replace '/.*', '')
+
+        $netDataObject.certData += New-Object -TypeName PSObject -Property @{
+            certURL       = $tempCert
+            expIssuerName = $expIssuerName[$($i/2)]
+            expSubject    = $certArrayTemp[$i]
+            expIssuer     = $certArrayTemp[$i+1]
         }
     }
-    # process the URL strings from github for use
-    cleanURL -ArrayRef ([ref]$script:testURLs)
-    cleanURL -ArrayRef ([ref]$script:certURLs)
+
+    # The data on github is purposely over-verbose for future use, so we strip extra characters.
+    for ($i = 0; $i -lt $netDataObject.testURLs.Count; $i++) {
+        $netDataObject.testURLs[$i] = $(($netDataObject.testURLs[$i] -replace '^https://', '') -replace '/.*', '')
+    }
 }
 
 # tests that the expected certificates are not intercepted. If the expected cert is not returned the agent will not function.
 function certTest {
+    param ( [PSObject]$netDataObject )
+
     logger "-- Testing Certificate Validation --"
-    $failCounter = 0
+    $certFailCounter = 0
     $failURLs    = @()
-    $i           = 0
     # for each URL, establish secure TCP connection and grab the certificate and subject lines to compare with known-good values.
-    foreach ($cleanURL in $script:certURLs) {
-        $uri = ([uri]$cleanURL)
+    foreach ($singleCert in $($netDataObject.certData)) {
+        $cleanURL = $singleCert.certURL
+        $uri = ([uri]($cleanURL))
         $tcp = $null
         $ssl = $null
         try {
@@ -380,43 +359,41 @@ $([System.Convert]::ToBase64String($cert.Export([System.Security.Cryptography.X5
 "@
 
             # Check for Subject match. No need for wildcards as these should all be static Huntress certs.
-            if ($recSubject -eq $script:expSubject[$i]) {
+            if ($recSubject -eq $($singleCert.expSubject)) {
                 logger "[Certificate subject validation successful for $cleanURL]"
             } else {
                 logger "[FAILED: Subject validation. Certificate does not match for [$cleanURL] !]"
                 logger "Subject that was returned: [$recSubject]"
-                logger "Subject that was expected: [$($script:expSubject[$i])]"
-                $failCounter++
-                $script:countFails++
+                logger "Subject that was expected: [$($singleCert.expSubject)]"
+                $certFailCounter++
+                $netDataObject.countFails++
                 $failURLs += $cleanURL
             }
 
             # Issuer can vary based on the specific server the script reaches. To compensate, we check for exact match then a wildcard match.
-            if ($recIssuer -eq $script:expIssuer[$i]) {
+            if ($recIssuer -eq $($singleCert.expIssuer)) {
                 logger "[Certificate issuer validation successful for $cleanURL]"
             } else {
                 # Wildcard match compensates for big infrastructure where the leaf cert's might vary slightly
-                if ($recIssuer -like "*$($script:expIssuerName[$i])*") {
+                if ($recIssuer -like "*$($singleCert.expIssuerName)*") {
                     logger "Please note this was not an exact match, which is expected with big infrastructure."
                     logger "Issuer that was returned: [$recIssuer]"
-                    logger "Issuer that was expected: [$($script:expIssuer[$i])]"
+                    logger "Issuer that was expected: [$($singleCert.expIssuer)]"
                 } else { 
                     logger "[FAILED: Issuer validation. Certificate does not match for [$cleanURL] !]"
                     logger "Issuer that was returned: [$recIssuer]"
-                    logger "Issuer that was expected: [$($script:expIssuer[$i])]"
+                    logger "Issuer that was expected: [$($singleCert.expIssuer)]"
                     logger "PEM that was received: $PEM"
-                    $failCounter++
-                    $script:countFails++
+                    $certFailCounter++
+                    $netDataObject.countFails++
                     $failURLs += $cleanURL
                 }
             }
-            $i++
         } catch {
             logger "Error: $($_.Exception.Message)"
             logger "[Error during certificate validation for '$cleanURL'!]"
-            $i++
-            $failCounter++
-            $script:countFails++
+            $certFailCounter++
+            $netDataObject.countFails++
             $failURLs += $cleanURL
         } finally {
             if ($null -ne $ssl) {
@@ -426,7 +403,7 @@ $([System.Convert]::ToBase64String($cert.Export([System.Security.Cryptography.X5
         }
     }
     # If we see any fails, print more info about those failures.
-    if ($failCounter -gt 0) {
+    if ($certFailCounter -gt 0) {
         foreach ($failURL in $failURLs) {
             certFail $failURL
         }
@@ -436,8 +413,10 @@ $([System.Convert]::ToBase64String($cert.Export([System.Security.Cryptography.X5
 
 # test outgoing port 443 connectivity to Huntress URLs
 function tcpTest {
+    param ( [PSObject]$netDataObject )
+
     logger "-- Verifying Huntress services can be reached --"
-    foreach ($testURL in $script:testURLs) {
+    foreach ($testURL in $netDataObject.testURLs) {
         $tcp = New-Object System.Net.Sockets.TcpClient
         try {
             $tcp.connect($testURL, 443)
@@ -445,7 +424,7 @@ function tcpTest {
         } catch {
             logger "WARNING, connectivity to Huntress URL's is being interrupted. You MUST open port 443 for $testURL in order for the Huntress agent to function."
             logger "Error: $($_.Exception.Message)"
-            $script:countFails++
+            $netDataObject.countFails++
         } finally {
             $tcp.Close()
         }
@@ -1037,6 +1016,8 @@ function repairAgent {
 
 # Log useful data about the machine for troubleshooting AB
 function logInfo {
+    param ( [PSObject]$netDataObject )
+
     logger "============================== Pre-flight checks and logging =============================="
     logger "Script type: '$ScriptType'"
     logger "Script version: '$ScriptVersion'"
@@ -1138,10 +1119,10 @@ function logInfo {
     getNetworkAdapterInfo
     
     # Checking connectivity to Huntress servers 
-    getLocalJSON
-    tcpTest
-    certTest
-    if ($script:countFails -gt 0) {
+    getLocalJSON $netDataObject
+    tcpTest $netDataObject
+    certTest $netDataObject
+    if ($netDataObject.countFails -gt 0) {
         $errorText = "[FAILED to connect to all Huntress services, aborting deploy! Read the errors above for more info.]"
         copyLogAndExit $errorText
     }
@@ -1311,7 +1292,7 @@ function main () {
     setNetworking
 
     # Start the script with logging to capture useful data for troubleshooting. All your logging are belong to us, Zero Wang.
-    logInfo
+    logInfo $netDataObject
 
     # if run with the uninstall flag, exit afterward so we don't reinstall the agent after
     if ($uninstall) {
