@@ -444,8 +444,6 @@ function getRegistrationStatus {
     while IFS= read -r line || [[ -n "$line" ]]; do
         if [[ $line == *registered* ]]; then
             didAgentRegister=true
-            ((regCount++))
-            registrationLines+=("$line")
         fi
     done <<< "$tailedLog"
 
@@ -458,21 +456,19 @@ function getRegistrationStatus {
         # recent registration + older registrations found
         if [[ $regCount -gt 1 ]]; then
             logger "Success: Agent registered with Huntress portal. Multiple registration events:"
-            logger $registrationLines
         # only a recent registration was found
         else
             logger "Success: New agent registered with Huntress portal! Registration event from log:"
-            logger $registrationLines
         fi
     # no recent agent reg, but older events found
     elif [[ $regCount -gt 0 ]]; then
         logger "Caution: the agent didn't output a registration line in logs, however older registration events were detected."
         logger "Check your Huntress portal for confirmation of registration status, unable to determine via logs. Registration events:"
-        logger "$registrationLines"
     else 
         logger "  >>>  WARNING: Agent did not successfully register!  <<<  "
         exit 1
     fi   
+    logger $registrationLines
 }
 
 
