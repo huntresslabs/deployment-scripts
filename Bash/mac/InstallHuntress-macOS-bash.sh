@@ -54,11 +54,11 @@ rmm="macOS Bash script (Unspecified RMM)"
 # without security prompts on the endpoint, permissions need to be applied to the endpoint by an MDM before this script
 # is run. See the following KB article for instructions:
 # https://support.huntress.io/hc/en-us/articles/21286543756947-Instructions-for-the-MDM-Configuration-for-macOS
-install_system_extension=true
+install_system_extension=false
 
 # If you want to change the JSON file location, uncomment and change one localJSONtemp variable below to your desired directory. 
-# The location must be writable for the user who is running the script! Do not remove any leading or trailing forward slashes /
-#     Examples / Suggested locations:
+# The location must be writable for the user who is running the script! Do not remove any leading or trailing forward slashes "/"
+#     Examples and Suggested locations:
 # localJSONtemp="/var/tmp/"
 # localJSONtemp="/tmp/"
 
@@ -66,10 +66,9 @@ install_system_extension=true
 ## Do not modify anything below this line
 ##############################################################################
 
+scriptVersion="September 23, 2026"
 
-scriptVersion="September 22, 2026"
-
-version="1.2 - $scriptVersion"
+version="1.3 - $scriptVersion"
 dd=$(date "+%Y-%m-%d  %H:%M:%S")
 log_file="/tmp/HuntressInstaller.log"
 log_file_location="/Users/Shared/"
@@ -81,9 +80,9 @@ pattern="[a-f0-9]{32}"
 gitURL='https://raw.githubusercontent.com/huntresslabs/support/refs/heads/main/URLdata.json'
 localJSON="./URLdata.json"
 altJSON="/tmp/URLdata.json"
-countFails=0
-certFailCounter=0
-gracePeriodForJSON=14
+countFails=0                    # total number of network tests that failed (includes cert fails)
+certFailCounter=0               # total number of certificate tests that failed
+gracePeriodForJSON=14           # number of days old the local JSON can be before it's ignored
 declare -a testURLs=()
 declare -a certURLs=()
 declare -a expIssuer=()
@@ -247,7 +246,7 @@ function certTest {
           recIssuer=$(printf '%s\n' "$s_client" | openssl x509 -noout -issuer -nameopt compat | cut -d'/' -f2- | xargs)
           recSubject=$(printf '%s\n' "$s_client" | openssl x509 -noout -subject -nameopt compat | cut -d'/' -f2- | xargs)
 
-          if [[ -z $recSubject || -z $recSubject ]]; then
+          if [[ -z $recSubject || -z $recIssuer ]]; then
                logger "WARNING: Unable to retrieve certificate data! Exiting."
                exit 1
           fi
@@ -415,8 +414,8 @@ function validateParameters {
 # After deploy, read the 8 newest lines from HuntressAgent.log to determine registration status
 function getRegistrationStatus {
     didAgentRegister=false
-    registrationLine=""
-    logLocation="/library/Application Support/Huntress/HuntressAgent/HuntressAgent.log"
+    declare -a registrationLines=()
+    logLocation="/Library/Application Support/Huntress/HuntressAgent/HuntressAgent.log"
     # Watch for HuntressAgent.log, checking every 1/4 second until 10 seconds elapsed, if found grab the last 8 lines
     for (( i=0; i<40; i++ )); do
         if [[ -f "$logLocation" ]]; then
@@ -431,27 +430,50 @@ function getRegistrationStatus {
         exit 1
     fi
 
-    # Find the actual registration line
+    # find all registration lines
     regCount=0
     while IFS= read -r line || [[ -n "$line" ]]; do
         if [[ $line == *registered* ]]; then
-            didAgentRegister=true
-            registrationLine+=$line
+            ((regCount++))
+            registrationLines+=("$line")
         fi
     done < "$logLocation"
 
-    if ! $didAgentRegister; then
-       logger "Warning: Agent did not successfully register!"
-    else 
-        logger "Success: Agent successfully registered!"
-        logger "$registrationLine"
-    fi
-
+    # look for recent registration
     tailedLog=$(tail -n 8 "$logLocation")
+    while IFS= read -r line || [[ -n "$line" ]]; do
+        if [[ $line == *registered* ]]; then
+            didAgentRegister=true
+            ((regCount++))
+            registrationLines+=("$line")
+        fi
+    done <<< "$tailedLog"
+
     logger "Last 8 lines of agent log:"
     logger "$tailedLog"
-}
+    logger
 
+    # agent registered recently
+    if $didAgentRegister; then
+        # recent registration + older registrations found
+        if [[ $regCount -gt 1 ]]; then
+            logger "Success: Agent registered with Huntress portal. Multiple registration events:"
+            logger $registrationLines
+        # only a recent registration was found
+        else
+            logger "Success: New agent registered with Huntress portal! Registration event from log:"
+            logger $registrationLines
+        fi
+    # no recent agent reg, but older events found
+    elif [[ $regCount -gt 0 ]]; then
+        logger "Caution: the agent didn't output a registration line in logs, however older registration events were detected."
+        logger "Check your Huntress portal for confirmation of registration status, unable to determine via logs. Registration events:"
+        logger "$registrationLines"
+    else 
+        logger "  >>>  WARNING: Agent did not successfully register!  <<<  "
+        exit 1
+    fi   
+}
 
 
 logger "============================= Pre-Flight Checks at $dd ==================================="
@@ -498,7 +520,6 @@ EOF
 
 reinstall=false
 skipNetTest=false
-install_system_extension=false
 while getopts "a:o:t:ihrn-:" OPT; do
     if [ "$OPT" = "-" ]; then
         OPT="${OPTARG%%=*}"       # extract long option name
@@ -558,7 +579,7 @@ if ! $reinstall; then
         for HuntressProcess in "HuntressAgent" "HuntressUpdater"; do
             if [ $(pgrep "$HuntressProcess" > /dev/null) ]; then
                 logger "Warning: process $HuntressProcess is stopped"
-                numServicesStopped++
+                ((numServicesStopped++))
             else
                 logger "Process $HuntressProcess is running"
             fi
@@ -593,6 +614,10 @@ if ! $skipNetTest; then
     getLocalJSON
     tcpTest
     certTest
+    if [[ $countFails -gt 0 ]]; then
+        logger "WARNING: Network testing failed, aborting deploy since the endpoint is not ready for Huntress yet."
+        exit 1
+    fi
 else
     logger "Warning: Skipping network testing, the Huntress agent may not operate without a valid network setup!"
 fi
