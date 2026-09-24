@@ -46,6 +46,22 @@ param (
 # Replace __ACCOUNT_KEY__ with your account secret key.
 $AccountKey = "__ACCOUNT_KEY__"
 
+# Optional. Leave this line unmodified to derive the Organization Key from the
+# SITEID/SITENAME registry values, which is the default behavior.
+#
+# ConnectWise RMM users: ConnectWise no longer populates SITENAME, so the
+# default naming produces Organizations named after the numeric Site ID. The
+# RMM does expose the site name to the script as a built-in variable, so you
+# can name Organizations after the client instead by setting this line to:
+#
+#     $OrganizationKey = "%sitename%"
+#
+# Note that ConnectWise uses two different delimiters: task parameters you
+# define yourself use @Name@ (for example @Account_Key@ above), while built-in
+# variables such as sitename and output use %Name%. Using the wrong delimiter
+# leaves the token in place as literal text.
+$OrganizationKey = "__ORGANIZATION_KEY__"
+
 # Set to "Continue" to enable verbose logging.
 $DebugPreference = "SilentlyContinue"
 
@@ -77,6 +93,9 @@ $InstallerName = "HuntressInstaller.exe"
 $InstallerPath = Join-Path $Env:TMP $InstallerName
 $DebugLog = Join-Path $Env:TMP HuntressInstaller.log
 $DownloadURL = "https://update.huntress.io/download/" + $AccountKey + "/" + $InstallerName
+# The download URL embeds the account key. Log this redacted copy instead, so
+# the key is not written into RMM task output where it is broadly readable.
+$SafeDownloadURL = "https://update.huntress.io/download/<account key redacted>/" + $InstallerName
 $HuntressAgentServiceName = "HuntressAgent"
 $HuntressUpdaterServiceName = "HuntressUpdater"
 
@@ -332,7 +351,7 @@ function Get-Installer {
     } catch {
         $msg = $_.Exception.Message
         $err = (
-            "ERROR: Failed to download the Huntress Installer. Please try accessing $DownloadURL " +
+            "ERROR: Failed to download the Huntress Installer. Please try accessing $SafeDownloadURL " +
             "from a web browser on the host where the download failed. If the issue persists, please " +
             "send the error message to the Huntress Team for help at support@huntress.com.")
         LogMessage $msg
@@ -341,7 +360,7 @@ function Get-Installer {
     }
 
     if ( ! (Test-Path $InstallerPath) ) {
-        $err = "ERROR: Failed to download the Huntress Installer from $DownloadURL."
+        $err = "ERROR: Failed to download the Huntress Installer from $SafeDownloadURL."
         LogMessage $err
         LogMessage $SupportMessage
         throw $ScriptFailed + " " + $err + " " + $SupportMessage
@@ -369,7 +388,10 @@ function Install-Huntress ($OrganizationKey) {
     $msg = "Executing installer..."
     LogMessage $msg
 
-    $timeout = 30 # Seconds
+    # Matches the timeout used by InstallHuntress.powershellv2.ps1. Third party
+    # security software can slow the install considerably when the Huntress
+    # exclusions are not in place, and 30 seconds is not always enough.
+    $timeout = 120 # Seconds
     $process = Start-Process $InstallerPath "/ACCT_KEY=`"$AccountKey`" /ORG_KEY=`"$OrganizationKey`" /S" -PassThru
     try {
         $process | Wait-Process -Timeout $timeout -ErrorAction Stop
@@ -517,8 +539,20 @@ function main () {
     LogMessage "Installer location: '$InstallerPath'"
     LogMessage "Installer log: '$DebugLog'"
 
-    # Continuum specific
-    $OrganizationKey = Get-OrganizationKey
+    # Continuum specific.
+    # Only derive the Organization Key from the registry when one was not
+    # supplied. Previously this assignment was unconditional, so both the
+    # -orgkey parameter and the $OrganizationKey variable above were silently
+    # discarded.
+    # The placeholder is matched by shape rather than by its literal text. If
+    # this compared against the placeholder directly, a user who did a global
+    # find and replace on it would turn the comparison into "is the key equal
+    # to itself", silently disabling the override again.
+    if ( [string]::IsNullOrEmpty($OrganizationKey) -or ($OrganizationKey -match '^__.+__$') ) {
+        $OrganizationKey = Get-OrganizationKey
+    } else {
+        LogMessage "Using the supplied Organization Key."
+    }
 
     # trim keys before use
     $AccountKey = $AccountKey.Trim()
