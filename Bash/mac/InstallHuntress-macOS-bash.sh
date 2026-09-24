@@ -66,7 +66,7 @@ install_system_extension=false
 ## Do not modify anything below this line
 ##############################################################################
 
-scriptVersion="September 23, 2026"
+scriptVersion="September 24, 2026"
 
 version="1.3 - $scriptVersion"
 dd=$(date "+%Y-%m-%d  %H:%M:%S")
@@ -78,7 +78,8 @@ pattern="[a-f0-9]{32}"
 
 # Setup some variables for network testing
 gitURL='https://raw.githubusercontent.com/huntresslabs/support/refs/heads/main/URLdata.json'
-localJSON="./URLdata.json"
+scriptDIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)
+localJSON="$scriptDIR/URLdata.json"
 altJSON="/tmp/URLdata.json"
 countFails=0                    # total number of network tests that failed (includes cert fails)
 certFailCounter=0               # total number of certificate tests that failed
@@ -146,7 +147,7 @@ function getLocalJSON {
      if [[ -f $localJSON ]]; then
           if [[ $(find "$localJSON" -type f -mtime -"$gracePeriodForJSON" -print) ]]; then
                lastWrite="$(date -r "$localJSON" '+%Y-%m-%d %H:%M:%S %Z')"
-               logger "Using local URLdata.json from $lastWrite"
+               logger "Using $localJSON from $lastWrite"
                getJSON 0
           else
                logger "Local JSON file is stale, downloading new version from github"
@@ -237,49 +238,55 @@ function getJSON {
 
 # tests that the expected certificates are not intercepted. If the expected cert is not returned the agent will not function.
 function certTest {
-     logger "-- Testing Certificate Validation --"
-     declare -a failURLs=()
-     for i in "${!certURLs[@]}"; do
-          cleanURL=${certURLs[i]}
-          s_client=$(printf '\n' | openssl s_client -connect "${cleanURL}:443" -servername "${cleanURL}" 2> /dev/null < /dev/null )
-          PEM=$(printf '%s\n' "$s_client" | sed -n '/-----BEGIN CERTIFICATE-----/,/-----END CERTIFICATE-----/p')
-          recIssuer=$(printf '%s\n' "$s_client" | openssl x509 -noout -issuer -nameopt compat | cut -d'/' -f2- | xargs)
-          recSubject=$(printf '%s\n' "$s_client" | openssl x509 -noout -subject -nameopt compat | cut -d'/' -f2- | xargs)
+    logger "-- Testing Certificate Validation --"
+    declare -a failURLs=()
+    for i in "${!certURLs[@]}"; do
+        cleanURL=${certURLs[i]}
+        #s_client=$(printf '\n' | openssl s_client -connect "${cleanURL}:443" -servername "${cleanURL}" 2> /dev/null < /dev/null )
+        if command -v timeout >/dev/null 2>&1; then
+            s_client=$(timeout 5 openssl s_client -connect "${cleanURL}:443" -servername "${cleanURL}" </dev/null 2>/dev/null)
+        else
+            s_client=$(perl -e 'alarm 5; exec @ARGV' openssl s_client -connect "${cleanURL}:443" -servername "${cleanURL}" </dev/null 2>/dev/null)
+        fi
 
-          if [[ -z $recSubject || -z $recIssuer ]]; then
-               logger "WARNING: Unable to retrieve certificate data! Exiting."
-               exit 1
-          fi
-          if [[ "$recSubject" == "${expSubject[i]}" ]]; then
-               logger "[Certificate subject validation successful for $cleanURL]"
-          else
-               ((certFailCounter++))
-               ((countFails++))
-               failURLs+=($cleanURL)
-               logger "[FAILED: Subject validation. Certificate does not match for [$cleanURL] !]"
-               logger "Subject that was returned: [$recSubject]"
-               logger "Subject that was expected: [${expSubject[i]}]"
-               logger "PEM that was received: $PEM"
-          fi
+        PEM=$(printf '%s\n' "$s_client" | sed -n '/-----BEGIN CERTIFICATE-----/,/-----END CERTIFICATE-----/p')
+        recIssuer=$(printf '%s\n' "$s_client" | openssl x509 -noout -issuer -nameopt compat | cut -d'/' -f2- | xargs)
+        recSubject=$(printf '%s\n' "$s_client" | openssl x509 -noout -subject -nameopt compat | cut -d'/' -f2- | xargs)
 
-          # Issuer can vary based on the specific server the script reaches. To compensate, we check for exact match then a wildcard match.
-          if [[ "$recIssuer" == "${expIssuer[i]}" ]]; then 
-               logger "[Certificate issuer validation successful for $cleanURL]"
-          else
-               if [[ "$recIssuer" == *"${expIssuerName[i]}"* ]]; then
-                    logger "Please note this was not an exact match, which is expected with big infrastructure."
-                    logger "Issuer that was returned: [$recIssuer]"
-                    logger "Issuer that was expected: [${expIssuer[i]}]"
-               else
-                    ((certFailCounter++))
-                    ((countFails++))
-                    failURLs+=($cleanURL)
-                    logger "[FAILED: Issuer validation. Certificate does not match for [$cleanURL] !]"
-                    logger "Issuer that was returned: [$recIssuer]"
-                    logger "Issuer that was expected: [${expIssuer[i]}]"
-                    logger "PEM that was received: $PEM"
-               fi
-          fi
+        if [[ -z $recSubject || -z $recIssuer ]]; then
+           logger "WARNING: Unable to retrieve certificate data! Exiting."
+           exit 1
+        fi
+        if [[ "$recSubject" == "${expSubject[i]}" ]]; then
+           logger "[Certificate subject validation successful for $cleanURL]"
+        else
+           ((certFailCounter++))
+           ((countFails++))
+           failURLs+=($cleanURL)
+           logger "[FAILED: Subject validation. Certificate does not match for [$cleanURL] !]"
+           logger "Subject that was returned: [$recSubject]"
+           logger "Subject that was expected: [${expSubject[i]}]"
+           logger "PEM that was received: $PEM"
+        fi
+
+        # Issuer can vary based on the specific server the script reaches. To compensate, we check for exact match then a wildcard match.
+        if [[ "$recIssuer" == "${expIssuer[i]}" ]]; then 
+           logger "[Certificate issuer validation successful for $cleanURL]"
+        else
+           if [[ "$recIssuer" == *"${expIssuerName[i]}"* ]]; then
+                logger "Please note this was not an exact match, which is expected with big infrastructure."
+                logger "Issuer that was returned: [$recIssuer]"
+                logger "Issuer that was expected: [${expIssuer[i]}]"
+           else
+                ((certFailCounter++))
+                ((countFails++))
+                failURLs+=($cleanURL)
+                logger "[FAILED: Issuer validation. Certificate does not match for [$cleanURL] !]"
+                logger "Issuer that was returned: [$recIssuer]"
+                logger "Issuer that was expected: [${expIssuer[i]}]"
+                logger "PEM that was received: $PEM"
+           fi
+        fi
      done
      if [[ "$certFailCounter" > 0 ]]; then
           for i in "${!failURLs[@]}"; do
