@@ -47,7 +47,7 @@ rmm="macOS Bash script (Unspecified RMM)"
 # https://support.huntress.io/hc/en-us/articles/21286543756947-Instructions-for-the-MDM-Configuration-for-macOS
 install_system_extension=false
 
-# If you want to change the network testers JSON file location, uncomment and change one localJSONtemp variable below to your desired directory. 
+# If you want to change the network testers JSON file location, uncomment and change one localJSONtempOverride variable below to your desired directory. 
 # The location must be writable for the user who is running the script! Do not remove any leading or trailing forward slashes "/"
 #     Examples and Suggested locations:
 # localJSONOverride="/var/root/"
@@ -57,7 +57,7 @@ install_system_extension=false
 ## Do not modify anything below this line
 ##############################################################################
 
-scriptVersion="September 25, 2026"
+scriptVersion="September 28, 2026"
 
 version="1.3 - $scriptVersion"
 dd=$(date "+%Y-%m-%d  %H:%M:%S")
@@ -200,8 +200,7 @@ function getJSON {
 
      # retrieve URLs, cert Issuer, and cert Subject from Huntress github
      if $downloadFromGithub; then
-          curl -fsSL --tlsv1.2 -o "$localJSON" "$gitURL"
-          if [ $? -ne 0 ]; then
+          if curl -fsSL --tlsv1.2 -o "$localJSON" "$gitURL"; then
                logger "Unable to connect to github, if you can't allow connections to githubusercontent.com then download this file and save it in same DIR as this script."
                logger "$gitURL"
                exit 1
@@ -218,17 +217,17 @@ function getJSON {
      # Splitting the JSON file into several arrays
      while IFS= read -r item; do
           [ -z "$item" ] && continue
-          testURLs+=($(printf "%s\n" "$item" | sed -e 's|^[^/]*//||' -e 's|/.*$||'))
+          testURLs+=("$(printf "%s\n" "$item" | sed -e 's|^[^/]*//||' -e 's|/.*$||')")
      done < <(cat "$localJSON" | jq -r '.array1[] | select(length > 0)')
      while IFS= read -r item; do
           [ -z "$item" ] && continue
-          certURLs+=($(printf "%s\n" "$item" | sed -e 's|^[^/]*//||' -e 's|/.*$||'))
+          certURLs+=("$(printf "%s\n" "$item" | sed -e 's|^[^/]*//||' -e 's|/.*$||')")
      done < <(cat "$localJSON" | jq -r '.array2[] | select(length > 0)')
      # even array indices are Subjects, odd are Issuer. 
      count=0    
      while IFS= read -r item; do
           [ -z "$item" ] && continue
-          if (( $count % 2 == 0 )); then
+          if (( count % 2 == 0 )); then
                expSubject+=("$(echo "$item" | xargs)")
           else
                expIssuer+=("$(echo "$item" | xargs)")
@@ -249,81 +248,93 @@ function getJSON {
 
 # tests that the expected certificates are not intercepted. If the expected cert is not returned the agent will not function.
 function certTest {
-     logger "-- Testing Certificate Validation --"
-     declare -a failURLs=()
-     for i in "${!certURLs[@]}"; do
-          cleanURL=${certURLs[i]}
-          # there is no cross-platform timeout command, so attempt to use timeout, perl, or gtimeout before defaulting to no timeout (with warning)
-          if command -v timeout >/dev/null 2>&1; then
-               s_client=$(timeout 5 openssl s_client -connect "${cleanURL}:443" -servername "${cleanURL}" </dev/null 2>/dev/null)
-          elif command -v perl >/dev/null 2>&1; then
-               s_client=$(perl -e 'alarm 5; exec @ARGV' openssl s_client -connect "${cleanURL}:443" -servername "${cleanURL}" </dev/null 2>/dev/null)
-          elif command -v gtimeout >/dev/null 2>&1; then
-               s_client=$(gtimeout 5 openssl s_client -connect "${cleanURL}:443" -servername "${cleanURL}" </dev/null 2>/dev/null)
-          else
-               logger "Warning: Unable to find an appropriate 'timeout' library. Using openssl without a timer, it's rare but possible for this to hang!"
-               s_client=$(printf '\n' | openssl s_client -connect "${cleanURL}:443" -servername "${cleanURL}" 2> /dev/null < /dev/null )
-          fi
+    logger "-- Testing Certificate Validation --"
+    declare -a failURLs=()
+    
+    # Placeholder handling of shell index issues
+    if $( [ -n "$BASH_VERSION" ] && true || false ); then
+        index=0
+        iMax=((${#testURLs[@]}-1))
+    else
+        index=1
+        iMax=${#testURLs[@]}
+    fi
 
-          PEM=$(printf '%s\n' "$s_client" | sed -n '/-----BEGIN CERTIFICATE-----/,/-----END CERTIFICATE-----/p')
-          recIssuer=$(printf '%s\n' "$s_client" | openssl x509 -noout -issuer -nameopt compat | cut -d'/' -f2- | xargs)
-          recSubject=$(printf '%s\n' "$s_client" | openssl x509 -noout -subject -nameopt compat | cut -d'/' -f2- | xargs)
+    for item in "${certURLs[@]}"; do
+        cleanURL="$item"
+        # there is no cross-platform timeout command, so attempt to use timeout, perl, or gtimeout before defaulting to no timeout (with warning)
+        if command -v timeout >/dev/null 2>&1; then
+            s_client=$(timeout 5 openssl s_client -connect "${cleanURL}:443" -servername "${cleanURL}" </dev/null 2>/dev/null)
+        elif command -v perl >/dev/null 2>&1; then
+            s_client=$(perl -e 'alarm 5; exec @ARGV' openssl s_client -connect "${cleanURL}:443" -servername "${cleanURL}" </dev/null 2>/dev/null)
+        elif command -v gtimeout >/dev/null 2>&1; then
+            s_client=$(gtimeout 5 openssl s_client -connect "${cleanURL}:443" -servername "${cleanURL}" </dev/null 2>/dev/null)
+        else
+            logger "Warning: Unable to find an appropriate 'timeout' library. Using openssl without a timer, it's rare but possible for this to hang!"
+            s_client=$(printf '\n' | openssl s_client -connect "${cleanURL}:443" -servername "${cleanURL}" 2> /dev/null < /dev/null )
+        fi
 
-          # abort install if certificates can't be retrieved
-          if [[ -z $recSubject || -z $recIssuer ]]; then
-               logger "WARNING: Unable to retrieve certificate data! Exiting."
-               exit 1
-          fi
+        PEM=$(printf '%s\n' "$s_client" | sed -n '/-----BEGIN CERTIFICATE-----/,/-----END CERTIFICATE-----/p')
+        recIssuer=$(printf '%s\n' "$s_client" | openssl x509 -noout -issuer -nameopt compat | cut -d'/' -f2- | xargs)
+        recSubject=$(printf '%s\n' "$s_client" | openssl x509 -noout -subject -nameopt compat | cut -d'/' -f2- | xargs)
 
-          if [[ "$recSubject" == "${expSubject[i]}" ]]; then
-               logger "[Certificate subject validation successful for $cleanURL]"
-          else
-               ((certFailCounter++))
-               ((countFails++))
-               failURLs+=($cleanURL)
-               logger "[FAILED: Subject validation. Certificate does not match for [$cleanURL] !]"
-               logger "Subject that was returned: [$recSubject]"
-               logger "Subject that was expected: [${expSubject[i]}]"
-               logger "PEM that was received: $PEM"
-          fi
+        # abort install if certificates can't be retrieved
+        if [[ -z "$recSubject" || -z "$recIssuer" ]]; then
+           logger "WARNING: Unable to retrieve certificate data! Exiting."
+           exit 1
+        fi
 
-          # Issuer can vary based on the specific server the script reaches. To compensate, we check for exact match then a wildcard match.
-          if [[ "$recIssuer" == "${expIssuer[i]}" ]]; then 
-               logger "[Certificate issuer validation successful for $cleanURL]"
-          else
-               if [[ "$recIssuer" == *"${expIssuerName[i]}"* ]]; then
-                    logger "Please note this was not an exact match, which is expected with big infrastructure."
-                    logger "Issuer that was returned: [$recIssuer]"
-                    logger "Issuer that was expected: [${expIssuer[i]}]"
-               else
-                    ((certFailCounter++))
-                    ((countFails++))
-                    failURLs+=($cleanURL)
-                    logger "[FAILED: Issuer validation. Certificate does not match for [$cleanURL] !]"
-                    logger "Issuer that was returned: [$recIssuer]"
-                    logger "Issuer that was expected: [${expIssuer[i]}]"
-                    logger "PEM that was received: $PEM"
-               fi
-          fi
-     done
-     # list every cert failure so the appropriate DPI system can be adjusted
-     if [[ "$certFailCounter" > 0 ]]; then
-          for i in "${!failURLs[@]}"; do
-               certFail "${failURLs[i]}"
-          done
-     fi
-     logger ""
+        if [[ "$recSubject" == "${expSubject[$index]}" ]]; then
+           logger "[Certificate subject validation successful for $cleanURL]"
+        else
+            ((certFailCounter++))
+            ((countFails++))
+            failURLs+=($cleanURL)
+            logger "[FAILED: Subject validation. Certificate does not match for [$cleanURL] !]"
+            logger "Subject that was returned: [$recSubject]"
+            logger "Subject that was expected: [${expSubject[$index]}]"
+            logger "PEM that was received: $PEM"
+        fi
+
+        # Issuer can vary based on the specific server the script reaches. To compensate, we check for exact match then a wildcard match.
+        if [[ "$recIssuer" == "${expIssuer[$index]}" ]]; then 
+            logger "[Certificate issuer validation successful for $cleanURL]"
+        else
+            if [[ "$recIssuer" == *"${expIssuerName[$index]}"* ]]; then
+                logger "Please note this was not an exact match, which is expected with big infrastructure."
+                logger "Issuer that was returned: [$recIssuer]"
+                logger "Issuer that was expected: [${expIssuer[$index]}]"
+            else
+                ((certFailCounter++))
+                ((countFails++))
+                failURLs+=($cleanURL)
+                logger "[FAILED: Issuer validation. Certificate does not match for [$cleanURL] !]"
+                logger "Issuer that was returned: [$recIssuer]"
+                logger "Issuer that was expected: [${expIssuer[$index]}]"
+                logger "PEM that was received: $PEM"
+            fi
+        fi
+        if [[ "$index" -lt "$iMax" ]]; then
+            ((index++))
+        fi
+    done
+    # list every cert failure so the appropriate DPI system can be adjusted
+    if [[ "$certFailCounter" -gt 0 ]]; then
+        for item in "${failURLs[@]}"; do
+           certFail "$item"
+        done
+    fi
+    logger ""
 }
 
 # test outgoing port 443 connectivity to Huntress URLs
 function tcpTest {
      logger "-- Verifying Huntress services can be reached --"
-     for i in "${!testURLs[@]}"; do
-          cleanURL=${testURLs[i]}
-          if nc -zvw 5 "$cleanURL" 443 > /dev/null 2>&1; then
-              logger "[Connection to $cleanURL successful]"
+     for item in "${testURLs[@]}"; do
+          if nc -zvw 5 "$item" 443 > /dev/null 2>&1; then
+              logger "[Connection to $item successful]"
           else
-              logger "[FAILED: Connection to $cleanURL"
+              logger "[FAILED: Connection to $item"
                ((countFails++))
           fi
      done
@@ -342,6 +353,26 @@ function certFail {
     logger "      You'll need to add an exclusion for the certificate for this URL in your DPI/cert interception service: $cleanURL"
     logger "* Otherwise this is likely a missing certificate chain. Check for pending OS updates, reboot, and try again."
     logger "------------------------------------------------------------------------------------------------------------------------------"
+}
+
+# Creates a temp directory if the file storage location is unsafe 
+function useTempDIR {
+     logger "Caution: Running from root directory is not recommended, using temporary directory"
+     localJSONOverrideDIR=$(mktemp -d "/tmp/huntress.XXXXXX") || {
+          logger "WARNING: Unable to create a private temporary directory in /tmp/!"
+          logger "WARNING: No safe place to store JSON file found, exiting!"
+          exit 1
+     }
+     if ! [[ -d $localJSONOverrideDIR ]]; then
+          logger "WARNING: Unable to create temporary directory!"
+          logger "WARNING: No safe place to store JSON file found, exiting!"
+          exit 1
+     fi
+     tempDIRCreated=true
+     logger "Successfully created $localJSONOverrideDIR directory!"
+     # ensure temp directory is only writable by admins
+     chmod 700 "$localJSONOverrideDIR"
+     localJSONOverride="$localJSONOverrideDIR/"
 }
 
 # Get a list of network adapter names, IPv4 address, DNS IP, and gateway IP
@@ -420,7 +451,6 @@ function validateParameters {
     then
         logger "Error: --account_key and --organization_key are both required" >> $log_file
         logger "Account key: $masked and Org Key: $organizationKey were provided"
-        echo
         usage
         exit 1
     fi
@@ -437,15 +467,23 @@ function validateParameters {
     fi
 }
 
+function tailForReg {
+    return $(tail -n 8 "$logLocation" | grep -q "registered")
+}
+
 # After deploy, read the 8 newest lines from HuntressAgent.log to determine registration status
 function getRegistrationStatus {
     didAgentRegister=false
     declare -a registrationLines=()
     logLocation="/Library/Application Support/Huntress/HuntressAgent/HuntressAgent.log"
-    # Watch for HuntressAgent.log, checking every 1/4 second until 10 seconds elapsed, if found grab the last 8 lines
+
+    # Watch for registration event in HuntressAgent.log, checking every 1/4 second ($i) until 10 seconds elapsed.
     for (( i=0; i<40; i++ )); do
         if [[ -f "$logLocation" ]]; then
-            break
+            if ! [[ -z tailForReg ]]; then
+                didAgentRegister=true
+                break
+            fi
         fi
         sleep 0.25
     done
@@ -456,7 +494,7 @@ function getRegistrationStatus {
         exit 1
     fi
 
-    # find all registration lines
+    # find all registration lines including older entries
     regCount=0
     while IFS= read -r line || [[ -n "$line" ]]; do
         if [[ $line == *registered* ]]; then
@@ -465,14 +503,7 @@ function getRegistrationStatus {
         fi
     done < "$logLocation"
 
-    # look for recent registration
     tailedLog=$(tail -n 8 "$logLocation")
-    while IFS= read -r line || [[ -n "$line" ]]; do
-        if [[ $line == *registered* ]]; then
-            didAgentRegister=true
-        fi
-    done <<< "$tailedLog"
-
     logger "Last 8 lines of agent log:"
     logger "$tailedLog"
     logger
@@ -632,6 +663,13 @@ getNetAdapters
 # Perform a network test. Verifying port 443 connectivity to Huntress URL's and that Huntress certificates are not intercepted.
 if ! $skipNetTest; then
     logger "Scanning for endpoint network readiness:"
+    # if the script is ran from the root directory and there isn't a local override, use a temp directory
+    if [[ "$scriptDIR" == "/" && -z "$localJSONOverride" ]]; then 
+        useTempDIR
+    # if the override is the root directory, use a temp directory
+    elif [[ "$localJSONOverride" == "/" ]]; then
+         useTempDIR
+    fi
     checkDependency
     getLocalJSON
     tcpTest
