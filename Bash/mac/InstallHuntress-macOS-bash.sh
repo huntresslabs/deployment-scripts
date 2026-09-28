@@ -468,7 +468,13 @@ function validateParameters {
 }
 
 function tailForReg {
-    return $(tail -n 8 "$logLocation" | grep -q "registered")
+    temp=$(tail -n 8 "$logLocation" | grep "registered")
+    #logger "($temp)"
+    if [[ -n "$temp" ]]; then
+        return 0
+    else
+        return 1
+    fi
 }
 
 # After deploy, read the 8 newest lines from HuntressAgent.log to determine registration status
@@ -480,7 +486,7 @@ function getRegistrationStatus {
     # Watch for registration event in HuntressAgent.log, checking every 1/4 second ($i) until 10 seconds elapsed.
     for (( i=0; i<40; i++ )); do
         if [[ -f "$logLocation" ]]; then
-            if ! [[ -z tailForReg ]]; then
+            if tailForReg; then
                 didAgentRegister=true
                 break
             fi
@@ -492,6 +498,8 @@ function getRegistrationStatus {
     if ! [ -f "$logLocation" ]; then
         logger "WARNING: HuntressAgent.log not found, install failed."
         exit 1
+    else
+        tailedLog=$(tail -n 8 "$logLocation")
     fi
 
     # find all registration lines including older entries
@@ -503,7 +511,6 @@ function getRegistrationStatus {
         fi
     done < "$logLocation"
 
-    tailedLog=$(tail -n 8 "$logLocation")
     logger "Last 8 lines of agent log:"
     logger "$tailedLog"
     logger
@@ -646,6 +653,7 @@ if ! $reinstall; then
     fi
 fi
 
+
 logger "============================== Logging Machine Details at $dd ==================================="
 logger "Machine name: $(scutil --get ComputerName)"
 logger "macOS version: $(sw_vers --ProductVersion)"
@@ -704,6 +712,7 @@ else
 fi
 
 if [ $? != "0" ]; then
+    getRegistrationStatus
     logger "Installer Error: $install_result"
     exit 1
 fi
