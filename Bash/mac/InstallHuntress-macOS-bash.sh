@@ -41,23 +41,27 @@ defaultOrgKey="Mac Agents"
 # are being used to deploy the Huntress macOS Agent. Simply replace the text in quotes below.
 rmm="macOS Bash script (Unspecified RMM)"
 
-# Option to install the system extension after the Huntress Agent is installed. In order for this to happen
-# without security prompts on the endpoint, permissions need to be applied to the endpoint by an MDM before this script
-# is run. See the following KB article for instructions:
-# https://support.huntress.io/hc/en-us/articles/21286543756947-Instructions-for-the-MDM-Configuration-for-macOS
-install_system_extension=false
+# Option to install the system extension after the Huntress Agent is installed. In order for this to happen without security prompts on the endpoint, 
+# permissions need to be applied to the endpoint by an MDM before this script is run. See the following KB article for instructions:
+#   https://support.huntress.io/hc/en-us/articles/21286543756947-Instructions-for-the-MDM-Configuration-for-macOS
+# We have deprecated this option in favor of always installing the System Extension (SE), however you can still hardcode this. Find the first non-commented 
+# line below that starts with install_result= and follow the instructions to change SE installation behavior.
+# install_result="$(/bin/bash "$install_script" -a "$accountKey" -o "$organizationKey" -t "$tags" -v)"
 
-# If you want to change the network testers JSON file location, uncomment and change one localJSONtempOverride variable below to your desired directory. 
-# The location must be writable for the user who is running the script! Do not remove any leading or trailing forward slashes "/"
-#     Examples and Suggested locations:
-# localJSONOverride="/var/root/"
-# localJSONOverride="/root/"
+# For network testing: if your network blocks access to githubusercontent.com or if you'd prefer to use a local file, you'll need to download this file and
+# keep it in the same directory as the script:  https://raw.githubusercontent.com/huntresslabs/support/refs/heads/main/URLdata.json
+# Restrictions (primarily for test accuracy/security): 
+#   - Script/JSON file must not be in a root directory ./
+#   - Script/JSON file directory must not be writable by non-admins
+#   - Script/JSON file directory must not be a symbolic link
+#   - JSON file must have a last modified time of no more than 2 weeks ago
+#   = If any of the above fail, script will download from github into a temporary directory that will be deleted when script is done.
 
 ##############################################################################
 ## Do not modify anything below this line
 ##############################################################################
 
-scriptVersion="September 28, 2026"
+scriptVersion="September 29, 2026"
 
 version="1.3 - $scriptVersion"
 dd=$(date "+%Y-%m-%d  %H:%M:%S")
@@ -67,11 +71,10 @@ install_script="/tmp/HuntressMacInstall.sh"
 invalid_key="Invalid account secret key"
 pattern="[a-f0-9]{32}"
 
-# Setup some variables for network testing
+# Setup some variables
 gitURL='https://raw.githubusercontent.com/huntresslabs/support/refs/heads/main/URLdata.json'
 scriptDIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)
 localJSON="$scriptDIR/URLdata.json"  # from the same working directory as the script
-altJSON="/tmp/URLdata.json"          # alternate location if current working directory is inaccessible or is missing the JSON file
 countFails=0                         # total number of network tests that failed (including cert fails)
 certFailCounter=0                    # total number of certificate tests that failed
 gracePeriodForJSON=14                # number of days old the local JSON can be before it's ignored
@@ -133,23 +136,66 @@ function checkDependency {
      done
 }
 
-# If the local JSON file exists and was modified less than 14 days ago, skip downloading from github
+# In order to ensure accurate test results, reduce chance of interference by only using admin-writable directories
+# Also looking for sym links, as that's another way users could potentially gain write-access to this data.
+function JSONSecurityChecks {
+     if ! [ -z "$localJSONOverride" ]; then
+          # if the override is the root directory, use a temp directory
+          if [[ "$localJSONOverride" == "/" ]]; then
+               logger "Caution: Running from root directory is not recommended (localJSONOverride), using temporary directory"
+               useTempDIR
+          # If the localJSONOverride variable is set and location is writable by non-admins, use temp directory.
+          elif [[ "$(stat -c %a "$localJSONOverride" 2>/dev/null || stat -f %p "$localJSONOverride" | tail -c 4)" = "777" ]]; then
+               logger "Warning: JSON (override) directory is writable by non-admins, using a temporary directory instead!"
+               useTempDIR
+          # Symbolic links could potentially give a user limited access to a directory they normally can't access.
+          elif [[ -L "$localJSONOverride" ]] || [[ -L "$localJSONOverride/URLdata.json" ]]; then
+               logger "JSON override is a symbolic link, using temporary directory instead."
+               useTempDIR
+          fi
+     else
+          localPerm="$(stat -c %a "$scriptDIR" 2>/dev/null || stat -f %p "$scriptDIR" | tail -c 1)"
+          # Symbolic links could potentially give a user limited access to a directory they normally can't access.
+          if [[ -L "$localJSON" ]]; then
+               logger "Local JSON is a symbolic link, using temporary directory instead."
+               useTempDIR
+          # if the script is ran from the root directory and there isn't a local override, use a temp directory
+          elif [[ "$scriptDIR" == "/" ]]; then 
+               logger "Caution: Running from root directory is not recommended (localJSON), using temporary directory"
+               useTempDIR
+          # if the directory is writable by all users, use temp directory instead
+          elif [[ "$localPerm" = "7" || "$localPerm" = "6" ]]; then
+               logger "Warning: JSON file directory is writable by non-admins, using a temporary directory instead!"
+               useTempDIR
+          fi
+     fi
+}
+
+# Creates a temp directory if the file storage location is unsafe 
+function useTempDIR {
+     localJSONOverrideDIR=$(mktemp -d "/tmp/huntress.XXXXXX") || {
+          logger "WARNING: Unable to create a private temporary directory in /tmp/!"
+          logger "WARNING: No safe place to store JSON file found, exiting!"
+          exit 1
+     }
+     if ! [[ -d $localJSONOverrideDIR ]]; then
+          logger "WARNING: Unable to create temporary directory!"
+          logger "WARNING: No safe place to store JSON file found, exiting!"
+          exit 1
+     fi
+     tempDIRCreated=true
+     scriptDIR="$localJSONOverrideDIR"
+     logger "Successfully created $localJSONOverrideDIR directory!"
+     # ensure temp directory is only writable by admins
+     chmod 700 "$localJSONOverrideDIR"
+     localJSONOverride="$localJSONOverrideDIR/"
+}
+
+# If the local JSON file meets the requirements, skip downloading from github
 function getLocalJSON {
-     # alternate file location override
+     # file location override
      if ! [[ -z "$localJSONOverride" ]]; then
           localJSON="${localJSONOverride}URLdata.json"
-     fi
-
-     # Symbolic links could potentially give a user limited access to a directory they normally can't access.
-     # The script will exit if it can't find a non-symlink file.
-     if [ -L "$localJSON" ]; then
-          if [ -L "$altJSON" ]; then
-               logger "WARNING: Both JSON files are symbolic links. This is not recommended for security reasons. Exiting!"
-               exit 1
-          else
-               localJSON=$altJSON
-               logger "Local JSON is a symbolic link, using alternate location $altJSON."
-          fi
      fi
 
      # look for local JSON file
@@ -162,34 +208,17 @@ function getLocalJSON {
                logger "Local JSON file is stale, downloading new version from github"
                getJSON true
           fi
-     # if local JSON isn't found, use alternate
-     elif [[ -f "$altJSON" ]]; then
-          localJSON=$altJSON
-          if [[ $(find "$localJSON" -type f -mtime -"$gracePeriodForJSON" -print) ]]; then
-               lastWrite="$(date -r "$localJSON" '+%Y-%m-%d %H:%M:%S %Z')"
-               logger "Using alternate JSON file ($localJSON) from $lastWrite"
-               getJSON false
-          else
-               logger "Alternate JSON file ($localJSON) too old to safely use, attempting to retrieve from github"
-               getJSON true
-          fi
      # no existing files found, look for a writable directory
      else 
-          # script directory is writable, download fresh copy from github 
+          # script directory is writable, download fresh copy from github
           if [[ -w "$scriptDIR" ]]; then
                logger "JSON file not found, using $scriptDIR"
                getJSON true
-          # alternate directory is writable, download fresh copy from github to alternate location
-          elif [[ -w "/tmp/" ]]; then
-               logger "JSON file not found, script directory not writable, using $altJSON"
-               localJSON=$altJSON
+          # else use temporary directory
+          elif [[ "$tempDIRCreated" != "true" ]]; then
+               logger "Unable to write to local JSON files, using temporary directory"
+               useTempDIR
                getJSON true
-          # else exit the script with error
-          else
-               logger "Unable to write to either local or alternate JSON files:"
-               logger "$localJSON"
-               logger "$altJSON"
-               exit 1
           fi
      fi
 }
@@ -201,12 +230,12 @@ function getJSON {
      # retrieve URLs, cert Issuer, and cert Subject from Huntress github
      if $downloadFromGithub; then
           if curl -fsSL --tlsv1.2 -o "$localJSON" "$gitURL"; then
+               logger "Download successful from github!"
+               logger
+          else 
                logger "Unable to connect to github, if you can't allow connections to githubusercontent.com then download this file and save it in same DIR as this script."
                logger "$gitURL"
                exit 1
-          else 
-               logger "Download successful from github!"
-               logger
           fi
      fi
      if ! [ -f "$localJSON" ]; then
@@ -241,7 +270,14 @@ function getJSON {
 
      # If the data wasn't ingested into the arrays, exit with error (likely a corrupted JSON download)
      if [[ ${#testURLs[@]} -eq 0 || ${#certURLs[@]} -eq 0 || ${#expSubject[@]} -eq 0 || ${#expIssuer[@]} -eq 0 || ${#expIssuerName[@]} -eq 0 ]]; then
-          logger "Error reading data from JSON file. Delete the local JSON file and try again."
+          logger "Error reading data from JSON file (empty array(s) found). Delete the local JSON file and try again."
+          exit 1
+     fi
+
+     # These 4 arrays must all be the same size otherwise there was an issue retrieving data.
+     # shellcheck disable=SC2055
+     if [[ ${#certURLs[@]} -ne ${#expSubject[@]} || ${#certURLs[@]} -ne ${#expIssuer[@]} || ${#certURLs[@]} -ne ${#expIssuerName[@]} ]]; then
+          logger "Error reading data from JSON file (array size mismatch). Delete the local JSON file and try again."
           exit 1
      fi
 }
@@ -252,12 +288,12 @@ function certTest {
     declare -a failURLs=()
     
     # Placeholder handling of shell index issues
-    if $( [ -n "$BASH_VERSION" ] && true || false ); then
+    if [ -n "$BASH_VERSION" ] && true || false; then
         index=0
-        iMax=((${#testURLs[@]}-1))
+        iMax="((${#certURLs[@]}-1))"
     else
         index=1
-        iMax=${#testURLs[@]}
+        iMax="${#certURLs[@]}"
     fi
 
     for item in "${certURLs[@]}"; do
@@ -271,7 +307,7 @@ function certTest {
             s_client=$(gtimeout 5 openssl s_client -connect "${cleanURL}:443" -servername "${cleanURL}" </dev/null 2>/dev/null)
         else
             logger "Warning: Unable to find an appropriate 'timeout' library. Using openssl without a timer, it's rare but possible for this to hang!"
-            s_client=$(printf '\n' | openssl s_client -connect "${cleanURL}:443" -servername "${cleanURL}" 2> /dev/null < /dev/null )
+            s_client=$(printf '\n' | openssl s_client -connect "${cleanURL}:443" -servername "${cleanURL}" 2> /dev/null )
         fi
 
         PEM=$(printf '%s\n' "$s_client" | sed -n '/-----BEGIN CERTIFICATE-----/,/-----END CERTIFICATE-----/p')
@@ -289,7 +325,7 @@ function certTest {
         else
             ((certFailCounter++))
             ((countFails++))
-            failURLs+=($cleanURL)
+            failURLs+=("$cleanURL")
             logger "[FAILED: Subject validation. Certificate does not match for [$cleanURL] !]"
             logger "Subject that was returned: [$recSubject]"
             logger "Subject that was expected: [${expSubject[$index]}]"
@@ -307,7 +343,7 @@ function certTest {
             else
                 ((certFailCounter++))
                 ((countFails++))
-                failURLs+=($cleanURL)
+                failURLs+=("$cleanURL")
                 logger "[FAILED: Issuer validation. Certificate does not match for [$cleanURL] !]"
                 logger "Issuer that was returned: [$recIssuer]"
                 logger "Issuer that was expected: [${expIssuer[$index]}]"
@@ -330,11 +366,12 @@ function certTest {
 # test outgoing port 443 connectivity to Huntress URLs
 function tcpTest {
      logger "-- Verifying Huntress services can be reached --"
-     for item in "${testURLs[@]}"; do
-          if nc -zvw 5 "$item" 443 > /dev/null 2>&1; then
-              logger "[Connection to $item successful]"
+     for i in "${!testURLs[@]}"; do
+          cleanURL=${testURLs[i]}
+          if nc -zvw 5 "$cleanURL" 443 > /dev/null 2>&1; then
+              logger "[Connection to $cleanURL successful]"
           else
-              logger "[FAILED: Connection to $item"
+              logger "[FAILED: Connection to $cleanURL"
                ((countFails++))
           fi
      done
@@ -353,26 +390,6 @@ function certFail {
     logger "      You'll need to add an exclusion for the certificate for this URL in your DPI/cert interception service: $cleanURL"
     logger "* Otherwise this is likely a missing certificate chain. Check for pending OS updates, reboot, and try again."
     logger "------------------------------------------------------------------------------------------------------------------------------"
-}
-
-# Creates a temp directory if the file storage location is unsafe 
-function useTempDIR {
-     logger "Caution: Running from root directory is not recommended, using temporary directory"
-     localJSONOverrideDIR=$(mktemp -d "/tmp/huntress.XXXXXX") || {
-          logger "WARNING: Unable to create a private temporary directory in /tmp/!"
-          logger "WARNING: No safe place to store JSON file found, exiting!"
-          exit 1
-     }
-     if ! [[ -d $localJSONOverrideDIR ]]; then
-          logger "WARNING: Unable to create temporary directory!"
-          logger "WARNING: No safe place to store JSON file found, exiting!"
-          exit 1
-     fi
-     tempDIRCreated=true
-     logger "Successfully created $localJSONOverrideDIR directory!"
-     # ensure temp directory is only writable by admins
-     chmod 700 "$localJSONOverrideDIR"
-     localJSONOverride="$localJSONOverrideDIR/"
 }
 
 # Get a list of network adapter names, IPv4 address, DNS IP, and gateway IP
@@ -459,11 +476,6 @@ function validateParameters {
     logger "Provided Organization Key: $organizationKey"
     if [ -n "$tags" ]; then
       logger "using tags: $tags"
-    fi
-
-    if $install_system_extension; then
-      logger "automatically installing system extension"
-      logger "$install_system_extension"
     fi
 }
 
@@ -571,7 +583,6 @@ Usage: $0 [options...] --account_key=<account_key> --organization_key=<organizat
 -o, --organization_key <organization_key> The org key to use for this agent install
 -t, --tags             <tags>             A comma-separated list of agent tags to use for this agent install
 -r, --reinstall                           If passed, attempt to reinstall on top of existing Huntress agent
--i, --install_system_extension            If passed, automatically install the system extension
 -n, --noNetTest                           If prompted by Huntress staff, use this flag to temporarily bypass network testing
 -h, --help                                Print this message
 
@@ -580,7 +591,7 @@ EOF
 
 reinstall=false
 skipNetTest=false
-while getopts "a:o:t:ihrn-:" OPT; do
+while getopts "a:o:t:hrn-:" OPT; do
     if [ "$OPT" = "-" ]; then
         OPT="${OPTARG%%=*}"       # extract long option name
         OPTARG="${OPTARG#$OPT}"   # extract long option argument (may be empty)
@@ -598,10 +609,6 @@ while getopts "a:o:t:ihrn-:" OPT; do
             ;;
         t | tags)
             tags="$OPTARG"
-            ;;
-        i | install_system_extension)
-            logger "Running with System Extension immediate install option"
-            install_system_extension=true
             ;;
         r | reinstall)
             logger "Running with the -reinstall flag"
@@ -627,7 +634,7 @@ done
 shift $((OPTIND-1)) # remove parsed options and args from $@ list
 
 logger "Huntress install script $scriptVersion, install source: $rmm"
-logger "Script flags: Reinstall:$reinstall  System Extension:$install_system_extension  Network testing skip:$skipNetTest"
+logger "Script flags: Reinstall:$reinstall   Network testing skip:$skipNetTest"
 validateParameters
 logger "Script cursory check, is Huntress installed already: $isInstalled"
 
@@ -671,14 +678,8 @@ getNetAdapters
 # Perform a network test. Verifying port 443 connectivity to Huntress URL's and that Huntress certificates are not intercepted.
 if ! $skipNetTest; then
     logger "Scanning for endpoint network readiness:"
-    # if the script is ran from the root directory and there isn't a local override, use a temp directory
-    if [[ "$scriptDIR" == "/" && -z "$localJSONOverride" ]]; then 
-        useTempDIR
-    # if the override is the root directory, use a temp directory
-    elif [[ "$localJSONOverride" == "/" ]]; then
-         useTempDIR
-    fi
     checkDependency
+    JSONSecurityChecks
     getLocalJSON
     tcpTest
     certTest
@@ -705,15 +706,13 @@ if grep -Fq "$invalid_key" "$install_script"; then
    exit 1
 fi
 
-if $install_system_extension; then
-    install_result="$(/bin/bash "$install_script" -a "$accountKey" -o "$organizationKey" -t "$tags" -v --install_system_extension)"
-else
-    install_result="$(/bin/bash "$install_script" -a "$accountKey" -o "$organizationKey" -t "$tags" -v)"
-fi
+install_result="$(/bin/bash "$install_script" -a "$accountKey" -o "$organizationKey" -t "$tags" -v --install_system_extension)"
+# add a # character in front of the line above and remove the # character from the line below to have the agent skip System Extension installation 
+# install_result="$(/bin/bash "$install_script" -a "$accountKey" -o "$organizationKey" -t "$tags" -v)"
 
 if [ $? != "0" ]; then
-    getRegistrationStatus
     logger "Installer Error: $install_result"
+    getRegistrationStatus
     exit 1
 fi
 logger "$install_result"
