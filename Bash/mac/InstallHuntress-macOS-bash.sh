@@ -290,7 +290,7 @@ function certTest {
     # Placeholder handling of shell index issues
     if [ -n "$BASH_VERSION" ] && true || false; then
         index=0
-        iMax="((${#certURLs[@]}-1))"
+        iMax=$((${#certURLs[@]}-1))
     else
         index=1
         iMax="${#certURLs[@]}"
@@ -591,7 +591,7 @@ EOF
 
 reinstall=false
 skipNetTest=false
-while getopts "a:o:t:hrn-:" OPT; do
+while getopts "a:o:t:ihrn-:" OPT; do
     if [ "$OPT" = "-" ]; then
         OPT="${OPTARG%%=*}"       # extract long option name
         OPTARG="${OPTARG#$OPT}"   # extract long option argument (may be empty)
@@ -613,6 +613,9 @@ while getopts "a:o:t:hrn-:" OPT; do
         r | reinstall)
             logger "Running with the -reinstall flag"
             reinstall=true
+            ;;
+        i | install_system_extension)
+            logger "The -i option has been deprecated. All installs will attempt to deploy the SE."
             ;;
         n | noNetTest)
             logger "=======> Skipping network test! <======="
@@ -711,14 +714,13 @@ install_result="$(/bin/bash "$install_script" -a "$accountKey" -o "$organization
 # install_result="$(/bin/bash "$install_script" -a "$accountKey" -o "$organizationKey" -t "$tags" -v)"
 
 if [ $? != "0" ]; then
-    logger "Installer Error: $install_result"
     getRegistrationStatus
+    logger "Installer Error: $install_result"
     exit 1
 fi
-logger "$install_result"
 
 getRegistrationStatus
+logger "$install_result"
 
 logger "============================ INSTALL FINISHED AT $dd ====================================="
-
 exit 0
