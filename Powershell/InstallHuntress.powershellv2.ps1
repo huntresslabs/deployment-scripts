@@ -31,8 +31,10 @@ param (
   [string]$tags,
   [switch]$reregister,
   [switch]$reinstall,
-  [switch]$uninstall
+  [switch]$uninstall,
+  [switch]$noNetTest
 )
+
 
 ##############################################################################################################
 ##              ---====>> DO NOT REMOVE OR COMMENT OUT ANYTHING IN THIS SCRIPT! <<====---
@@ -53,7 +55,7 @@ $TagsKey = "__TAGS__"
 
 # These are used by the Huntress support team when troubleshooting. 
 # It's suggested to change $ScriptType to be the name of your automation system deploying this.
-$ScriptVersion = "Version 2, major revision 10, 2026 Sept 23"
+$ScriptVersion = "Version 2, major revision 11, 2026 Nov 18"
 $ScriptType = "PowerShell"
 
 # Set to "Continue" to enable verbose logging. "SilentlyContinue" is default
@@ -70,6 +72,7 @@ $estimatedSpaceNeeded = 200111222
 
 # If you'd like to use a local JSON file in a specified location, uncomment the below line and change the location if needed
 # $alternateLocalJSONFile = "$env:temp\URLdata.json"
+
 
 ##############################################################################
 ##              Do not modify anything below this line
@@ -90,13 +93,13 @@ $HuntressEDRServiceName     = "HuntressRio"
 $Vendor                     = "Huntress"
 $ScriptInfoName             = "HuntressPoShInstaller.json"
 
-# Setup custom object for network testing
 $localJSONLocation = Join-Path $(Split-Path -Parent -Path $MyInvocation.MyCommand.Definition) "URLdata.json"
 if ($null -ne $alternateLocalJSONFile) {
     $localJSONLocation = $alternateLocalJSONFile
 }
 $testURLs      = @()
 $certData      = @()
+# Setup custom object for network testing
 $netDataObject = New-Object -TypeName PSObject -Property @{
     altJSON    = "$env:temp\URLdata.json"
     localJSON  = $localJSONLocation
@@ -204,7 +207,8 @@ function setNetworking {
         }
     } catch {
         $msg = $_.Exception.Message
-        logger "Failed to enable TLS 1.2, Huntress requires TLS 1.2 or higher for security reasons."
+        logger "This system supports these protocols: $([System.Enum]::GetValues([System.Net.SecurityProtocolType]))"
+        logger "Failed to enable TLS 1.2+, Huntress requires TLS 1.2 or higher for security reasons. Exiting."
         logger "$msg"
         throw $msg
     }
@@ -341,10 +345,16 @@ function certTest {
         $tcp = $null
         $ssl = $null
         try {
+            # the function setNetworking ensures only machines that support TLS 1.2 and/or 1.3, thus the check here is short
+            if ($([System.Enum]::GetValues([System.Net.SecurityProtocolType])) -contains "Tls12") {
+                $SSLProtocol = [System.Security.Authentication.SslProtocols]::Tls12
+            } else {
+                $SSLProtocol = [System.Security.Authentication.SslProtocols]::Tls13
+            }
             $tcp = New-Object Net.Sockets.TcpClient
             $tcp.Connect("$uri", 443)
             $ssl = New-Object Net.Security.SslStream($tcp.GetStream(),$false,{$true})
-            $ssl.AuthenticateAsClient($uri)
+            $ssl.AuthenticateAsClient($uri, $null, $SSLProtocol, $false)
             $cert       = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2 $ssl.RemoteCertificate
             $recSubject = $cert.Subject
             $recIssuer  = $cert.Issuer
@@ -389,7 +399,11 @@ $([System.Convert]::ToBase64String($cert.Export([System.Security.Cryptography.X5
             }
         } catch {
             logger "Error: $($_.Exception.Message)"
+            if ($_.Exception.InnerException) {
+                logger "Inner Error: $($_.Exception.InnerException.Message)"
+            }
             logger "[Error during certificate validation for '$cleanURL'!]"
+            $tryCatch = $true
             $certFailCounter++
             $netDataObject.countFails++
             $failURLs += $cleanURL
@@ -400,8 +414,8 @@ $([System.Convert]::ToBase64String($cert.Export([System.Security.Cryptography.X5
             $tcp.Close()
         }
     }
-    # If we see any fails, print more info about those failures.
-    if ($certFailCounter -gt 0) {
+    # If we see any fails and we encountered no try/catch errors, print more info about those failures.
+    if ($certFailCounter -gt 0 -and ! $tryCatch) {
         foreach ($failURL in $failURLs) {
             certFail $failURL
         }
@@ -1014,12 +1028,13 @@ function repairAgent {
 
 # Log useful data about the machine for troubleshooting AB
 function logInfo {
-    param ( [PSObject]$netDataObject )
+    param ( [PSObject]$netDataObject, 
+            [switch]$noNetTest )
 
     logger "============================== Pre-flight checks and logging =============================="
     logger "Script type: '$ScriptType'"
     logger "Script version: '$ScriptVersion'"
-    logger "Script flags:  Reregister=$reregister  Reinstall=$reinstall  Uninstall=$uninstall "
+    logger "Script flags:  Reregister=$reregister  Reinstall=$reinstall  Uninstall=$uninstall NetTest=$noNetTest"
     if ($AccountKey.length -lt 8) {
         logger "Invalid key length, found $($AccountKey.length) (should be 32). Account key value: $AccountKey"
     } else {
@@ -1117,12 +1132,25 @@ function logInfo {
     getNetworkAdapterInfo
     
     # Checking connectivity to Huntress servers 
-    getLocalJSON $netDataObject
-    tcpTest $netDataObject
-    certTest $netDataObject
-    if ($netDataObject.countFails -gt 0) {
-        $errorText = "[FAILED to connect to all Huntress services, aborting deploy! Read the errors above for more info.]"
-        copyLogAndExit $errorText
+    if ($null -eq $netDataObject.localJSON) {
+        logger "Unknown error retrieving local JSON path. For internal troubleshooting:'$($netDataObject.localJSON)'"
+        logger "     Alternate JSON path:'$($netDataObject.altJSON)'"
+        logger "WARNING: Skipping network test, agent may not operate properly if the network isn't prepared for Huntress!"
+        logger "Visit https://support.huntress.io/hc/en-us/articles/4411751045267-Network-Connectivity-and-Troubleshooting-Errors-Caused-by-Firewalls "
+    }
+    elseif ( ! $noNetTest) {
+        getLocalJSON $netDataObject
+        tcpTest $netDataObject
+        certTest $netDataObject
+        if ($netDataObject.countFails -gt 0) {
+            $errorText = "[FAILED to connect to all Huntress services, aborting deploy! Read the errors above for more info.]"
+            copyLogAndExit $errorText
+        } else {
+            logger "[Successfully connected to Huntress services]"
+        }
+    } else {
+        logger "The network test skip flag was used, skipping the pre-requisite network test."
+        logger "WARNING: The Huntress agent may not operate as expected if the network is not ready for Huntress."
     }
 }
 
@@ -1173,7 +1201,8 @@ function fixServices {
     foreach ($svc in $servicesOnInstall) {
         if (  (Confirm-ServiceExists($svc))) {
             # repairing service state
-            if ( $(Get-Service $svc).StartType -ne "automatic") {
+            $serviceStatus = Get-CimInstance -ClassName Win32_Service -Filter "Name='$svc'" | Select-Object StartMode
+            if ( $serviceStatus -ne "Auto") {
                 logger "Disabled service $svc detected, attempting to set startup type to automatic."
                 c:\Windows\System32\sc.exe config $svc start=auto
             }
@@ -1290,7 +1319,7 @@ function main () {
     setNetworking
 
     # Start the script with logging to capture useful data for troubleshooting. All your logging are belong to us, Zero Wang.
-    logInfo $netDataObject
+    logInfo $netDataObject -noNetTest:$noNetTest
 
     # if run with the uninstall flag, exit afterward so we don't reinstall the agent after
     if ($uninstall) {
