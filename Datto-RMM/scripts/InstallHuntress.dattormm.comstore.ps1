@@ -119,7 +119,7 @@ $estimatedSpaceNeeded = 200111222
 ##############################################################################
 
 # These are used by the Huntress support team when troubleshooting.
-$ScriptVersion = "Version 2, major revision 9, 2026 Aug 12"
+$ScriptVersion = "Version 2, major revision 10, 2026 Nov 20"
 $ScriptType = "PowerShell (Datto)"
 
 # variables used throughout this script
@@ -134,6 +134,7 @@ $SupportMessage             = "Please send the error message to support@huntress
 $HuntressAgentServiceName   = "HuntressAgent"
 $HuntressUpdaterServiceName = "HuntressUpdater"
 $HuntressEDRServiceName     = "HuntressRio"
+$HuntressSignerNames        = @("Huntress Labs Incorporated", "Huntress Labs Inc.")
 
 # Find poorly written code faster with the most stringent setting.
 Set-StrictMode -Version Latest
@@ -347,18 +348,37 @@ function StopHuntressServices {
 }
 
 # Ensure the installer was not modified during download by validating the file signature.
+# The Authenticode status must be 'Valid' (file hash matches the signature and the certificate chains to a trusted root)
+# and the signing certificate must belong to Huntress.
 function verifyInstaller ($file) {
-    $varChain = New-Object -TypeName System.Security.Cryptography.X509Certificates.X509Chain
+    $retryMsg = "Suggest trying again, contact support@huntress.com if it fails >2 times"
+
     try {
-        $varChain.Build((Get-AuthenticodeSignature -FilePath "$file").SignerCertificate) | out-null
-    } catch [System.Management.Automation.MethodInvocationException] {
-        $err = ( "ERROR: '$file' did not contain a valid digital certificate. " +
-                 "Something may have corrupted/modified the file during the download process. " +
-                 "Suggest trying again, contact support@huntress.com if it fails >2 times")
+        $signature = Get-AuthenticodeSignature -FilePath "$file" -ErrorAction Stop
+    } catch {
+        $err = "ERROR: Unable to read the digital signature of '$file': $($_.Exception.Message) $retryMsg"
         LogMessage $err
         LogMessage $SupportMessage
         throw $ScriptFailed + " " + $err + " " + $SupportMessage
     }
+
+    if ($signature.Status -ne [System.Management.Automation.SignatureStatus]::Valid) {
+        $err = ( "ERROR: '$file' does not have a valid digital signature (status: $($signature.Status), $($signature.StatusMessage)). " +
+                 "The file may be corrupted or tampered with, or this host may be missing trusted root certificates. $retryMsg")
+        LogMessage $err
+        LogMessage $SupportMessage
+        throw $ScriptFailed + " " + $err + " " + $SupportMessage
+    }
+
+    $signerName = $signature.SignerCertificate.GetNameInfo([System.Security.Cryptography.X509Certificates.X509NameType]::SimpleName, $false)
+    if ($HuntressSignerNames -notcontains $signerName) {
+        $err = "ERROR: '$file' is signed by '$signerName', expected one of '$($HuntressSignerNames -join "', '")'. The file may have been tampered with. $retryMsg"
+        LogMessage $err
+        LogMessage $SupportMessage
+        throw $ScriptFailed + " " + $err + " " + $SupportMessage
+    }
+
+    LogMessage "Verified installer signature (signer: '$signerName', thumbprint: $($signature.SignerCertificate.Thumbprint))"
 }
 
 # Prevent conflicting file from preventing creation of installation directory.
@@ -443,17 +463,23 @@ function Install-Huntress ($OrganizationKey) {
         $process = Start-Process $InstallerPath "/ACCT_KEY=`"$AccountKey`" /ORG_KEY=`"$OrganizationKey`" /S" -PassThru
     }
 
+    # Open and hold a handle to the installer process now; without it, ExitCode can be $null once the process exits.
+    $null = $process.Handle
+
+    # Errors thrown here propagate to the top-level try/catch, which copies the log and exits with code 1.
     try {
         $process | Wait-Process -Timeout $timeout -ErrorAction Stop
-        if ($process.exitcode -ne 0) {
-            $err = "ERROR: Installer exited with a non-zero exit code. This indicates an error. The exit code is $($process.exitcode)."
-            LogMessage $err
-            LogMessage $SupportMessage
-            throw $ScriptFailed + " " + $err + " " + $SupportMessage
-        }
     } catch {
-        $process | Stop-Process -Force
+        $process | Stop-Process -Force -ErrorAction SilentlyContinue
         $err = "ERROR: Installer failed to complete in $timeout seconds. Possible interference from a security product?"
+        LogMessage $err
+        LogMessage $SupportMessage
+        throw $ScriptFailed + " " + $err + " " + $SupportMessage
+    }
+
+    # Checked outside the try/catch above so a non-zero exit code is not misreported as a timeout.
+    if ($process.ExitCode -ne 0) {
+        $err = "ERROR: Installer exited with a non-zero exit code. This indicates an error. The exit code is $($process.ExitCode)."
         LogMessage $err
         LogMessage $SupportMessage
         throw $ScriptFailed + " " + $err + " " + $SupportMessage
@@ -684,7 +710,43 @@ function runProcess ($process, $flags, $name){
 
         $err = "ERROR: $($name) running as '$($process) $($flags)' failed to complete in $timeout seconds, full error message: '$($msg).'"
         LogMessage $err
-        copyLogAndExit
+        copyLogAndExit 1
+    }
+}
+
+# Remove leftover Add/Remove Programs (ARP) entries, stale entries can block subsequent reinstalls.
+# The agent's key is named 'Huntress'. Rio's key is an MSI product code that varies by version, so Rio is
+# matched by DisplayName only.
+function removeArpEntries {
+    $arpRoots        = @("HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall",
+                         "HKLM:\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall")
+    $arpKeyNames     = @("Huntress")
+    $arpDisplayNames = @("Huntress Agent", "Huntress Rio")
+
+    # 32bit PowerShell on 64bit Windows is redirected to the 32bit registry view and cannot reach the 64bit ARP entries
+    if ( ($PowerShellArch -eq $X86) -and ($WindowsArchitecture -eq $X64) ) {
+        LogMessage "WARNING: Can't clean up 64bit ARP entries due to 32bit PowerShell on 64bit host, they may remain. Please run PowerShell in 64 bit mode"
+    }
+
+    foreach ($arpRoot in $arpRoots) {
+        if ( ! (Test-Path $arpRoot) ) {
+            continue
+        }
+        foreach ($arpKey in (Get-ChildItem -Path $arpRoot -ErrorAction SilentlyContinue)) {
+            $displayName = $null
+            $arpProps = Get-ItemProperty -Path $arpKey.PSPath -ErrorAction SilentlyContinue
+            if ($arpProps -and $arpProps.PSObject.Properties['DisplayName']) {
+                $displayName = $arpProps.DisplayName
+            }
+            if (($arpKeyNames -contains $arpKey.PSChildName) -or ($arpDisplayNames -contains $displayName)) {
+                Remove-Item -Path $arpKey.PSPath -Recurse -Force -ErrorAction SilentlyContinue
+                if (Test-Path $arpKey.PSPath) {
+                    LogMessage "WARNING: Failed to delete ARP entry '$($arpKey.PSChildName)' (DisplayName: '$displayName') from $arpRoot. Tamper Protection or permissions may be blocking removal."
+                } else {
+                    LogMessage "Manually deleted ARP entry '$($arpKey.PSChildName)' (DisplayName: '$displayName') from $arpRoot"
+                }
+            }
+        }
     }
 }
 
@@ -702,9 +764,10 @@ function uninstallHuntress {
     Stop-Service "huntressagent" -ErrorAction SilentlyContinue
 
     # Force kill the executables so they're not hangin around
-    KillProcessByName "HuntressAgent.exe"
-    KillProcessByName "HuntressUpdater.exe"
-    KillProcessByName "HuntressRio.exe"
+    # NOTE: Get-Process reports ProcessName without the '.exe' extension, so names must not include it.
+    KillProcessByName "HuntressAgent"
+    KillProcessByName "HuntressUpdater"
+    KillProcessByName "Rio"
 
     # attempt to use the built in uninstaller, if not found use the uninstallers built into the Agent and Updater
     if (Test-Path $agentPath) {
@@ -745,15 +808,23 @@ function uninstallHuntress {
     # look for the Huntress directory, if found then delete
     if (Test-Path $agentPath) {
         Remove-Item -LiteralPath $agentPath -Force -Recurse -ErrorAction SilentlyContinue
-        LogMessage "Manual cleanup of Huntress folder: success"
+        if (Test-Path $agentPath) {
+            LogMessage "WARNING: Manual cleanup of Huntress folder incomplete, '$agentPath' still exists. Files may be locked or protected."
+        } else {
+            LogMessage "Manual cleanup of Huntress folder: success"
+        }
     } else {
         LogMessage "Manual cleanup of Huntress folder: folder not found"
     }
 
     # look for the registry keys, if exist then delete
     if (Test-Path $HuntressRegKey) {
-        Get-Item -path $HuntressRegKey | Remove-Item -recurse
-        LogMessage "Manually deleted Huntress registry keys"
+        Remove-Item -Path $HuntressRegKey -Recurse -Force -ErrorAction SilentlyContinue
+        if (Test-Path $HuntressRegKey) {
+            LogMessage "WARNING: Failed to delete Huntress registry keys at '$HuntressRegKey'. Tamper Protection or permissions may be blocking removal."
+        } else {
+            LogMessage "Manually deleted Huntress registry keys"
+        }
     } else {
         LogMessage "No registry keys found, uninstallation complete"
     }
@@ -766,6 +837,18 @@ function uninstallHuntress {
             c:\Windows\System32\sc.exe STOP $service
             c:\Windows\System32\sc.exe DELETE $service
         }
+    }
+
+    # Only remove the ARP entries once no Huntress executables remain. If any are still present the uninstall did not
+    # complete (e.g. a locked file), and the ARP entries should keep reflecting the still-present install.
+    $remainingExeCount = 0
+    if (Test-Path $agentPath) {
+        $remainingExeCount = @(Get-ChildItem -Path $agentPath -Filter "*.exe" -Recurse -ErrorAction SilentlyContinue).Count
+    }
+    if ($remainingExeCount -eq 0) {
+        removeArpEntries
+    } else {
+        LogMessage "WARNING: $remainingExeCount Huntress .exe file(s) still present under '$agentPath'. Skipping ARP cleanup, uninstall may be incomplete."
     }
 }
 
@@ -979,11 +1062,15 @@ function logInfo {
         }
     }
 
-    $areURLsAvailable = testNetworkConnectivity
+    # LogMessage output is returned along with the Boolean, so keep only the last item (the Boolean)
+    $areURLsAvailable = @(testNetworkConnectivity)[-1]
     if ( $areURLsAvailable) {
         LogMessage "Network Connectivity verified!"
+    } elseif ($uninstall) {
+        # Uninstalling does not need access to Huntress URLs, so don't block it on connectivity
+        LogMessage "WARNING: Network connectivity check failed, continuing with uninstall"
     } else {
-        copyLogAndExit
+        copyLogAndExit 1
     }
 
 }
@@ -1062,12 +1149,14 @@ function main () {
     # if run with the repair flag, check if installed (install if not), if ver < 0.13.16 apply the fix
     if ($repair) {
         if (Test-Path(getAgentPath)){
-            if (!(repairAgent)){
-
-            } else {
+            # LogMessage output is returned along with the Boolean, so keep only the last item (the Boolean)
+            if (@(repairAgent)[-1]) {
                 LogMessage "Repair complete!"
+                copyLogAndExit
+            } else {
+                LogMessage "Repair did not complete, see above for details. $($SupportMessage)"
+                copyLogAndExit 1
             }
-            copyLogAndExit
         } else {
             LogMessage "Agent not found! Attempting to install"
             $reregister = $true
@@ -1111,7 +1200,8 @@ function main () {
     } else {
         LogMessage "Checking for HuntressAgent install..."
         $agentPath = getAgentPath
-        if ( (Test-Path $agentPath) -eq $true) {
+        # Check for the agent executable, not just the folder: copyLogAndExit creates the folder to store the log after a failed run
+        if (Test-Path (Join-Path $agentPath "HuntressAgent.exe")) {
             LogMessage "The Huntress Agent is already installed in $agentPath. Exiting with no changes. Suggest using -reregister or -reinstall flags"
             copyLogAndExit
         }
