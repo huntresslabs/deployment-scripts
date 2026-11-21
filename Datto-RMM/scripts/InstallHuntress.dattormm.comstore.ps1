@@ -1066,6 +1066,9 @@ function logInfo {
     $areURLsAvailable = @(testNetworkConnectivity)[-1]
     if ( $areURLsAvailable) {
         LogMessage "Network Connectivity verified!"
+    } elseif ($uninstall) {
+        # Uninstalling does not need access to Huntress URLs, so don't block it on connectivity
+        LogMessage "WARNING: Network connectivity check failed, continuing with uninstall"
     } else {
         copyLogAndExit 1
     }
@@ -1197,7 +1200,8 @@ function main () {
     } else {
         LogMessage "Checking for HuntressAgent install..."
         $agentPath = getAgentPath
-        if ( (Test-Path $agentPath) -eq $true) {
+        # Check for the agent executable, not just the folder: copyLogAndExit creates the folder to store the log after a failed run
+        if (Test-Path (Join-Path $agentPath "HuntressAgent.exe")) {
             LogMessage "The Huntress Agent is already installed in $agentPath. Exiting with no changes. Suggest using -reregister or -reinstall flags"
             copyLogAndExit
         }
