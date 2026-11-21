@@ -723,6 +723,11 @@ function removeArpEntries {
     $arpKeyNames     = @("Huntress")
     $arpDisplayNames = @("Huntress Agent", "Huntress Rio")
 
+    # 32bit PowerShell on 64bit Windows is redirected to the 32bit registry view and cannot reach the 64bit ARP entries
+    if ( ($PowerShellArch -eq $X86) -and ($WindowsArchitecture -eq $X64) ) {
+        LogMessage "WARNING: Can't clean up 64bit ARP entries due to 32bit PowerShell on 64bit host, they may remain. Please run PowerShell in 64 bit mode"
+    }
+
     foreach ($arpRoot in $arpRoots) {
         if ( ! (Test-Path $arpRoot) ) {
             continue
