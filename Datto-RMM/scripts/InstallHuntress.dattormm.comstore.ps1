@@ -714,6 +714,37 @@ function runProcess ($process, $flags, $name){
     }
 }
 
+# Remove leftover Add/Remove Programs (ARP) entries, stale entries can block subsequent reinstalls.
+# The agent's key is named 'Huntress'. Rio's key is an MSI product code that varies by version, so Rio is
+# matched by DisplayName only.
+function removeArpEntries {
+    $arpRoots        = @("HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall",
+                         "HKLM:\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall")
+    $arpKeyNames     = @("Huntress")
+    $arpDisplayNames = @("Huntress Agent", "Huntress Rio")
+
+    foreach ($arpRoot in $arpRoots) {
+        if ( ! (Test-Path $arpRoot) ) {
+            continue
+        }
+        foreach ($arpKey in (Get-ChildItem -Path $arpRoot -ErrorAction SilentlyContinue)) {
+            $displayName = $null
+            $arpProps = Get-ItemProperty -Path $arpKey.PSPath -ErrorAction SilentlyContinue
+            if ($arpProps -and $arpProps.PSObject.Properties['DisplayName']) {
+                $displayName = $arpProps.DisplayName
+            }
+            if (($arpKeyNames -contains $arpKey.PSChildName) -or ($arpDisplayNames -contains $displayName)) {
+                Remove-Item -Path $arpKey.PSPath -Recurse -Force -ErrorAction SilentlyContinue
+                if (Test-Path $arpKey.PSPath) {
+                    LogMessage "WARNING: Failed to delete ARP entry '$($arpKey.PSChildName)' (DisplayName: '$displayName') from $arpRoot. Tamper Protection or permissions may be blocking removal."
+                } else {
+                    LogMessage "Manually deleted ARP entry '$($arpKey.PSChildName)' (DisplayName: '$displayName') from $arpRoot"
+                }
+            }
+        }
+    }
+}
+
 # Fully uninstall the agent AB
 function uninstallHuntress {
     $agentPath         = getAgentPath
@@ -772,39 +803,25 @@ function uninstallHuntress {
     # look for the Huntress directory, if found then delete
     if (Test-Path $agentPath) {
         Remove-Item -LiteralPath $agentPath -Force -Recurse -ErrorAction SilentlyContinue
-        LogMessage "Manual cleanup of Huntress folder: success"
+        if (Test-Path $agentPath) {
+            LogMessage "WARNING: Manual cleanup of Huntress folder incomplete, '$agentPath' still exists. Files may be locked or protected."
+        } else {
+            LogMessage "Manual cleanup of Huntress folder: success"
+        }
     } else {
         LogMessage "Manual cleanup of Huntress folder: folder not found"
     }
 
     # look for the registry keys, if exist then delete
     if (Test-Path $HuntressRegKey) {
-        Get-Item -path $HuntressRegKey | Remove-Item -recurse
-        LogMessage "Manually deleted Huntress registry keys"
+        Remove-Item -Path $HuntressRegKey -Recurse -Force -ErrorAction SilentlyContinue
+        if (Test-Path $HuntressRegKey) {
+            LogMessage "WARNING: Failed to delete Huntress registry keys at '$HuntressRegKey'. Tamper Protection or permissions may be blocking removal."
+        } else {
+            LogMessage "Manually deleted Huntress registry keys"
+        }
     } else {
         LogMessage "No registry keys found, uninstallation complete"
-    }
-
-    # Remove leftover Add/Remove Programs (ARP) entries, stale entries can block subsequent reinstalls
-    $arpRoots        = @("HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall",
-                         "HKLM:\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall")
-    $arpKeyNames     = @("Huntress Agent", "{7AD69321-5BCC-43D5-BDFB-8F9A69938715}")
-    $arpDisplayNames = @("Huntress Agent", "Huntress Rio")
-    foreach ($arpRoot in $arpRoots) {
-        if ( ! (Test-Path $arpRoot) ) {
-            continue
-        }
-        foreach ($arpKey in (Get-ChildItem -Path $arpRoot -ErrorAction SilentlyContinue)) {
-            $displayName = $null
-            $arpProps = Get-ItemProperty -Path $arpKey.PSPath -ErrorAction SilentlyContinue
-            if ($arpProps -and $arpProps.PSObject.Properties['DisplayName']) {
-                $displayName = $arpProps.DisplayName
-            }
-            if (($arpKeyNames -contains $arpKey.PSChildName) -or ($arpDisplayNames -contains $displayName)) {
-                Remove-Item -Path $arpKey.PSPath -Recurse -Force -ErrorAction SilentlyContinue
-                LogMessage "Manually deleted ARP entry '$($arpKey.PSChildName)' (DisplayName: '$displayName') from $arpRoot"
-            }
-        }
     }
 
     # if Huntress services still exist, then delete
@@ -815,6 +832,18 @@ function uninstallHuntress {
             c:\Windows\System32\sc.exe STOP $service
             c:\Windows\System32\sc.exe DELETE $service
         }
+    }
+
+    # Only remove the ARP entries once no Huntress executables remain. If any are still present the uninstall did not
+    # complete (e.g. a locked file), and the ARP entries should keep reflecting the still-present install.
+    $remainingExeCount = 0
+    if (Test-Path $agentPath) {
+        $remainingExeCount = @(Get-ChildItem -Path $agentPath -Filter "*.exe" -Recurse -ErrorAction SilentlyContinue).Count
+    }
+    if ($remainingExeCount -eq 0) {
+        removeArpEntries
+    } else {
+        LogMessage "WARNING: $remainingExeCount Huntress .exe file(s) still present under '$agentPath'. Skipping ARP cleanup, uninstall may be incomplete."
     }
 }
 
