@@ -767,7 +767,7 @@ function uninstallHuntress {
     # NOTE: Get-Process reports ProcessName without the '.exe' extension, so names must not include it.
     KillProcessByName "HuntressAgent"
     KillProcessByName "HuntressUpdater"
-    KillProcessByName "HuntressRio"
+    KillProcessByName "Rio"
 
     # attempt to use the built in uninstaller, if not found use the uninstallers built into the Agent and Updater
     if (Test-Path $agentPath) {
@@ -1062,7 +1062,8 @@ function logInfo {
         }
     }
 
-    $areURLsAvailable = testNetworkConnectivity
+    # LogMessage output is returned along with the Boolean, so keep only the last item (the Boolean)
+    $areURLsAvailable = @(testNetworkConnectivity)[-1]
     if ( $areURLsAvailable) {
         LogMessage "Network Connectivity verified!"
     } else {
@@ -1145,7 +1146,8 @@ function main () {
     # if run with the repair flag, check if installed (install if not), if ver < 0.13.16 apply the fix
     if ($repair) {
         if (Test-Path(getAgentPath)){
-            if (repairAgent) {
+            # LogMessage output is returned along with the Boolean, so keep only the last item (the Boolean)
+            if (@(repairAgent)[-1]) {
                 LogMessage "Repair complete!"
                 copyLogAndExit
             } else {
