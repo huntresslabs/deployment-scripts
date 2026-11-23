@@ -53,7 +53,7 @@ $TagsKey = "__TAGS__"
 
 # These are used by the Huntress support team when troubleshooting. 
 # It's suggested to change $ScriptType to be the name of your automation system deploying this.
-$ScriptVersion = "Version 2, major revision 10, 2026 Sept 23"
+$ScriptVersion = "Version 2, major revision 11, 2026 Nov 20"
 $ScriptType = "PowerShell"
 
 # Set to "Continue" to enable verbose logging. "SilentlyContinue" is default
@@ -88,6 +88,7 @@ $HuntressAgentServiceName   = "HuntressAgent"
 $HuntressUpdaterServiceName = "HuntressUpdater"
 $HuntressEDRServiceName     = "HuntressRio"
 $Vendor                     = "Huntress"
+$HuntressSignerNames        = @("Huntress Labs Incorporated", "Huntress Labs Inc.")
 $ScriptInfoName             = "HuntressPoShInstaller.json"
 
 # Setup custom object for network testing
@@ -551,13 +552,27 @@ function StopHuntressServices {
 }
 
 # Ensure the installer was not modified during download by validating the file signature.
+# The Authenticode status must be 'Valid' (file hash matches the signature and the certificate chains to a trusted root)
+# and the signing certificate must belong to Huntress.
 function verifyInstaller ($file) {
-    $varChain = New-Object -TypeName System.Security.Cryptography.X509Certificates.X509Chain
+    $retryMsg = "Try again and contact Support if the 2nd attempt fails"
+
     try {
-        $varChain.Build((Get-AuthenticodeSignature -FilePath "$file").SignerCertificate) | out-null
-    } catch [System.Management.Automation.MethodInvocationException] {
-        copyLogAndExit -throwError "ERROR: '$file' did not contain a valid digital certificate, something may have corrupted the file. Try again and contact Support if the 2nd attempt fails"
+        $signature = Get-AuthenticodeSignature -FilePath "$file" -ErrorAction Stop
+    } catch {
+        copyLogAndExit -throwError "ERROR: Unable to read the digital signature of '$file': $($_.Exception.Message) $retryMsg"
     }
+
+    if ($signature.Status -ne [System.Management.Automation.SignatureStatus]::Valid) {
+        copyLogAndExit -throwError "ERROR: '$file' does not have a valid digital signature (status: $($signature.Status), $($signature.StatusMessage)). The file may be corrupted or tampered with, or this host may be missing trusted root certificates. $retryMsg"
+    }
+
+    $signerName = $signature.SignerCertificate.GetNameInfo([System.Security.Cryptography.X509Certificates.X509NameType]::SimpleName, $false)
+    if ($HuntressSignerNames -notcontains $signerName) {
+        copyLogAndExit -throwError "ERROR: '$file' is signed by '$signerName', expected one of '$($HuntressSignerNames -join "', '")'. The file may have been tampered with. $retryMsg"
+    }
+
+    logger "Verified installer signature (signer: '$signerName', thumbprint: $($signature.SignerCertificate.Thumbprint))"
 }
 
 # Prevent conflicting file from preventing creation of installation directory.
